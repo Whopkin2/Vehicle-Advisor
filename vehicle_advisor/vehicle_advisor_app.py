@@ -121,7 +121,7 @@ with st.form("chat_form", clear_on_submit=True):
             if st.session_state.question_index < len(questions):
                 next_question = questions[st.session_state.question_index]
                 st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {next_question}")
-            st.experimental_rerun()
+            st.rerun()
     else:
         st.markdown("### ✅ Top Vehicle Recommendations:")
         recommendations = recommend_vehicle_conversational(st.session_state.user_answers)
