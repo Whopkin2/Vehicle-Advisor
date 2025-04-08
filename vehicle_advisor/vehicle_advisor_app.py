@@ -1,3 +1,9 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[ ]:
+
+
 import streamlit as st
 import pandas as pd
 import openai
@@ -81,10 +87,8 @@ def recommend_vehicle_conversational(user_answers, top_n=3):
 
 def generate_summary_with_gpt(row, user_answers):
     prompt = (
-        f"The user is shopping for a vehicle with a budget of {user_answers.get('Budget', 'unknown')}.
-"
-        f"Their preferences: {user_answers}.
-"
+        f"The user is shopping for a vehicle with a budget of {user_answers.get('Budget', 'unknown')}.\n"
+        f"Their preferences: {user_answers}.\n"
         f"Explain why the {row['Brand']} {row['Model']} ({row['Model Year']}) is a good match. "
         f"Highlight its size, simplicity, fuel type, towing ability, tech level, and ownership value. "
         f"Include the MSRP: {row['MSRP Range']}, and how it fits their budget."
@@ -125,3 +129,4 @@ with st.form("chat_form", clear_on_submit=True):
             summary = generate_summary_with_gpt(row, st.session_state.user_answers)
             st.markdown(f"**{row['Brand']} {row['Model']} ({row['Model Year']})**")
             st.markdown(summary)
+
