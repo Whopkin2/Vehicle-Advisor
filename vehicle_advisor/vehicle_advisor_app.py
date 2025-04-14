@@ -137,8 +137,7 @@ if not st.session_state.profile_complete:
             del st.session_state.next_key
             st.rerun()
         else:
-            profile_summary = "
-".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()])
+            profile_summary = ".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()])
             gpt_followup_prompt = (
                 f"Current profile:
 {profile_summary}
