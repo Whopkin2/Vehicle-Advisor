@@ -79,7 +79,7 @@ def get_salesman_reply(key, value, user_answers):
     profile = {**user_answers, key: value}
     profile_summary = "\n".join([f"{k}: {v}" for k, v in profile.items()])
     prompt = (
-        f"You're a friendly car salesman named Mike. You're helping someone find a great vehicle.\n"
+        f"You're a friendly vehicle advisor. You're helping someone find a great vehicle.\n"
         f"So far, they've told you:\n{profile_summary}\n"
         f"They just said: {key} = {value}. Respond casually like a car salesman, suggest 1-2 vehicles that might fit so far, and ask the next question conversationally."
     )
@@ -93,7 +93,7 @@ def get_salesman_reply(key, value, user_answers):
     return response.choices[0].message.content
 
 
-st.markdown("## 🚗 VehicleAdvisor: Talk to Mike the Car Guy")
+st.markdown("## 🚗 VehicleAdvisor Chat")
 
 for key, question in questions:
     if key not in st.session_state.user_answers:
@@ -105,7 +105,7 @@ for key, question in questions:
             st.session_state.user_answers[key] = user_input
             reply = get_salesman_reply(key, user_input, st.session_state.user_answers)
             st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
-            st.session_state.chat_log.append(f"<b>Mike:</b> {reply}")
+            st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {reply}")
             st.rerun()
         break
 else:
