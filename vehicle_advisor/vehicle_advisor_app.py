@@ -80,12 +80,12 @@ def get_salesman_reply(key, value, user_answers):
     prompt = (
         f"You're a vehicle advisor. You're helping someone find a great vehicle.\n"
         f"So far, they've told you:\n{profile_summary}\n"
-        f"They just said: {key} = {value}. Respond like a car salesman, suggest 1-2 vehicles that might fit so far, and ask only the next question — no more than one question at a time."
+        f"They just said: {key} = {value}. Respond like a car salesman, suggest 1-2 vehicles that might fit so far,"
     )
     response = client.chat.completions.create(
         model="gpt-4",
         messages=[
-            {"role": "system", "content": "You are a friendly car salesman who speaks casually and helps customers pick vehicles."},
+            {"role": "system", "content": "You are a car salesman who speaks casually and helps customers pick vehicles."},
             {"role": "user", "content": prompt}
         ]
     )
