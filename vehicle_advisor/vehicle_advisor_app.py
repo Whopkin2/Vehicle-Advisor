@@ -106,10 +106,10 @@ def feedback_response_after_input(key, value):
     }.get(key, 0.5)
 
     prompt = (
-        f"User just answered: {key} = {value}\n"
-        f"Given the full profile so far: {profile}\n"
+        f"You just mentioned: {key} = {value}\n"
+        f"Considering everything we've talked about so far, {profile}\n"
         f"Provide 2-3 example vehicles that might fit based on this new input."
-        f" Also explain how influential this input is on scoring (weight = {weight})."
+        f" Explain how much this matters when picking your vehicle, based on a weight of {weight}."
     )
 
     response = client.chat.completions.create(
@@ -129,29 +129,51 @@ st.markdown("## 🚘 VehicleAdvisor Chatbot")
 
 if not st.session_state.profile_complete:
     st.markdown("Welcome! Let's find your ideal vehicle. Answer a few quick questions:")
+    if "next_key" in st.session_state and st.session_state.next_key in st.session_state.user_answers:
+    follow_up = st.text_input("Type your reply or say 'continue' to go to the next question:")
+    if st.button("Respond") and follow_up:
+        st.session_state.chat_log.append(f"<b>You:</b> {follow_up}")
+        if follow_up.strip().lower() == "continue":
+            del st.session_state.next_key
+            st.rerun()
+        else:
+            profile_summary = "
+".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()])
+            gpt_followup_prompt = (
+                f"Current profile:
+{profile_summary}
+"
+                f"User follow-up: {follow_up}
+"
+                f"Respond conversationally and naturally. Offer suggestions, examples, or ask clarifying questions if needed."
+            )
+            response = client.chat.completions.create(
+                model="gpt-4",
+                messages=[
+                    {"role": "system", "content": "You are a friendly and knowledgeable vehicle advisor. Speak directly to the user as 'you'."},
+                    {"role": "user", "content": gpt_followup_prompt}
+                ]
+            )
+            st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {response.choices[0].message.content}")
+            st.rerun()
+else:
     for key, question in questions:
         if key not in st.session_state.user_answers:
             st.markdown("### 💬 Chat with VehicleAdvisor")
             for message in st.session_state.chat_log:
                 st.markdown(message, unsafe_allow_html=True)
 
-            if key == "Tech Features":
-                user_input = st.selectbox(question, ["Low", "Medium", "High"])
-            elif key == "Car Size":
-                user_input = st.selectbox(question, ["Small", "Midsize", "Full-Size", "SUV", "Truck"])
-            elif key == "Use Category":
-                user_input = st.selectbox(question, ["Commuting", "Leisure", "Work", "Family", "Off-road", "Towing"])
-            elif key == "Neighborhood Type":
-                user_input = st.selectbox(question, ["City", "Suburbs", "Rural"])
-            else:
+            user_input = st.text_input(question)
                 user_input = st.text_input(question)
 
             if st.button("Submit Answer"):
-                st.session_state.user_answers[key] = user_input
-                feedback = feedback_response_after_input(key, user_input)
-                st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
-                st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {feedback}")
-                st.rerun()
+    st.session_state.user_answers[key] = user_input
+    feedback = feedback_response_after_input(key, user_input)
+    st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
+    st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {feedback}")
+    st.session_state.chat_log.append("<i>Would you like to dive deeper into any of these options or continue?</i>")
+    st.session_state.next_key = key
+    st.rerun()
             break
     else:
         st.session_state.profile_complete = True
