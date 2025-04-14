@@ -21,7 +21,7 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 client = openai.OpenAI(api_key=openai.api_key)
 
 questions = [
-    ("Region", "Where are you cruising around mostly?"),
+    ("Region", "Where are you from or currently living?"),
     ("Use Category", "What’s the main mission for this ride? Commute? Weekend warrior?"),
     ("Yearly Income", "Mind sharing your ballpark yearly income? Helps with budget range."),
     ("Credit Score", "What’s your credit score looking like? Helps me figure out your financing lane."),
