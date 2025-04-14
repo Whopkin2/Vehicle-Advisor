@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
-
-
 import streamlit as st
 import pandas as pd
 import openai
@@ -15,7 +12,10 @@ st.set_page_config(page_title="Vehicle Advisor", layout="centered")
 @st.cache_data
 def load_data():
     df = pd.read_csv("vehicle_data.csv")
-    df['MSRP Min'] = df['MSRP Range'].apply(lambda msrp_range: float(re.findall(r'\$([\d,]+)', str(msrp_range))[0].replace(',', '')) if re.findall(r'\$([\d,]+)', str(msrp_range)) else None)
+    df['MSRP Min'] = df['MSRP Range'].apply(
+        lambda msrp_range: float(re.findall(r'\$([\d,]+)', str(msrp_range))[0].replace(',', ''))
+        if re.findall(r'\$([\d,]+)', str(msrp_range)) else None
+    )
     return df
 
 df_vehicle_advisor = load_data()
@@ -59,15 +59,6 @@ if "chat_log" not in st.session_state:
 
 def recommend_vehicle_conversational(user_answers, top_n=3):
     df = df_vehicle_advisor.copy()
-    try:
-        user_budget = float(re.findall(r'\d+', user_answers.get("Budget", "45000").replace("$", "").replace(",", "").strip())[0])
-    except:
-        user_budget = 45000
-
-    df = df[~df['Fuel Type'].str.lower().str.contains("electric|hybrid", na=False)]
-    df = df[~df['Vehicle Type'].str.lower().str.contains("sedan|luxury|compact", na=False)]
-    df = df[df['Car Size'].str.lower().isin(['midsize', 'full-size', 'truck', 'suv'])]
-    df = df[df['MSRP Min'].fillna(99999) <= user_budget]
 
     score_weights = {
         "Region": 1.0, "Use Category": 1.0, "Yearly Income": 0.6, "Credit Score": 0.6,
@@ -129,4 +120,3 @@ with st.form("chat_form", clear_on_submit=True):
             summary = generate_summary_with_gpt(row, st.session_state.user_answers)
             st.markdown(f"**{row['Brand']} {row['Model']} ({row['Model Year']})**")
             st.markdown(summary)
-
