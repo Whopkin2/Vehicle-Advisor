@@ -26,6 +26,8 @@ if "user_profile" not in st.session_state:
     st.session_state.user_profile = {}
 if "recommendation_made" not in st.session_state:
     st.session_state.recommendation_made = False
+if "intro_shown" not in st.session_state:
+    st.session_state.intro_shown = False
 
 
 def recommend_vehicle_dynamic(profile):
@@ -71,11 +73,18 @@ def reset_chat():
     st.session_state.chat_log = []
     st.session_state.user_profile = {}
     st.session_state.recommendation_made = False
+    st.session_state.intro_shown = False
     st.experimental_rerun()
 
 st.markdown("## 🚘 VehicleAdvisor Chatbot")
 
 st.markdown("### 💬 Chat with VehicleAdvisor")
+
+if not st.session_state.intro_shown:
+    intro = "<b>VehicleAdvisor:</b> Hi! I'm here to help you find the perfect car. Let's get started. What region are you located in?"
+    st.session_state.chat_log.append(intro)
+    st.session_state.intro_shown = True
+
 for message in st.session_state.chat_log:
     st.markdown(message, unsafe_allow_html=True)
 
@@ -89,14 +98,13 @@ if submitted and user_query:
     if user_query.strip().lower() == "reset":
         reset_chat()
 
-    # Extract potential updates from the user message (lightweight keyword mapping)
     profile_keywords = [
         "region", "budget", "family", "mileage", "credit", "garage",
         "hybrid", "suv", "sedan", "eco", "commute", "features"
     ]
     for word in profile_keywords:
         if word in user_query.lower():
-            st.session_state.user_profile[word] = user_query  # Naive mapping for now
+            st.session_state.user_profile[word] = user_query
 
     reply = gpt_vehicle_response(user_query)
     st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {reply}")
@@ -106,7 +114,6 @@ if submitted and user_query:
         st.session_state.chat_log.append("<br><b>✅ I've gathered enough to recommend your top 3 vehicles:</b>")
         for _, row in top_vehicles.iterrows():
             st.session_state.chat_log.append(f"- <b>{row['Brand']} {row['Model']} ({row['Model Year']})</b>: {row['MSRP Range']}")
-
         st.session_state.chat_log.append("<br>Would you like to compare these cars in a table or by features? Or would you like to change any preferences or start over?")
         st.session_state.recommendation_made = True
 
