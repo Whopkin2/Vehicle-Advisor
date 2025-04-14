@@ -157,6 +157,26 @@ if not st.session_state.profile_complete:
             st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {response.choices[0].message.content}")
             st.rerun()
 else:
+            profile_summary = "
+".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()])
+            gpt_followup_prompt = (
+                f"Current profile:
+{profile_summary}
+"
+                f"User follow-up: {follow_up}
+"
+                f"Respond conversationally and naturally. Offer suggestions, examples, or ask clarifying questions if needed."
+            )
+            response = client.chat.completions.create(
+                model="gpt-4",
+                messages=[
+                    {"role": "system", "content": "You are a friendly and knowledgeable vehicle advisor. Speak directly to the user as 'you'."},
+                    {"role": "user", "content": gpt_followup_prompt}
+                ]
+            )
+            st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {response.choices[0].message.content}")
+            st.rerun()
+else:
     for key, question in questions:
         if key not in st.session_state.user_answers:
             st.markdown("### 💬 Chat with VehicleAdvisor")
