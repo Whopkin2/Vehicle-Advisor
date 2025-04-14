@@ -21,24 +21,23 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 client = openai.OpenAI(api_key=openai.api_key)
 
 questions = [
-    ("Region", "Where are you from or currently living?"),
-    ("Use Category", "What’s the main mission for this ride? Commute? Weekend warrior?"),
-    ("Yearly Income", "Mind sharing your ballpark yearly income? Helps with budget range."),
-    ("Credit Score", "What’s your credit score looking like? Helps me figure out your financing lane."),
-    ("Garage Access", "You got a garage to park this beauty in, or street parking?"),
-    ("Eco-Conscious", "Are you eco-conscious? Thinking hybrid or EV maybe?"),
-    ("Charging Access", "Do you have access to EV charging at home or nearby?"),
-    ("Neighborhood Type", "What’s your neighborhood vibe – city streets, burbs, or out in the sticks?"),
-    ("Towing Needs", "Need to haul stuff? Boats, trailers, anything heavy?"),
-    ("Safety Priority", "How much do you care about safety features? Be honest."),
-    ("Tech Features", "You want all the bells and whistles inside?"),
-    ("Car Size", "Got a size in mind? SUV, sedan, something compact?"),
-    ("Ownership Recommendation", "You lookin’ to buy, lease, or test the waters with a rental?"),
-    ("Employment Status", "What’s the work situation? Helps with insurance and reliability options."),
-    ("Travel Frequency", "How often are you on the road – daily, weekends, or the occasional road trip?"),
-    ("Annual Mileage", "Roughly how many miles you rack up a year?"),
-    ("Ownership Duration", "How long do you plan to keep this vehicle? Few years or long haul?"),
-    ("Budget", "And most important — what’s the budget range you’re working with?")
+    ("Region", "What state or region are you currently residing in?"),
+    ("Use Category", "What is the primary purpose of the vehicle?"),
+    ("Yearly Income", "What is your approximate annual income?"),
+    ("Credit Score", "What is your estimated credit score?"),
+    ("Garage Access", "Do you have access to a garage or covered parking?"),
+    ("Eco-Conscious", "Do you prefer an environmentally friendly vehicle, such as a hybrid or EV?"),
+    ("Charging Access", "Do you have access to an electric vehicle charging station at home or nearby?"),
+    ("Neighborhood Type", "Do you live in an urban, suburban, or rural area?"),
+    ("Towing Needs", "Will you need the vehicle for towing purposes?"),
+    ("Safety Priority", "How important are advanced safety features in your decision?"),
+    ("Tech Features", "What level of in-car technology and features do you prefer?"),
+    ("Car Size", "What size vehicle are you considering (e.g., compact, midsize, SUV)?"),
+    ("Employment Status", "What is your current employment status?"),
+    ("Travel Frequency", "How frequently do you plan to drive the vehicle?"),
+    ("Annual Mileage", "What is your estimated annual mileage?"),
+    ("Ownership Duration", "How long do you plan to own or lease the vehicle?"),
+    ("Budget", "What is your vehicle budget or price range?")
 ]
 
 if "user_answers" not in st.session_state:
