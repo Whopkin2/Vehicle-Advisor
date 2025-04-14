@@ -131,6 +131,10 @@ if not st.session_state.profile_complete:
     st.markdown("Welcome! Let's find your ideal vehicle. Answer a few quick questions:")
     for key, question in questions:
         if key not in st.session_state.user_answers:
+            st.markdown("### 💬 Chat with VehicleAdvisor")
+            for message in st.session_state.chat_log:
+                st.markdown(message, unsafe_allow_html=True)
+
             if key == "Tech Features":
                 user_input = st.selectbox(question, ["Low", "Medium", "High"])
             elif key == "Car Size":
@@ -145,6 +149,7 @@ if not st.session_state.profile_complete:
             if st.button("Submit Answer"):
                 st.session_state.user_answers[key] = user_input
                 feedback = feedback_response_after_input(key, user_input)
+                st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
                 st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {feedback}")
                 st.rerun()
             break
