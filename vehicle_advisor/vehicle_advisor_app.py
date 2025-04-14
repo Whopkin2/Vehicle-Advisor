@@ -75,21 +75,21 @@ if st.button("Send") and user_query:
     st.session_state.chat_log.append(f"<b>You:</b> {user_query}")
 
     # Extract potential updates from the user message (lightweight keyword mapping)
-    profile_keywords = ["region", "budget", "family", "mileage", "credit", "garage", "hybrid", "suv", "sedan", "eco", "commute", "features"]
+    profile_keywords = [
+        "region", "budget", "family", "mileage", "credit", "garage",
+        "hybrid", "suv", "sedan", "eco", "commute", "features"
+    ]
     for word in profile_keywords:
         if word in user_query.lower():
-            st.session_state.user_profile[word] = user_query  # Very naive placeholder logic
+            st.session_state.user_profile[word] = user_query  # Naive mapping for now
 
     reply = gpt_vehicle_response(user_query)
     st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {reply}")
 
-    if "recommend" in user_query.lower() or "suggest" in user_query.lower() or "car" in user_query.lower():
+    if any(kw in user_query.lower() for kw in ["recommend", "suggest", "car"]):
         top_vehicles = recommend_vehicle_dynamic(st.session_state.user_profile)
         st.session_state.chat_log.append("<br><b>Here are some options based on what I know so far:</b>")
         for _, row in top_vehicles.iterrows():
             st.session_state.chat_log.append(f"- <b>{row['Brand']} {row['Model']} ({row['Model Year']})</b>: {row['MSRP Range']}")
 
     st.rerun()
-        reply = response.choices[0].message.content
-        st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {reply}")
-        st.rerun()
