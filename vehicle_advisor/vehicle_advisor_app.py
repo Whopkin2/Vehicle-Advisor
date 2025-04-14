@@ -107,16 +107,16 @@ with st.form("chat_form", clear_on_submit=True):
         if submitted and user_input:
             key = keys[st.session_state.question_index]
             st.session_state.user_answers[key] = user_input
-            st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
+            st.session_state.chat_log.append(f"You: {user_input}")
             st.session_state.question_index += 1
             if st.session_state.question_index < len(questions):
                 next_question = questions[st.session_state.question_index]
-                st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {next_question}")
+                st.session_state.chat_log.append(f"VehicleAdvisor: {next_question}")
             st.rerun()
     else:
         st.markdown("### ✅ Top Vehicle Recommendations:")
         recommendations = recommend_vehicle_conversational(st.session_state.user_answers)
         for _, row in recommendations.iterrows():
             summary = generate_summary_with_gpt(row, st.session_state.user_answers)
-            st.markdown(f"**{row['Brand']} {row['Model']} ({row['Model Year']})**")
-            st.markdown(summary)
+            st.text(f"{row['Brand']} {row['Model']} ({row['Model Year']})")
+            st.text(summary)
