@@ -81,7 +81,7 @@ def get_salesman_reply(key, value, user_answers):
     prompt = (
         f"You're a friendly vehicle advisor. You're helping someone find a great vehicle.\n"
         f"So far, they've told you:\n{profile_summary}\n"
-        f"They just said: {key} = {value}. Respond casually like a car salesman, suggest 1-2 vehicles that might fit so far, and ask the next question conversationally."
+        f"They just said: {key} = {value}. Respond casually like a car salesman, suggest 1-2 vehicles that might fit so far, and ask only the next question — no more than one question at a time."
     )
     response = client.chat.completions.create(
         model="gpt-4",
@@ -109,7 +109,7 @@ for key, question in questions:
             st.rerun()
         break
 else:
-    st.success("You’re all set! Mike’s got a few rides in mind for you.")
+    st.success("You’re all set! VehicleAdvisor has a few rides in mind for you.")
     recommendations = recommend_vehicles(st.session_state.user_answers)
     for _, row in recommendations.iterrows():
         st.markdown(f"**{row['Brand']} {row['Model']} ({row['Model Year']})**")
