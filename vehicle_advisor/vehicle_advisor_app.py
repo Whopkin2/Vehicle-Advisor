@@ -78,9 +78,9 @@ def get_salesman_reply(key, value, user_answers):
     profile = {**user_answers, key: value}
     profile_summary = "\n".join([f"{k}: {v}" for k, v in profile.items()])
     prompt = (
-        f"You're a friendly vehicle advisor. You're helping someone find a great vehicle.\n"
+        f"You're a vehicle advisor. You're helping someone find a great vehicle.\n"
         f"So far, they've told you:\n{profile_summary}\n"
-        f"They just said: {key} = {value}. Respond casually like a car salesman, suggest 1-2 vehicles that might fit so far, and ask only the next question — no more than one question at a time."
+        f"They just said: {key} = {value}. Respond like a car salesman, suggest 1-2 vehicles that might fit so far, and ask only the next question — no more than one question at a time."
     )
     response = client.chat.completions.create(
         model="gpt-4",
