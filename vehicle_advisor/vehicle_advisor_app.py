@@ -52,7 +52,6 @@ if "chat_log" not in st.session_state:
 
 def recommend_vehicle_conversational(user_answers, top_n=3):
     df = df_vehicle_advisor.copy()
-
     try:
         user_budget = float(re.findall(r'\d+', user_answers.get("Budget", "45000").replace("$", "").replace(",", "").strip())[0])
     except:
@@ -129,74 +128,50 @@ st.markdown("## 🚘 VehicleAdvisor Chatbot")
 
 if not st.session_state.profile_complete:
     st.markdown("Welcome! Let's find your ideal vehicle. Answer a few quick questions:")
+
     if "next_key" in st.session_state and st.session_state.next_key in st.session_state.user_answers:
-    follow_up = st.text_input("Type your reply or say 'continue' to go to the next question:")
-    if st.button("Respond") and follow_up:
-        st.session_state.chat_log.append(f"<b>You:</b> {follow_up}")
-        if follow_up.strip().lower() == "continue":
-            del st.session_state.next_key
-            st.rerun()
-        else:
-            profile_summary = ".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()])
-            gpt_followup_prompt = (
-                f"Current profile:
-{profile_summary}
-"
-                f"User follow-up: {follow_up}
-"
-                f"Respond conversationally and naturally. Offer suggestions, examples, or ask clarifying questions if needed."
-            )
-            response = client.chat.completions.create(
-                model="gpt-4",
-                messages=[
-                    {"role": "system", "content": "You are a friendly and knowledgeable vehicle advisor. Speak directly to the user as 'you'."},
-                    {"role": "user", "content": gpt_followup_prompt}
-                ]
-            )
-            st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {response.choices[0].message.content}")
-            st.rerun()
-else:
-            profile_summary = "
-".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()])
-            gpt_followup_prompt = (
-                f"Current profile:
-{profile_summary}
-"
-                f"User follow-up: {follow_up}
-"
-                f"Respond conversationally and naturally. Offer suggestions, examples, or ask clarifying questions if needed."
-            )
-            response = client.chat.completions.create(
-                model="gpt-4",
-                messages=[
-                    {"role": "system", "content": "You are a friendly and knowledgeable vehicle advisor. Speak directly to the user as 'you'."},
-                    {"role": "user", "content": gpt_followup_prompt}
-                ]
-            )
-            st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {response.choices[0].message.content}")
-            st.rerun()
-else:
-    for key, question in questions:
-        if key not in st.session_state.user_answers:
-            st.markdown("### 💬 Chat with VehicleAdvisor")
-            for message in st.session_state.chat_log:
-                st.markdown(message, unsafe_allow_html=True)
-
-            user_input = st.text_input(question)
-                user_input = st.text_input(question)
-
-            if st.button("Submit Answer"):
-    st.session_state.user_answers[key] = user_input
-    feedback = feedback_response_after_input(key, user_input)
-    st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
-    st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {feedback}")
-    st.session_state.chat_log.append("<i>Would you like to dive deeper into any of these options or continue?</i>")
-    st.session_state.next_key = key
-    st.rerun()
-            break
+        follow_up = st.text_input("Type your reply or say 'continue' to go to the next question:")
+        if st.button("Respond") and follow_up:
+            st.session_state.chat_log.append(f"<b>You:</b> {follow_up}")
+            if follow_up.strip().lower() == "continue":
+                del st.session_state.next_key
+                st.rerun()
+            else:
+                profile_summary = "\n".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()])
+                gpt_followup_prompt = (
+                    f"Current profile:\n{profile_summary}\n"
+                    f"User follow-up: {follow_up}\n"
+                    f"Respond conversationally and naturally. Offer suggestions, examples, or ask clarifying questions if needed."
+                )
+                response = client.chat.completions.create(
+                    model="gpt-4",
+                    messages=[
+                        {"role": "system", "content": "You are a friendly and knowledgeable vehicle advisor. Speak directly to the user as 'you'."},
+                        {"role": "user", "content": gpt_followup_prompt}
+                    ]
+                )
+                st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {response.choices[0].message.content}")
+                st.rerun()
     else:
-        st.session_state.profile_complete = True
-        st.rerun()
+        for key, question in questions:
+            if key not in st.session_state.user_answers:
+                st.markdown("### 💬 Chat with VehicleAdvisor")
+                for message in st.session_state.chat_log:
+                    st.markdown(message, unsafe_allow_html=True)
+
+                user_input = st.text_input(question)
+                if st.button("Submit Answer"):
+                    st.session_state.user_answers[key] = user_input
+                    feedback = feedback_response_after_input(key, user_input)
+                    st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
+                    st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {feedback}")
+                    st.session_state.chat_log.append("<i>Would you like to dive deeper into any of these options or continue?</i>")
+                    st.session_state.next_key = key
+                    st.rerun()
+                break
+        else:
+            st.session_state.profile_complete = True
+            st.rerun()
 
 elif not st.session_state.chat_mode:
     st.success("✅ Profile complete! Generating recommendations...")
@@ -211,7 +186,6 @@ elif not st.session_state.chat_mode:
     if st.button("💬 Enter Chat Mode"):
         st.session_state.chat_mode = True
         st.rerun()
-
 else:
     st.markdown("### 💬 Chat with VehicleAdvisor")
     render_profile_summary()
