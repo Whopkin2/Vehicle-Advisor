@@ -49,6 +49,9 @@ if "profile_complete" not in st.session_state:
     st.session_state.profile_complete = False
 if "chat_log" not in st.session_state:
     st.session_state.chat_log = []
+if "current_question_index" not in st.session_state:
+    st.session_state.current_question_index = 0
+
 
 def recommend_vehicle_conversational(user_answers, top_n=3):
     df = df_vehicle_advisor.copy()
@@ -77,101 +80,48 @@ def recommend_vehicle_conversational(user_answers, top_n=3):
     df = df.sort_values(by=['score', 'Model Year'], ascending=[False, False])
     return df.head(top_n).reset_index(drop=True)
 
-def generate_summary_with_gpt(row, user_answers):
-    profile = "\n".join([f"{k}: {v}" for k, v in user_answers.items()])
-    prompt = (
-        f"User profile:\n{profile}\n"
-        f"Recommend the {row['Brand']} {row['Model']} ({row['Model Year']}) based on this profile."
-        f" Explain why it's a good match. Include budget, size, fuel, tech, towing, mileage, and resale." 
-        f" Include MSRP: {row['MSRP Range']}."
-    )
-    response = client.chat.completions.create(
-        model="gpt-4",
-        messages=[
-            {"role": "system", "content": "You are a helpful vehicle advisor."},
-            {"role": "user", "content": prompt}
-        ]
-    )
-    return response.choices[0].message.content
-
-def feedback_response_after_input(key, value):
-    profile = {**st.session_state.user_answers, key: value}
-    weight = {
-        "Region": 1.0, "Use Category": 1.0, "Yearly Income": 0.6, "Credit Score": 0.6,
-        "Garage Access": 0.5, "Eco-Conscious": 0.8, "Charging Access": 0.8, "Neighborhood Type": 0.9,
-        "Towing Needs": 0.6, "Safety Priority": 0.9, "Tech Features": 0.8, "Car Size": 0.7,
-        "Ownership Recommendation": 0.7, "Employment Status": 0.6, "Travel Frequency": 0.5,
-        "Ownership Duration": 0.5, "Budget": 2.0, "Annual Mileage": 0.6
-    }.get(key, 0.5)
-
-    prompt = (
-        f"You just mentioned: {key} = {value}\n"
-        f"Considering everything we've talked about so far, {profile}\n"
-        f"Provide 2-3 example vehicles that might fit based on this new input."
-        f" Explain how much this matters when picking your vehicle, based on a weight of {weight}."
-    )
-
-    response = client.chat.completions.create(
-        model="gpt-4",
-        messages=[
-            {"role": "system", "content": "You are a helpful vehicle advisor who provides real-time suggestions based on user profile and scoring weights."},
-            {"role": "user", "content": prompt}
-        ]
-    )
-    return response.choices[0].message.content
 
 def render_profile_summary():
-    st.markdown("### 🧾 Your Profile Summary")
+    st.markdown("### 📟 Your Profile Summary")
     st.table(pd.DataFrame.from_dict(st.session_state.user_answers, orient='index', columns=["Your Answer"]))
+
+
+def gpt_followup_after_answer(key, value):
+    profile = {**st.session_state.user_answers, key: value}
+    profile_summary = "\n".join([f"{k}: {v}" for k, v in profile.items()])
+    prompt = (
+        f"User just answered: {key} = {value}\n"
+        f"Current profile:\n{profile_summary}\n"
+        f"Thank the user and ask if any clarification would help, or say 'Great!' if enough info is provided."
+    )
+    response = client.chat.completions.create(
+        model="gpt-4",
+        messages=[
+            {"role": "system", "content": "You're a helpful vehicle advisor."},
+            {"role": "user", "content": prompt}
+        ]
+    )
+    return response.choices[0].message.content
+
 
 st.markdown("## 🚘 VehicleAdvisor Chatbot")
 
 if not st.session_state.profile_complete:
-    st.markdown("Welcome! Let's find your ideal vehicle. Answer a few quick questions:")
-
-    if "next_key" in st.session_state and st.session_state.next_key in st.session_state.user_answers:
-        follow_up = st.text_input("Type your reply or say 'continue' to go to the next question:")
-        if st.button("Respond") and follow_up:
-            st.session_state.chat_log.append(f"<b>You:</b> {follow_up}")
-            if follow_up.strip().lower() == "continue":
-                del st.session_state.next_key
-                st.rerun()
-            else:
-                profile_summary = "\n".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()])
-                gpt_followup_prompt = (
-                    f"Current profile:\n{profile_summary}\n"
-                    f"User follow-up: {follow_up}\n"
-                    f"Respond conversationally and naturally. Offer suggestions, examples, or ask clarifying questions if needed."
-                )
-                response = client.chat.completions.create(
-                    model="gpt-4",
-                    messages=[
-                        {"role": "system", "content": "You are a friendly and knowledgeable vehicle advisor. Speak directly to the user as 'you'."},
-                        {"role": "user", "content": gpt_followup_prompt}
-                    ]
-                )
-                st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {response.choices[0].message.content}")
-                st.rerun()
-    else:
-        for key, question in questions:
-            if key not in st.session_state.user_answers:
-                st.markdown("### 💬 Chat with VehicleAdvisor")
-                for message in st.session_state.chat_log:
-                    st.markdown(message, unsafe_allow_html=True)
-
-                user_input = st.text_input(question)
-                if st.button("Submit Answer"):
-                    st.session_state.user_answers[key] = user_input
-                    feedback = feedback_response_after_input(key, user_input)
-                    st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
-                    st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {feedback}")
-                    st.session_state.chat_log.append("<i>Would you like to dive deeper into any of these options or continue?</i>")
-                    st.session_state.next_key = key
-                    st.rerun()
-                break
-        else:
-            st.session_state.profile_complete = True
+    index = st.session_state.current_question_index
+    if index < len(questions):
+        key, question = questions[index]
+        st.markdown(f"### 💬 {question}")
+        user_input = st.text_input("Your answer:", key="input")
+        if st.button("Submit") and user_input:
+            st.session_state.user_answers[key] = user_input
+            gpt_reply = gpt_followup_after_answer(key, user_input)
+            st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
+            st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {gpt_reply}")
+            st.session_state.current_question_index += 1
             st.rerun()
+    else:
+        st.session_state.profile_complete = True
+        st.rerun()
 
 elif not st.session_state.chat_mode:
     st.success("✅ Profile complete! Generating recommendations...")
@@ -180,12 +130,12 @@ elif not st.session_state.chat_mode:
     st.markdown("### 🚗 Top Vehicle Matches")
     for _, row in recommendations.iterrows():
         st.text(f"{row['Brand']} {row['Model']} ({row['Model Year']})")
-        st.text(generate_summary_with_gpt(row, st.session_state.user_answers))
+        st.text(row['MSRP Range'])
     st.markdown("---")
-    st.markdown("Want to make changes or ask questions?")
     if st.button("💬 Enter Chat Mode"):
         st.session_state.chat_mode = True
         st.rerun()
+
 else:
     st.markdown("### 💬 Chat with VehicleAdvisor")
     render_profile_summary()
