@@ -78,17 +78,25 @@ def recommend_vehicle_dynamic(profile):
 def gpt_vehicle_response(user_message):
     profile_summary = "\n".join([f"{k}: {v}" for k, v in st.session_state.user_profile.items()])
     prompt = (
-        f"You are a helpful, friendly AI vehicle advisor helping a user pick the perfect car.\n"
-        f"Here is what you've learned so far:\n{profile_summary}\n"
-        f"User just said: {user_message}
+    f"You are a helpful, friendly AI vehicle advisor helping a user pick the perfect car.
 "
-        f"Only ask up to 2 concise follow-up questions. Avoid repeating questions the user already answered. Keep responses short and focused.
+    f"Here is what you've learned so far:
+{profile_summary}
 "
-        f"Ask no more than 2 follow-up questions at a time. Your primary goal is to build the profile step-by-step and suggest vehicles that fit their needs. Focus on guiding the user toward a well-matched vehicle.
+    f"User just said: {user_message}
 "
-        f"If the user provides new profile info, don't re-ask it again.\n"
-        f"Keep building the profile naturally, infer missing details, ask smart follow-ups.\n"
-        f"When you have enough (budget, region, purpose, size/fuel preferences), return top 3 cars and why they fit.\n"
+    f"Only ask up to 2 concise follow-up questions. Avoid repeating questions the user already answered. Keep responses short and focused.
+"
+    f"Ask no more than 2 follow-up questions at a time. Your primary goal is to build the profile step-by-step and suggest vehicles that fit their needs. Focus on guiding the user toward a well-matched vehicle.
+"
+    f"If the user provides new profile info, don't re-ask it again.
+"
+    f"Keep building the profile naturally, infer missing details, ask smart follow-ups.
+"
+    f"When you have enough (budget, region, purpose, size/fuel preferences), return top 3 cars and why they fit.
+"
+    f"Then offer comparison or to revise profile."
+), return top 3 cars and why they fit.\n"
         f"Then offer comparison or to revise profile."
     )
     response = client.chat.completions.create(
