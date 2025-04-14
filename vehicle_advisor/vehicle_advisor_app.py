@@ -60,17 +60,28 @@ if "chat_log" not in st.session_state:
 def recommend_vehicle_conversational(user_answers, top_n=3):
     df = df_vehicle_advisor.copy()
 
+    try:
+        user_budget = float(re.findall(r'\d+', user_answers.get("Budget", "45000").replace("$", "").replace(",", "").strip())[0])
+    except:
+        user_budget = 45000
+
+    # Exclude vehicles >20% over the user's budget
+    df = df[df['MSRP Min'].fillna(999999) <= user_budget * 1.2]
+
+    # Heavier weight on Budget
     score_weights = {
         "Region": 1.0, "Use Category": 1.0, "Yearly Income": 0.6, "Credit Score": 0.6,
         "Garage Access": 0.5, "Eco-Conscious": 0.8, "Charging Access": 0.8, "Neighborhood Type": 0.9,
         "Towing Needs": 0.6, "Safety Priority": 0.9, "Tech Features": 0.8, "Car Size": 0.7,
         "Ownership Recommendation": 0.7, "Employment Status": 0.6, "Travel Frequency": 0.5,
-        "Ownership Duration": 0.5, "Budget": 1.0
+        "Ownership Duration": 0.5, "Budget": 2.0
     }
 
     def compute_score(row):
-        return sum(weight for key, weight in score_weights.items()
-                   if str(user_answers.get(key, "")).lower() in str(row.get(key, "")).lower())
+        return sum(
+            weight for key, weight in score_weights.items()
+            if str(user_answers.get(key, "")).lower() in str(row.get(key, "")).lower()
+        )
 
     df['score'] = df.apply(compute_score, axis=1)
     df = df.sort_values(by=['score', 'Model Year'], ascending=[False, False])
