@@ -80,7 +80,12 @@ def gpt_vehicle_response(user_message):
     prompt = (
         f"You are a helpful, friendly AI vehicle advisor helping a user pick the perfect car.\n"
         f"Here is what you've learned so far:\n{profile_summary}\n"
-        f"User just said: {user_message}\n"
+        f"User just said: {user_message}
+"
+        f"Only ask up to 2 concise follow-up questions. Avoid repeating questions the user already answered. Keep responses short and focused.
+"
+        f"Ask no more than 2 follow-up questions at a time. Your primary goal is to build the profile step-by-step and suggest vehicles that fit their needs. Focus on guiding the user toward a well-matched vehicle.
+"
         f"If the user provides new profile info, don't re-ask it again.\n"
         f"Keep building the profile naturally, infer missing details, ask smart follow-ups.\n"
         f"When you have enough (budget, region, purpose, size/fuel preferences), return top 3 cars and why they fit.\n"
@@ -151,8 +156,8 @@ if submitted and user_query:
         st.session_state.chat_log.append("<br><b>🚗 Based on what you've shared so far, here are 2 options you might like:</b>")
         for _, row in temp_recommendations.iterrows():
             st.session_state.chat_log.append(f"- <b>{row['Brand']} {row['Model']} ({row['Model Year']})</b>: {row['MSRP Range']}")
-        st.session_state.chat_log.append("<br>Would you like to learn more about either of these cars or refine your preferences?")
-    st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {reply}")
+        st.session_state.chat_log.append("<br>Would you like to explore these further or keep refining your preferences to find an even better fit?")
+    st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {reply[:400]}{'...' if len(reply) > 400 else ''}")
 
     if not st.session_state.recommendation_made and len(st.session_state.user_profile) >= 4:
         top_vehicles = recommend_vehicle_dynamic(st.session_state.user_profile)
