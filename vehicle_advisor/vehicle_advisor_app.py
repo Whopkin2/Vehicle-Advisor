@@ -95,6 +95,32 @@ def generate_summary_with_gpt(row, user_answers):
     )
     return response.choices[0].message.content
 
+def feedback_response_after_input(key, value):
+    profile = {**st.session_state.user_answers, key: value}
+    weight = {
+        "Region": 1.0, "Use Category": 1.0, "Yearly Income": 0.6, "Credit Score": 0.6,
+        "Garage Access": 0.5, "Eco-Conscious": 0.8, "Charging Access": 0.8, "Neighborhood Type": 0.9,
+        "Towing Needs": 0.6, "Safety Priority": 0.9, "Tech Features": 0.8, "Car Size": 0.7,
+        "Ownership Recommendation": 0.7, "Employment Status": 0.6, "Travel Frequency": 0.5,
+        "Ownership Duration": 0.5, "Budget": 2.0, "Annual Mileage": 0.6
+    }.get(key, 0.5)
+
+    prompt = (
+        f"User just answered: {key} = {value}\n"
+        f"Given the full profile so far: {profile}\n"
+        f"Provide 2-3 example vehicles that might fit based on this new input."
+        f" Also explain how influential this input is on scoring (weight = {weight})."
+    )
+
+    response = client.chat.completions.create(
+        model="gpt-4",
+        messages=[
+            {"role": "system", "content": "You are a helpful vehicle advisor who provides real-time suggestions based on user profile and scoring weights."},
+            {"role": "user", "content": prompt}
+        ]
+    )
+    return response.choices[0].message.content
+
 def render_profile_summary():
     st.markdown("### 🧾 Your Profile Summary")
     st.table(pd.DataFrame.from_dict(st.session_state.user_answers, orient='index', columns=["Your Answer"]))
@@ -118,6 +144,8 @@ if not st.session_state.profile_complete:
 
             if st.button("Submit Answer"):
                 st.session_state.user_answers[key] = user_input
+                feedback = feedback_response_after_input(key, user_input)
+                st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {feedback}")
                 st.rerun()
             break
     else:
