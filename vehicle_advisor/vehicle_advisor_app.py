@@ -144,6 +144,14 @@ if submitted and user_query:
             st.session_state.user_profile[key] = user_query
 
     reply = gpt_vehicle_response(user_query)
+
+    # Suggest 2 vehicles after each message if enough info exists to start matching
+    temp_recommendations = recommend_vehicle_dynamic(st.session_state.user_profile).head(2)
+    if not st.session_state.recommendation_made and len(st.session_state.user_profile) >= 2:
+        st.session_state.chat_log.append("<br><b>🚗 Based on what you've shared so far, here are 2 options you might like:</b>")
+        for _, row in temp_recommendations.iterrows():
+            st.session_state.chat_log.append(f"- <b>{row['Brand']} {row['Model']} ({row['Model Year']})</b>: {row['MSRP Range']}")
+        st.session_state.chat_log.append("<br>Would you like to learn more about either of these cars or refine your preferences?")
     st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {reply}")
 
     if not st.session_state.recommendation_made and len(st.session_state.user_profile) >= 4:
