@@ -59,11 +59,6 @@ def recommend_vehicles(user_answers, top_n=3):
     df = df.sort_values(by=['score', 'Model Year'], ascending=[False, False])
     return df.head(top_n).reset_index(drop=True)
 
-def show_comparison_table(df):
-    comparison_cols = ['Brand', 'Model', 'Model Year', 'MSRP Range', 'Fuel Type', 'Drivetrain', 'Body Style']
-    st.markdown("### 🌐 Vehicle Comparison Table")
-    st.dataframe(df[comparison_cols].set_index('Model'))
-
 def show_recommendations():
     top_3 = recommend_vehicles(st.session_state.user_answers, top_n=3)
     car_names = top_3['Model'].tolist()
@@ -82,7 +77,6 @@ def show_recommendations():
     st.session_state.chat_log.append(f"<b>Why these cars?</b> {explanation}")
     st.session_state.chat_log.append("<b>Would you like to ask another question to refine your match or learn more about any of these cars?</b>")
     st.session_state.last_recommendations = top_3
-    show_comparison_table(top_3)
 
 st.markdown("""
     <style>
