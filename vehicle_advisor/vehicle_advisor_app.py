@@ -17,33 +17,18 @@ def load_data():
 
 df_vehicle_advisor = load_data()
 
-# OpenAI setup
 openai.api_key = os.getenv("OPENAI_API_KEY")
 client = openai.OpenAI(api_key=openai.api_key)
 
-# Session state setup
-if "user_answers" not in st.session_state:
-    st.session_state.user_answers = {}
-if "chat_log" not in st.session_state:
-    st.session_state.chat_log = []
-if "last_recommendations" not in st.session_state:
-    st.session_state.last_recommendations = pd.DataFrame()
-if "locked_keys" not in st.session_state:
-    st.session_state.locked_keys = set()
-if "vehicle_names_mentioned" not in st.session_state:
-    st.session_state.vehicle_names_mentioned = []
-if "awaiting_answer" not in st.session_state:
-    st.session_state.awaiting_answer = False
-if "considered_vehicles" not in st.session_state:
-    st.session_state.considered_vehicles = []
-if "blocked_brands" not in st.session_state:
-    st.session_state.blocked_brands = set()
-if "final_recommendation_given" not in st.session_state:
-    st.session_state.final_recommendation_given = False
-if "user_ended_convo" not in st.session_state:
-    st.session_state.user_ended_convo = False
-if "asked_keys" not in st.session_state:
-    st.session_state.asked_keys = set()
+# Initialize session state variables
+for key, default in [
+    ("user_answers", {}), ("chat_log", []), ("last_recommendations", pd.DataFrame()),
+    ("locked_keys", set()), ("vehicle_names_mentioned", []), ("awaiting_answer", False),
+    ("considered_vehicles", []), ("blocked_brands", set()), ("final_recommendation_given", False),
+    ("user_ended_convo", False), ("asked_keys", set())
+]:
+    if key not in st.session_state:
+        st.session_state[key] = default
 
 score_weights = {
     "Region": 1.0, "Use Category": 1.0, "Yearly Income": 0.6, "Credit Score": 0.6,
@@ -52,7 +37,6 @@ score_weights = {
     "Ownership Recommendation": 0.7, "Employment Status": 0.6, "Travel Frequency": 0.5,
     "Ownership Duration": 0.5, "Budget": 2.0, "Annual Mileage": 0.6
 }
-
 
 def recommend_vehicles(user_answers, top_n=3):
     df = df_vehicle_advisor.copy()
@@ -75,7 +59,6 @@ def recommend_vehicles(user_answers, top_n=3):
     df = df.sort_values(by=['score', 'Model Year'], ascending=[False, False])
     return df.head(top_n).reset_index(drop=True)
 
-
 st.markdown("""
     <style>
     * { font-family: Arial, sans-serif; }
@@ -96,7 +79,7 @@ if st.session_state.chat_log:
         st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
 
         if user_input.lower() in ["restart", "start over"]:
-            for key in st.session_state.keys():
+            for key in list(st.session_state.keys()):
                 del st.session_state[key]
             st.experimental_rerun()
 
@@ -154,19 +137,18 @@ if st.session_state.chat_log:
         if not st.session_state.user_ended_convo:
             unanswered = [k for k, _ in sorted(score_weights.items(), key=lambda item: -item[1]) if k.lower() not in st.session_state.locked_keys and k.lower() not in st.session_state.asked_keys]
             if unanswered:
-    next_q = unanswered[0]
-    natural_prompt = f"The user has not provided information about their {next_q}. Ask a casual, conversational follow-up to learn this detail. Be warm, friendly, and sound like you're building a connection."
-    natural_response = client.chat.completions.create(
-        model="gpt-4",
-        messages=[
-            {"role": "system", "content": "You are a helpful, casual, and conversational car advisor trying to get to know the user better to help them find the right car."},
-            {"role": "user", "content": natural_prompt}
-        ]
-    ).choices[0].message.content
-    st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {natural_response}")
-    st.session_state.asked_keys.add(next_q.lower())
-    st.rerun()
-
+                next_q = unanswered[0]
+                natural_prompt = f"The user has not provided information about their {next_q}. Ask a casual, conversational follow-up to learn this detail. Be warm, friendly, and sound like you're building a connection."
+                natural_response = client.chat.completions.create(
+                    model="gpt-4",
+                    messages=[
+                        {"role": "system", "content": "You are a helpful, casual, and conversational car advisor trying to get to know the user better to help them find the right car."},
+                        {"role": "user", "content": natural_prompt}
+                    ]
+                ).choices[0].message.content
+                st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {natural_response}")
+                st.session_state.asked_keys.add(next_q.lower())
+                st.rerun()
             else:
                 profile_summary = "\n".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()])
                 gpt_prompt = f"You are a car advisor. Here’s the user's profile:\n{profile_summary}\nUser just said: \"{user_input}\". Reply naturally. Track mentioned cars in: {st.session_state.considered_vehicles}. Avoid blocked brands: {st.session_state.blocked_brands}."
