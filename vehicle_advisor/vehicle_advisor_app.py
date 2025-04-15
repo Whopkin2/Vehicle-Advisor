@@ -80,38 +80,44 @@ if st.session_state.chat_log:
 
     if submitted and user_input:
         st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
+
+        # Check for updated preferences and overwrite
+        for key in score_weights.keys():
+            if key.lower() in user_input.lower():
+                st.session_state.user_answers[key] = user_input
+                st.session_state.locked_keys.add(key.lower())
+
         profile_summary = "\n".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()])
-        for key in st.session_state.user_answers:
-            st.session_state.locked_keys.add(key.lower())
 
         # Prioritize top-weighted unlocked questions
-        unlocked_questions = [k for k, _ in sorted(score_weights.items(), key=lambda item: item[1], reverse=True)
-                              if k.lower() not in st.session_state.locked_keys]
+        unlocked_questions = [
+            k for k, _ in sorted(score_weights.items(), key=lambda item: item[1], reverse=True)
+            if k.lower() not in st.session_state.locked_keys
+        ]
 
-        gpt_prompt = f"""You are a friendly, helpful vehicle advisor.
-Your job is to build the user's car profile and help them find the best match.
+        gpt_prompt = f"""You're a professional car advisor chatting with a prospective buyer.
 
-Here’s what they’ve shared so far:
+Here's what the customer has told you so far:
 {profile_summary}
 
-They just said: {user_input}
+They just said:
+"{user_input}"
 
-Follow this structure strictly:
+Your job is to do three things in this exact order:
 
-1. If the user asked about a specific vehicle (like "Tell me more about the Honda CR-V"), start by giving a short paragraph explaining that car’s pros and what it’s known for.
+1. If they asked about a vehicle, give a short paragraph explaining its benefits in their context.
+2. Suggest 1–2 matching vehicles based on their profile so far (or revise recommendations if new info changes them).
+3. End with ONE new helpful question from this list to better refine their match: {unlocked_questions}.
+   DO NOT ask about preferences in this list (already answered): {list(st.session_state.locked_keys)}.
+   If the user changed a previous answer, update it and adjust your response accordingly.
 
-2. Then suggest 1–2 additional vehicles that are similar or worth comparing based on the profile so far.
-
-3. LAST: Ask one new helpful question from this list (sorted by priority): {unlocked_questions}.
-Only ask questions about preferences that haven't been locked: {list(st.session_state.locked_keys)}.
-
-💡 IMPORTANT: End your response with the question. The final sentence must be the new question to ask the user.
+Always end with this phrase: "Would you like to learn more about one of these cars, or should I ask another question to refine your match?"
 """
 
         response = client.chat.completions.create(
             model="gpt-4",
             messages=[
-                {"role": "system", "content": "You are a vehicle advisor that helps users build their car preferences step by step and recommends cars after each step. Stick to the format you're instructed to use."},
+                {"role": "system", "content": "You are a conversational car advisor. Act like a professional, friendly car salesman. Follow structure and avoid repeating locked preferences."},
                 {"role": "user", "content": gpt_prompt}
             ]
         )
