@@ -58,7 +58,7 @@ if "last_recommendations" not in st.session_state:
 if "locked_keys" not in st.session_state:
     st.session_state.locked_keys = set()
 
-# Score weights for question prioritization
+# Score weights
 score_weights = {
     "Region": 1.0, "Use Category": 1.0, "Yearly Income": 0.6, "Credit Score": 0.6,
     "Garage Access": 0.5, "Eco-Conscious": 0.8, "Charging Access": 0.8, "Neighborhood Type": 0.9,
@@ -84,10 +84,10 @@ if st.session_state.chat_log:
         for key in st.session_state.user_answers:
             st.session_state.locked_keys.add(key.lower())
 
-        # Find next most important unanswered question
+        # Prioritize top-weighted unlocked questions
         unlocked_questions = [k for k, _ in sorted(score_weights.items(), key=lambda item: item[1], reverse=True)
                               if k.lower() not in st.session_state.locked_keys]
-        
+
         gpt_prompt = f"""You're a friendly, helpful car expert.
 Your job is to build the user's profile and help them find the perfect car.
 
@@ -96,13 +96,14 @@ Here’s what they’ve shared so far:
 
 They just said: {user_input}
 
-Update their profile only if they gave new info.
-NEVER ask again about these locked preferences: {list(st.session_state.locked_keys)}.
-Ask ONE NEW helpful question from this list if any remain: {unlocked_questions}.
+IF they asked about a specific vehicle (e.g. "Tell me more about the Honda Accord"), first explain that vehicle in detail.
 
-Then, based on the updated info, recommend 1 or 2 matching vehicles and explain why they fit.
+THEN, ask one NEW helpful question from this list (prioritized): {unlocked_questions}.
+Do not ask about locked preferences: {list(st.session_state.locked_keys)}.
 
-Once enough info is collected (5+ preferences), recommend their top 3 ideal cars overall with clear reasons.
+After that, suggest 1–2 vehicles based on their profile so far, and explain why they match well.
+
+If you’ve collected 5 or more key preferences, recommend the 3 BEST overall cars and give short but clear reasons for each.
 """
 
         response = client.chat.completions.create(
