@@ -36,7 +36,7 @@ score_weights = {
     "Garage Access": 0.5, "Eco-Conscious": 0.8, "Charging Access": 0.8, "Neighborhood Type": 0.9,
     "Towing Needs": 0.6, "Safety Priority": 0.9, "Tech Features": 0.8, "Car Size": 0.7,
     "Ownership Recommendation": 0.7, "Employment Status": 0.6, "Travel Frequency": 0.5,
-    "Ownership Duration": 0.5, "Budget": 1.5, "Annual Mileage": 0.6
+    "Ownership Duration": 0.5, "Budget": 1.5, "Annual Mileage": 0.6, "Drive Type": 1.0
 }
 
 def recommend_vehicles(user_answers, top_n=3):
@@ -60,7 +60,7 @@ def recommend_vehicles(user_answers, top_n=3):
     return df.head(top_n).reset_index(drop=True)
 
 # Chat interface
-st.markdown("## 🚗 VehicleAdvisor Chat")
+st.markdown("## \U0001F697 VehicleAdvisor Chat")
 
 if st.session_state.chat_log:
     for msg in st.session_state.chat_log:
@@ -72,14 +72,8 @@ if st.session_state.chat_log:
 
     if submitted and user_input:
         st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
-        profile_summary = "\n".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()])
 
-        # Display visual summary if 7 or more preferences collected
-        if len(st.session_state.locked_keys) >= 7:
-            st.markdown("### 🧾 Your Vehicle Profile")
-            st.markdown("<div style='border: 1px solid #ddd; padding: 1rem; border-radius: 10px; background-color: #f9f9f9; font-family: sans-serif;'>" + "<br>".join([f"<b>{k}:</b> {v}" for k, v in st.session_state.user_answers.items()]) + "</div>", unsafe_allow_html=True)
-            st.markdown("Would you like to:")
-            st.markdown("- 🚗 Proceed with top 3 car recommendations\n- ✏️ Edit your profile\n- 🔄 Restart your preferences")
+        profile_summary = "\n".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()])
 
         for key in st.session_state.user_answers:
             st.session_state.locked_keys.add(key.lower())
@@ -87,42 +81,27 @@ if st.session_state.chat_log:
         unlocked_questions = [k for k, _ in sorted(score_weights.items(), key=lambda item: item[1], reverse=True)
                               if k.lower() not in st.session_state.locked_keys]
 
-        gpt_prompt = f"""You're a friendly, helpful car expert.
-Your job is to build the user's profile and help them find the perfect car.
+        gpt_prompt = f"""You are a car chatbot, that is tasked with helping a person or a car salesman find the best cars that fit the needs specified.
+You will look into the the vehicle data csv and ask questions regarding the profile of the individual based off attributes of the cars to find out which car will best suit that individual.
+These questions should be based off the score weights — some hold much higher weights than others because they are more important — but that doesn't mean you ignore the lower weighted ones.
+
+After asking a question regarding their profile, hard lock that value into their profile and do NOT ask it again.
+
+After each question, mention 2 cars that could fit the individual's preferences so far, based on the latest answer and all prior locked values.
+You should ask a total of 8 to 10 thoughtful, dynamic questions before recommending the final vehicles that match best.
+
+You can use charts to visually compare options and highlight matches. Your goal is to be as human and fluid as possible — make the interaction feel natural.
 
 Here’s what they’ve shared so far:
 {profile_summary}
 
-Use this information as an accurate representation of what they’ve already told you. Avoid saying you have no data if some exists.
-
 They just said: {user_input}
 
-Update their profile only if they gave new info. If the budget or any other info has already been shared, do NOT ask about it again or imply that no information is available.
-NEVER ask again about these locked preferences: {list(st.session_state.locked_keys)}.
+Locked preferences: {list(st.session_state.locked_keys)}
+Remaining preference options to ask about: {unlocked_questions}
 
-Let’s keep track of how many preferences we’ve collected. So far, we have {len(st.session_state.locked_keys)}.
-
-If fewer than 7 preferences have been collected, ask ONE NEW helpful question from this list: {unlocked_questions}.
-
-If 7 or more preferences have been collected, summarize the profile and ask the user if they would like to:
-- Proceed with top 3 car recommendations,
-- Edit any part of their profile, or
-- Restart the process.
-
-First, based on the updated info, recommend 1 or 2 matching vehicles and explain why they fit.
-
-Then, ask if the user would like to learn more about those cars.
-Only after they respond should you decide whether to:
-- Provide more info on the cars, or
-- Continue asking a new helpful question from the remaining list.
-Do NOT ask a new question until the user answers the learn-more prompt.
-
-Allow the user to return to question mode at any time if they lose interest in a vehicle.
-
-Once 7 or more profile preferences are collected, summarize their profile and ask if they want to:
-- Proceed with top 3 car recommendations,
-- Edit any part of their profile, or
-- Restart the process."""
+Start by responding conversationally. Acknowledge their latest message, then update their profile (only if relevant), recommend 1–2 cars, and ask the next best question. Never ask about anything that is already locked.
+Wait for the user to respond before continuing. You must complete 8–10 total questions unless the user asks to skip ahead."""
 
         response = client.chat.completions.create(
             model="gpt-4",
