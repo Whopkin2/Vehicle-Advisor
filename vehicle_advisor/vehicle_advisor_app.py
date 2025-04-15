@@ -88,28 +88,30 @@ if st.session_state.chat_log:
         unlocked_questions = [k for k, _ in sorted(score_weights.items(), key=lambda item: item[1], reverse=True)
                               if k.lower() not in st.session_state.locked_keys]
 
-        gpt_prompt = f"""You're a friendly, helpful car expert.
-Your job is to build the user's profile and help them find the perfect car.
+        gpt_prompt = f"""You are a friendly, helpful vehicle advisor.
+Your job is to build the user's car profile and help them find the best match.
 
 Here’s what they’ve shared so far:
 {profile_summary}
 
 They just said: {user_input}
 
-IF they asked about a specific vehicle (e.g. "Tell me more about the Honda Accord"), first explain that vehicle in detail.
+Follow this structure strictly:
 
-THEN, ask one NEW helpful question from this list (prioritized): {unlocked_questions}.
-Do not ask about locked preferences: {list(st.session_state.locked_keys)}.
+1. If the user asked about a specific vehicle (like "Tell me more about the Honda CR-V"), start by giving a short paragraph explaining that car’s pros and what it’s known for.
 
-After that, suggest 1–2 vehicles based on their profile so far, and explain why they match well.
+2. Then suggest 1–2 additional vehicles that are similar or worth comparing based on the profile so far.
 
-If you’ve collected 5 or more key preferences, recommend the 3 BEST overall cars and give short but clear reasons for each.
+3. LAST: Ask one new helpful question from this list (sorted by priority): {unlocked_questions}.
+Only ask questions about preferences that haven't been locked: {list(st.session_state.locked_keys)}.
+
+💡 IMPORTANT: End your response with the question. The final sentence must be the new question to ask the user.
 """
 
         response = client.chat.completions.create(
             model="gpt-4",
             messages=[
-                {"role": "system", "content": "You are a vehicle advisor that helps users build their car preferences step by step, and recommend cars after every step."},
+                {"role": "system", "content": "You are a vehicle advisor that helps users build their car preferences step by step and recommends cars after each step. Stick to the format you're instructed to use."},
                 {"role": "user", "content": gpt_prompt}
             ]
         )
