@@ -72,7 +72,17 @@ if st.session_state.chat_log:
 
     if submitted and user_input:
         st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
-        profile_summary = "\n".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()])
+        profile_summary = "
+".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()])
+
+        # Display visual summary if 7 or more preferences collected
+        if len(st.session_state.locked_keys) >= 7:
+            st.markdown("### 🧾 Your Vehicle Profile")
+            st.markdown("<div style='border: 1px solid #ddd; padding: 1rem; border-radius: 10px; background-color: #f9f9f9; font-family: sans-serif;'>" + "<br>".join([f"<b>{k}:</b> {v}" for k, v in st.session_state.user_answers.items()]) + "</div>", unsafe_allow_html=True)
+            st.markdown("Would you like to:")
+            st.markdown("- 🚗 Proceed with top 3 car recommendations
+- ✏️ Edit your profile
+- 🔄 Restart your preferences")
 
         # Update locked keys if new info is added
         for key in st.session_state.user_answers:
@@ -102,7 +112,21 @@ If 7 or more preferences have been collected, summarize the profile and ask the 
 - Proceed with top 3 car recommendations,
 - Edit any part of their profile, or
 - Restart the process.
-"""
+
+First, based on the updated info, recommend 1 or 2 matching vehicles and explain why they fit.
+
+Then, ask if the user would like to learn more about those cars.
+Only after they respond should you decide whether to:
+- Provide more info on the cars, or
+- Continue asking a new helpful question from the remaining list.
+Do NOT ask a new question until the user answers the learn-more prompt.
+
+Allow the user to return to question mode at any time if they lose interest in a vehicle.
+
+Once 7 or more profile preferences are collected, summarize their profile and ask if they want to:
+- Proceed with top 3 car recommendations,
+- Edit any part of their profile, or
+- Restart the process."""
 
 First, based on the updated info, recommend 1 or 2 matching vehicles and explain why they fit.
 
