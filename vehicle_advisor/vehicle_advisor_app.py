@@ -40,6 +40,8 @@ score_weights = {
     "Ownership Duration": 0.5, "Budget": 1.5, "Annual Mileage": 0.6, "Drive Type": 1.0
 }
 
+custom_repeat_prevention = set()
+
 field_patterns = {
     "Budget": ["budget", "$", "k"],
     "Use Category": ["commute", "commuting", "daily driver", "everyday"],
@@ -104,7 +106,7 @@ if st.session_state.chat_log:
                 st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> Got it — feel free to update your {field} preference now.")
 
         for field, keywords in field_patterns.items():
-            if field.lower() in st.session_state.locked_keys:
+            if field.lower() in st.session_state.locked_keys or field.lower() in custom_repeat_prevention:
                 continue
             if field in ["Safety Priority", "Tech Features", "Eco-Conscious"]:
                 if any(kw in user_input_lower for kw in keywords) and any(num in user_input_lower for num in [str(i) for i in range(1, 11)]):
@@ -117,6 +119,10 @@ if st.session_state.chat_log:
                 value = match.group(1) if match else user_input.title()
                 st.session_state.user_answers[field] = value
                 st.session_state.locked_keys.add(field.lower())
+
+        # Prevent repeat prompts by tracking custom fields already asked or answered
+        for answered_field in st.session_state.user_answers:
+            custom_repeat_prevention.add(answered_field.lower())
 
         for key in st.session_state.user_answers:
             if key.lower() not in st.session_state.locked_keys:
