@@ -76,8 +76,8 @@ if st.session_state.chat_log:
         profile_summary = "\n".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()])
 
         for key in st.session_state.user_answers:
-    if key.lower() not in st.session_state.locked_keys:
-        st.session_state.locked_keys.add(key.lower())
+            if key.lower() not in st.session_state.locked_keys:
+                st.session_state.locked_keys.add(key.lower())
 
         unlocked_questions = [k for k, _ in sorted(score_weights.items(), key=lambda item: item[1], reverse=True)
                               if k.lower() not in st.session_state.locked_keys]
