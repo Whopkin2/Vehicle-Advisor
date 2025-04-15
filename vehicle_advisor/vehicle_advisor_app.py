@@ -26,6 +26,10 @@ if "chat_log" not in st.session_state:
     st.session_state.chat_log = []
 if "last_recommendations" not in st.session_state:
     st.session_state.last_recommendations = pd.DataFrame()
+if "chat_input" not in st.session_state:
+    st.session_state.chat_input = ""
+if "locked_keys" not in st.session_state:
+    st.session_state.locked_keys = set()
 
 def recommend_vehicles(user_answers, top_n=3):
     df = df_vehicle_advisor.copy()
@@ -66,7 +70,7 @@ if st.session_state.chat_log:
     for msg in st.session_state.chat_log:
         st.markdown(msg, unsafe_allow_html=True)
 
-    user_input = st.text_input("Your reply:", key="chat")
+    user_input = st.text_input("Your reply:", value=st.session_state.chat_input, key="chat")
     if st.button("Send", key="submit_chat") and user_input:
         st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
 
@@ -81,7 +85,7 @@ if st.session_state.chat_log:
             gpt_prompt = (
                 f"You're a vehicle advisor. Here's what the user has shared so far:\n{profile_summary}\n\n"
                 f"User just said: {user_input}\n"
-                f"Ask the next best profiling question to refine their vehicle needs."
+                f"Ask the next best profiling question to refine their vehicle needs. Do NOT repeat anything the user already answered unless they ask to change it. Locked preferences: {list(st.session_state.locked_keys)}."
             )
             response = client.chat.completions.create(
                 model="gpt-4",
@@ -98,7 +102,8 @@ if st.session_state.chat_log:
                 f"You're a vehicle advisor. Your goal is to chat casually and build the user's profile.\n\n"
                 f"So far, they've shared:\n{profile_summary}\n\n"
                 f"User just said: {user_input}\n\n"
-                f"Update their profile if you learn something. Suggest a car if you're ready, or ask one question to learn more."
+                f"Update their profile if you learn something new and LOCK that information so you never ask for it again unless the user says they want to change it. Locked preferences: {list(st.session_state.locked_keys)}."
+                f"Suggest a car if you're ready, or ask one question to learn more about UNLOCKED topics only."
             )
             response = client.chat.completions.create(
                 model="gpt-4",
@@ -108,16 +113,18 @@ if st.session_state.chat_log:
                 ]
             )
             reply = response.choices[0].message.content
+
+            # Heuristically try to detect newly answered profile fields from AI's response
+            for key in st.session_state.user_answers:
+                st.session_state.locked_keys.add(key)
+
             st.session_state.last_recommendations = recommend_vehicles(st.session_state.user_answers)
 
         st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {reply}")
+        st.session_state.chat_input = ""  # Clear the input box
         st.rerun()
 else:
     st.session_state.chat_log.append("<b>VehicleAdvisor:</b> Hey there! I’d love to help you find the perfect ride. Just tell me what you're looking for or where you're from, and we'll go from there!")
     st.rerun()
 
-with st.sidebar:
-    st.markdown("### Your Vehicle Preferences")
-    for k, v in st.session_state.user_answers.items():
-        if not any(phrase in v.lower() for phrase in ["learn more", "refine"]):
-            st.markdown(f"**{k}**: {v}")
+# Sidebar removed as requested
