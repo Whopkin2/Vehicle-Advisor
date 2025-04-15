@@ -85,7 +85,7 @@ if st.session_state.chat_log:
 You will look into the the vehicle data csv and ask questions regarding the profile of the individual based off attributes of the cars to find out which car will best suit that individual.
 These questions should be based off the score weights — some hold much higher weights than others because they are more important — but that doesn't mean you ignore the lower weighted ones.
 
-After asking a question regarding their profile, hard lock that value into their profile and do NOT ask it again.
+Once the user answers a question, HARD LOCK that information — NEVER ask for it again. For example, if they share their budget, that is FINAL. Do not re-ask it. Do not imply it wasn't given.
 
 After each question, mention 2 cars that could fit the individual's preferences so far, based on the latest answer and all prior locked values.
 You should ask a total of 8 to 10 thoughtful, dynamic questions before recommending the final vehicles that match best.
@@ -100,7 +100,7 @@ They just said: {user_input}
 Locked preferences: {list(st.session_state.locked_keys)}
 Remaining preference options to ask about: {unlocked_questions}
 
-Start by responding conversationally. Acknowledge their latest message, then update their profile (only if relevant), recommend 1–2 cars, and ask the next best question. Never ask about anything that is already locked.
+Start by responding conversationally. Acknowledge their latest message, then update their profile (only if relevant), recommend 1–2 cars, and ask the next best question. NEVER ask about anything that is already locked.
 Wait for the user to respond before continuing. You must complete 8–10 total questions unless the user asks to skip ahead."""
 
         response = client.chat.completions.create(
