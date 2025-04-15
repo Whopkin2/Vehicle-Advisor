@@ -20,25 +20,7 @@ df_vehicle_advisor = load_data()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 client = openai.OpenAI(api_key=openai.api_key)
 
-questions = [
-    ("Region", "What state or region are you currently residing in?"),
-    ("Use Category", "What is the primary purpose of the vehicle?"),
-    ("Yearly Income", "What is your approximate annual income?"),
-    ("Credit Score", "What is your estimated credit score?"),
-    ("Garage Access", "Do you have access to a garage or covered parking?"),
-    ("Eco-Conscious", "Do you prefer an environmentally friendly vehicle, such as a hybrid or EV?"),
-    ("Charging Access", "Do you have access to an electric vehicle charging station at home or nearby?"),
-    ("Neighborhood Type", "Do you live in an urban, suburban, or rural area?"),
-    ("Towing Needs", "Will you need the vehicle for towing purposes?"),
-    ("Safety Priority", "How important are advanced safety features in your decision?"),
-    ("Tech Features", "What level of in-car technology and features do you prefer?"),
-    ("Car Size", "What size vehicle are you considering (e.g., compact, midsize, SUV)?"),
-    ("Employment Status", "What is your current employment status?"),
-    ("Travel Frequency", "How frequently do you plan to drive the vehicle?"),
-    ("Annual Mileage", "What is your estimated annual mileage?"),
-    ("Ownership Duration", "How long do you plan to own or lease the vehicle?"),
-    ("Budget", "What is your vehicle budget or price range?")
-]
+questions = []  # Removed structured questions. GPT will dynamically ask questions to build the profile.
 
 if "user_answers" not in st.session_state:
     st.session_state.user_answers = {}
@@ -94,20 +76,39 @@ def get_salesman_reply(key, value, user_answers):
 
 st.markdown("## 🚗 VehicleAdvisor Chat")
 
-for key, question in questions:
-    if key not in st.session_state.user_answers:
-        for msg in st.session_state.chat_log:
-            st.markdown(msg, unsafe_allow_html=True)
+if st.session_state.chat_log:
+    for msg in st.session_state.chat_log:
+        st.markdown(msg, unsafe_allow_html=True)
 
-        user_input = st.text_input(question, key=key)
-        if st.button("Submit", key=f"submit_{key}"):
-            st.session_state.user_answers[key] = user_input
-            reply = get_salesman_reply(key, user_input, st.session_state.user_answers)
-            st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
-            st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {reply}")
-            st.rerun()
-        break
+    user_input = st.text_input("Your reply:", key="chat")
+    if st.button("Send", key="submit_chat") and user_input:
+        st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
+        profile_summary = "
+".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()])
+        gpt_prompt = (
+            f"You're a vehicle advisor. Your goal is to have a natural back-and-forth chat to understand the user's needs for a new vehicle.
+"
+            f"So far, here's what the user has shared:
+{profile_summary}
+
+"
+            f"User just said: {user_input}
+"
+            f"Update the profile if applicable. Respond casually, suggest a car if enough data is known, or ask just one follow-up question to better understand their preferences."
+        )
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": "You are a helpful car salesman-style vehicle advisor building a profile through a casual conversation."},
+                {"role": "user", "content": gpt_prompt}
+            ]
+        )
+        reply = response.choices[0].message.content
+        st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {reply}")
+        st.rerun()
 else:
+    st.session_state.chat_log.append("<b>VehicleAdvisor:</b> Hey there! I’d love to help you find the perfect ride. Just tell me what you're looking for or where you're from, and we'll go from there!")
+    st.rerun()
     st.success("You’re all set! VehicleAdvisor has a few rides in mind for you.")
     recommendations = recommend_vehicles(st.session_state.user_answers)
     for _, row in recommendations.iterrows():
