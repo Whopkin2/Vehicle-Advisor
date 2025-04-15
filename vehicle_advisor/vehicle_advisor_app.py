@@ -59,6 +59,31 @@ def recommend_vehicles(user_answers, top_n=3):
     df = df.sort_values(by=['score', 'Model Year'], ascending=[False, False])
     return df.head(top_n).reset_index(drop=True)
 
+def show_comparison_table(df):
+    comparison_cols = ['Brand', 'Model', 'Model Year', 'MSRP Range', 'Fuel Type', 'Drivetrain', 'Body Style']
+    st.markdown("### 🌐 Vehicle Comparison Table")
+    st.dataframe(df[comparison_cols].set_index('Model'))
+
+def show_recommendations():
+    top_3 = recommend_vehicles(st.session_state.user_answers, top_n=3)
+    car_names = top_3['Model'].tolist()
+    profile_summary = "\n".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()])
+    explanation_prompt = f"Based on the following user profile:\n{profile_summary}\nExplain why these 3 cars are a perfect fit: {', '.join(car_names)}"
+    explanation = client.chat.completions.create(
+        model="gpt-4",
+        messages=[
+            {"role": "system", "content": "You are a car advisor."},
+            {"role": "user", "content": explanation_prompt}
+        ]
+    ).choices[0].message.content
+    st.session_state.chat_log.append("<b>VehicleAdvisor:</b> Here are some cars that match your current preferences:")
+    for car in car_names:
+        st.session_state.chat_log.append(f"<b>• {car}</b>")
+    st.session_state.chat_log.append(f"<b>Why these cars?</b> {explanation}")
+    st.session_state.chat_log.append("<b>Would you like to ask another question to refine your match or learn more about any of these cars?</b>")
+    st.session_state.last_recommendations = top_3
+    show_comparison_table(top_3)
+
 st.markdown("""
     <style>
     * { font-family: Arial, sans-serif; }
@@ -90,7 +115,6 @@ if st.session_state.chat_log:
             st.session_state.locked_keys.add("budget")
             st.session_state.final_recommendation_given = False
             st.session_state.chat_log.append(f"<i>Updated your budget to ${new_budget}.</i>")
-            st.rerun()
 
         for model in st.session_state.considered_vehicles:
             if f"remove {model.lower()}" in user_input.lower():
@@ -114,25 +138,7 @@ if st.session_state.chat_log:
                 st.session_state.user_answers[key] = user_input
                 st.session_state.locked_keys.add(key.lower())
 
-        if not st.session_state.final_recommendation_given and len(st.session_state.locked_keys) >= 5:
-            top_3 = recommend_vehicles(st.session_state.user_answers, top_n=3)
-            car_names = top_3['Model'].tolist()
-            profile_summary = "\n".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()])
-            explanation_prompt = f"Based on the following user profile:\n{profile_summary}\nExplain why these 3 cars are a perfect fit: {', '.join(car_names)}"
-            explanation = client.chat.completions.create(
-                model="gpt-4",
-                messages=[
-                    {"role": "system", "content": "You are a car advisor."},
-                    {"role": "user", "content": explanation_prompt}
-                ]
-            ).choices[0].message.content
-            st.session_state.chat_log.append("<b>VehicleAdvisor:</b> I’ve gathered enough information to recommend the best matches for you. Here are my top 3 car suggestions:")
-            for car in car_names:
-                st.session_state.chat_log.append(f"<b>• {car}</b>")
-            st.session_state.chat_log.append(f"<b>Why these cars?</b> {explanation}")
-            st.session_state.chat_log.append("<b>Would you like more options, or are you happy with these? You can also type 'end conversation' to wrap up.</b>")
-            st.session_state.final_recommendation_given = True
-            st.rerun()
+        show_recommendations()
 
         if not st.session_state.user_ended_convo:
             unanswered = [k for k, _ in sorted(score_weights.items(), key=lambda item: -item[1]) if k.lower() not in st.session_state.locked_keys and k.lower() not in st.session_state.asked_keys]
@@ -148,23 +154,6 @@ if st.session_state.chat_log:
                 ).choices[0].message.content
                 st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {natural_response}")
                 st.session_state.asked_keys.add(next_q.lower())
-                st.rerun()
-            else:
-                profile_summary = "\n".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()])
-                gpt_prompt = f"You are a car advisor. Here’s the user's profile:\n{profile_summary}\nUser just said: \"{user_input}\". Reply naturally. Track mentioned cars in: {st.session_state.considered_vehicles}. Avoid blocked brands: {st.session_state.blocked_brands}."
-                response = client.chat.completions.create(
-                    model="gpt-4",
-                    messages=[
-                        {"role": "system", "content": "You are a helpful car advisor."},
-                        {"role": "user", "content": gpt_prompt}
-                    ]
-                )
-                reply = response.choices[0].message.content
-                st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {reply}")
-                for name in df_vehicle_advisor['Model'].unique():
-                    if name.lower() in reply.lower() and name not in st.session_state.considered_vehicles:
-                        st.session_state.considered_vehicles.append(name)
-                st.session_state.last_recommendations = recommend_vehicles(st.session_state.user_answers)
                 st.rerun()
 
 else:
