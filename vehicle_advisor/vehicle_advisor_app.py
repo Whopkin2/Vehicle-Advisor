@@ -24,38 +24,10 @@ if "user_answers" not in st.session_state:
     st.session_state.user_answers = {}
 if "chat_log" not in st.session_state:
     st.session_state.chat_log = []
-if "awaiting_vehicle_detail" not in st.session_state:
-    st.session_state.awaiting_vehicle_detail = False
 if "last_recommendations" not in st.session_state:
-    st.session_state.last_recommendations = []
-if "refine_requested" not in st.session_state:
-    st.session_state.refine_requested = False
+    st.session_state.last_recommendations = pd.DataFrame()
 
-# --- Extract user intent from input ---
-def extract_profile_info(user_input):
-    text = user_input.lower()
-    if "commute" in text:
-        st.session_state.user_answers["Use Category"] = "Daily Commute"
-    if "fuel" in text:
-        st.session_state.user_answers["Fuel Preference"] = "Fuel Efficiency" if "efficiency" in text else "Performance"
-    if any(brand in text for brand in ["ford", "honda", "toyota", "chevy", "bmw", "hyundai", "tesla"]):
-        st.session_state.user_answers["Brand Preference"] = user_input
-    if "$" in text or "k" in text:
-        st.session_state.user_answers["Budget"] = user_input
-    if "new" in text:
-        st.session_state.user_answers["Condition"] = "New"
-    elif "used" in text:
-        st.session_state.user_answers["Condition"] = "Used"
-    if "jersey" in text:
-        st.session_state.user_answers["Region"] = "New Jersey"
-
-    if any(x in text for x in ["refine", "more info", "continue refining"]):
-        st.session_state.refine_requested = True
-    if any(x in text for x in ["learn more", "tell me more", "more details"]):
-        st.session_state.awaiting_vehicle_detail = True
-
-# --- Recommend cars based on filtered profile ---
-def recommend_vehicles(user_answers, top_n=2):
+def recommend_vehicles(user_answers, top_n=3):
     df = df_vehicle_advisor.copy()
     try:
         user_budget = float(re.findall(r'\d+', user_answers.get("Budget", "45000").replace("$", "").replace(",", "").strip())[0])
@@ -65,8 +37,11 @@ def recommend_vehicles(user_answers, top_n=2):
     df = df[df['MSRP Min'].fillna(999999) <= user_budget * 1.2]
 
     score_weights = {
-        "Region": 1.0, "Use Category": 1.0, "Fuel Preference": 1.0, "Brand Preference": 1.0, "Condition": 1.0,
-        "Budget": 2.0
+        "Region": 1.0, "Use Category": 1.0, "Yearly Income": 0.6, "Credit Score": 0.6,
+        "Garage Access": 0.5, "Eco-Conscious": 0.8, "Charging Access": 0.8, "Neighborhood Type": 0.9,
+        "Towing Needs": 0.6, "Safety Priority": 0.9, "Tech Features": 0.8, "Car Size": 0.7,
+        "Ownership Recommendation": 0.7, "Employment Status": 0.6, "Travel Frequency": 0.5,
+        "Ownership Duration": 0.5, "Budget": 2.0, "Annual Mileage": 0.6
     }
 
     def compute_score(row):
@@ -79,85 +54,70 @@ def recommend_vehicles(user_answers, top_n=2):
     df = df.sort_values(by=['score', 'Model Year'], ascending=[False, False])
     return df.head(top_n).reset_index(drop=True)
 
-# --- UI ---
-st.markdown("## VehicleAdvisor Chat")
+def explain_recommendations(recs):
+    details = []
+    for _, row in recs.iterrows():
+        details.append(f"<b>{row['Brand']} {row['Model']} ({row['Model Year']})</b><br>MSRP Range: {row['MSRP Range']}<br>{row.get('Description', 'No additional description available.')}")
+    return "<br><br>".join(details)
+
+st.markdown("## \ud83d\ude97 VehicleAdvisor Chat")
 
 if st.session_state.chat_log:
     for msg in st.session_state.chat_log:
         st.markdown(msg, unsafe_allow_html=True)
 
-with st.form(key="chat_form", clear_on_submit=True):
-    user_input = st.text_input("Your reply:")
-    submitted = st.form_submit_button("Send")
+    user_input = st.text_input("Your reply:", key="chat")
+    if st.button("Send", key="submit_chat") and user_input:
+        st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
 
-if submitted and user_input:
-    st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
-    extract_profile_info(user_input)
+        if "learn more about those vehicles" in user_input.lower():
+            if not st.session_state.last_recommendations.empty:
+                reply = explain_recommendations(st.session_state.last_recommendations)
+            else:
+                reply = "I haven't recommended any vehicles yet. Tell me what you're looking for first!"
 
-    if st.session_state.awaiting_vehicle_detail and st.session_state.last_recommendations:
-        details = ""
-        for car in st.session_state.last_recommendations:
-            details += f"**{car['Brand']} {car['Model']} ({car['Model Year']})**\n"
-            details += f"- MSRP Range: {car.get('MSRP Range', 'N/A')}\n"
-            details += f"- Size: {car.get('Car Size', 'N/A')}\n"
-            details += f"- Safety: {car.get('Safety Priority', 'N/A')}\n"
-            details += f"- Tech Features: {car.get('Tech Features', 'N/A')}\n\n"
-        details += "Would you like to continue refining your preferences?"
-        st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b><br>{details}")
-        st.session_state.awaiting_vehicle_detail = False
+        elif "continue refining" in user_input.lower():
+            profile_summary = "\n".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()])
+            gpt_prompt = (
+                f"You're a vehicle advisor. Here's what the user has shared so far:\n{profile_summary}\n\n"
+                f"User just said: {user_input}\n"
+                f"Ask the next best profiling question to refine their vehicle needs."
+            )
+            response = client.chat.completions.create(
+                model="gpt-4",
+                messages=[
+                    {"role": "system", "content": "You are a helpful vehicle advisor building a user profile through natural conversation."},
+                    {"role": "user", "content": gpt_prompt}
+                ]
+            )
+            reply = response.choices[0].message.content
+
+        else:
+            profile_summary = "\n".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()])
+            gpt_prompt = (
+                f"You're a vehicle advisor. Your goal is to chat casually and build the user's profile.\n\n"
+                f"So far, they've shared:\n{profile_summary}\n\n"
+                f"User just said: {user_input}\n\n"
+                f"Update their profile if you learn something. Suggest a car if you're ready, or ask one question to learn more."
+            )
+            response = client.chat.completions.create(
+                model="gpt-4",
+                messages=[
+                    {"role": "system", "content": "You are a friendly car salesman helping users choose a vehicle based on their profile."},
+                    {"role": "user", "content": gpt_prompt}
+                ]
+            )
+            reply = response.choices[0].message.content
+            st.session_state.last_recommendations = recommend_vehicles(st.session_state.user_answers)
+
+        st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {reply}")
         st.rerun()
-
-    if st.session_state.refine_requested:
-        st.session_state.refine_requested = False
-        gpt_prompt = (
-            f"You are a professional vehicle advisor. Ask the user for more information to refine their profile.\n"
-            f"Only ask one follow-up question about missing vehicle preferences, such as budget, brand, size, or usage.\n\n"
-            f"User profile:\n" + "\n".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()]) + "\n\n"
-            f"User just said: {user_input}\n"
-        )
-    else:
-        profile_summary = "\n".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()])
-        answered_keys = list(st.session_state.user_answers.keys())
-        answered_list = ", ".join(answered_keys) if answered_keys else "None yet"
-
-        gpt_prompt = (
-            f"You are a professional vehicle advisor. Do not ask questions already answered: {answered_list}.\n"
-            f"User profile:\n{profile_summary}\n\n"
-            f"User input: {user_input}\n\n"
-            f"Update profile if needed. Recommend 1-2 vehicles with a sentence each.\n"
-            f"Then ask: 'Would you like to learn more about these vehicles or continue refining your preferences?'"
-        )
-
-    response = client.chat.completions.create(
-        model="gpt-4",
-        messages=[
-            {"role": "system", "content": "You are a formal and helpful vehicle advisor."},
-            {"role": "user", "content": gpt_prompt}
-        ]
-    )
-    reply = response.choices[0].message.content
-    st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {reply}")
-
-    vehicle_names = re.findall(r"\d\.\s*(.*?):", reply)
-    matched_vehicles = []
-    for name in vehicle_names:
-        match = df_vehicle_advisor[df_vehicle_advisor['Model'].str.contains(name, case=False, na=False)]
-        if not match.empty:
-            matched_vehicles.append(match.iloc[0].to_dict())
-
-    st.session_state.last_recommendations = matched_vehicles
-    st.session_state.awaiting_vehicle_detail = False
+else:
+    st.session_state.chat_log.append("<b>VehicleAdvisor:</b> Hey there! I’d love to help you find the perfect ride. Just tell me what you're looking for or where you're from, and we'll go from there!")
     st.rerun()
 
-if not st.session_state.chat_log:
-    st.session_state.chat_log.append("<b>VehicleAdvisor:</b> Welcome. Please tell me your location or intended vehicle usage.")
-    st.rerun()
-
-# --- Sidebar Profile ---
 with st.sidebar:
     st.markdown("### Your Vehicle Preferences")
-    if st.session_state.user_answers:
-        for key, val in st.session_state.user_answers.items():
-            st.markdown(f"**{key}**: {val}")
-    else:
-        st.markdown("_No preferences collected yet._")
+    for k, v in st.session_state.user_answers.items():
+        if not any(phrase in v.lower() for phrase in ["learn more", "refine"]):
+            st.markdown(f"**{k}**: {v}")
