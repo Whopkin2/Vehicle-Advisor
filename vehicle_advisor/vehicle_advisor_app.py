@@ -123,5 +123,5 @@ Update their profile if you learn something new and LOCK that information so you
         st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {reply}")
         st.rerun()
 else:
-    st.session_state.chat_log.append("<b>VehicleAdvisor:</b> Hey there! I’d love to help you find the perfect ride. Just tell me what you're looking for or where you're from, and we'll go from there!")
+    st.session_state.chat_log.append("<b>VehicleAdvisor:</b> Hey there! I’d love to help you find the perfect ride. Let me ask a couple questions and we will go from there!")
     st.rerun()
