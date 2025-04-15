@@ -82,7 +82,7 @@ Here’s what they’ve shared so far:
 They just said: {user_input}
 
 Update their profile only if new info is provided. NEVER ask about these locked preferences again unless the user changes them: {list(st.session_state.locked_keys)}.
-Ask ONE new helpful question from this list if an unlocked value remains: ['Region', 'Use Category', 'Yearly Income', 'Credit Score', 'Garage Access', 'Eco-Conscious', 'Charging Access', 'Neighborhood Type', 'Towing Needs', 'Safety Priority', 'Tech Features', 'Car Size', 'Ownership Recommendation', 'Employment Status', 'Travel Frequency', 'Ownership Duration', 'Budget', 'Annual Mileage'].
+Ask ONE new helpful question from this list if an unlocked value remains: " + str(list(dict(sorted({"Region": 1.0, "Use Category": 1.0, "Yearly Income": 0.6, "Credit Score": 0.6, "Garage Access": 0.5, "Eco-Conscious": 0.8, "Charging Access": 0.8, "Neighborhood Type": 0.9, "Towing Needs": 0.6, "Safety Priority": 0.9, "Tech Features": 0.8, "Car Size": 0.7, "Ownership Recommendation": 0.7, "Employment Status": 0.6, "Travel Frequency": 0.5, "Ownership Duration": 0.5, "Budget": 2.0, "Annual Mileage": 0.6}.items(), key=lambda item: item[1], reverse=True)).keys())).
 
 Then immediately recommend 1–2 vehicles based on what you’ve learned and explain why they match that particular new info. This is a process of elimination to narrow down to 3 ideal vehicles."""
 
