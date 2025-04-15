@@ -140,7 +140,7 @@ if not st.session_state.chat_log:
 
 # --- Sidebar Profile ---
 with st.sidebar:
-    st.markdown("### \ud83d\udccb Your Vehicle Preferences")
+   st.markdown("### Your Vehicle Preferences")
     if st.session_state.user_answers:
         for key, val in st.session_state.user_answers.items():
             st.markdown(f"**{key}**: {val}")
