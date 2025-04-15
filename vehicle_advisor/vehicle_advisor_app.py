@@ -57,6 +57,8 @@ if "last_recommendations" not in st.session_state:
     st.session_state.last_recommendations = pd.DataFrame()
 if "locked_keys" not in st.session_state:
     st.session_state.locked_keys = set()
+if "vehicle_names_mentioned" not in st.session_state:
+    st.session_state.vehicle_names_mentioned = []
 
 score_weights = {
     "Region": 1.0, "Use Category": 1.0, "Yearly Income": 0.6, "Credit Score": 0.6,
@@ -92,7 +94,15 @@ if st.session_state.chat_log:
             if k.lower() not in st.session_state.locked_keys
         ]
 
-        gpt_prompt = f"""You are a professional car advisor having a live conversation with a customer.
+        # Decide closing phrase
+        prior_vehicles = len(st.session_state.vehicle_names_mentioned) > 0
+        closing_phrase = (
+            "Would you like me to suggest other cars to consider, or should I ask another question to refine your match?"
+            if prior_vehicles else
+            "Would you like me to suggest a few cars to consider, or should I ask another question to refine your match?"
+        )
+
+        gpt_prompt = f"""You are a professional car advisor having a natural conversation with a customer.
 
 Here’s what they’ve told you so far:
 {profile_summary}
@@ -100,32 +110,34 @@ Here’s what they’ve told you so far:
 They just said:
 "{user_input}"
 
-Follow these instructions:
+Your job is to do the following:
 
-1. If they asked about a specific car (e.g., "Tell me more about the Camry"), explain that vehicle’s strengths in a few sentences. If they mentioned other cars before, you can compare — but only if they explicitly ask for it.
+1. If the user asked about a specific car (e.g., "Tell me more about the Accord"), give a helpful overview of that car’s features and benefits. If they ask for a comparison or mention others, compare only what’s relevant.
 
-2. If you know at least one of the following: budget, region, or use category — suggest 1 or 2 cars that fit what they’ve said. If none of those are known yet, don’t make recommendations.
+2. If you know at least one of: budget, region, or use category — recommend 1–2 matching vehicles. Add their names to the list you’re tracking: {st.session_state.vehicle_names_mentioned}.
 
-3. Only ask a follow-up preference question if the user says: "ask another question." If they don’t, follow their lead — they might want to explore a specific brand, compare models, or go deeper into a vehicle.
+3. ONLY ask a follow-up question if the user says: "ask another question." Otherwise, just respond to what they asked or continue the flow.
 
-4. ENDING RULE:
-- If you recommended any vehicles, close with:
-"Would you like to learn more about one of these cars, or should I ask another question to refine your match?"
-- If no vehicles were mentioned, close with:
-"Would you like me to suggest a few cars to consider, or should I ask you a question to get started?"
+Always end with:
+{closing_phrase}
 """
 
         response = client.chat.completions.create(
             model="gpt-4",
             messages=[
-                {"role": "system", "content": "You are a helpful, professional car advisor. Speak naturally, avoid repeating preferences, and follow the user's lead."},
+                {"role": "system", "content": "You are a conversational, helpful vehicle advisor. Speak naturally, avoid repeating locked preferences, and flow with the user’s intent."},
                 {"role": "user", "content": gpt_prompt}
             ]
         )
 
         reply = response.choices[0].message.content
-        st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {reply}")
 
+        # Track cars mentioned
+        for name in ["Accord", "Camry", "Outback", "RAV4", "Prius", "X5", "RX 350", "Escape", "CR-V"]:
+            if name.lower() in reply.lower() and name not in st.session_state.vehicle_names_mentioned:
+                st.session_state.vehicle_names_mentioned.append(name)
+
+        st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {reply}")
         st.session_state.last_recommendations = recommend_vehicles(st.session_state.user_answers)
         st.rerun()
 
