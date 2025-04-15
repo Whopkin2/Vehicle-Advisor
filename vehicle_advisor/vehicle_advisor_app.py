@@ -154,9 +154,17 @@ if st.session_state.chat_log:
         if not st.session_state.user_ended_convo:
             unanswered = [k for k, _ in sorted(score_weights.items(), key=lambda item: -item[1]) if k.lower() not in st.session_state.locked_keys and k.lower() not in st.session_state.asked_keys]
             if unanswered:
-                next_q = unanswered[0]
-                st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> Could you tell me a bit about your {next_q.lower()}?")
-                st.session_state.asked_keys.add(next_q.lower())
+    next_q = unanswered[0]
+    natural_prompt = f"The user has not provided information about their {next_q}. Ask a casual, conversational follow-up to learn this detail. Be warm, friendly, and sound like you're building a connection."
+    natural_response = client.chat.completions.create(
+        model="gpt-4",
+        messages=[
+            {"role": "system", "content": "You are a helpful, casual, and conversational car advisor trying to get to know the user better to help them find the right car."},
+            {"role": "user", "content": natural_prompt}
+        ]
+    ).choices[0].message.content
+    st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {natural_response}")
+    st.session_state.asked_keys.add(next_q.lower())
                 st.rerun()
 
             else:
@@ -187,3 +195,4 @@ else:
         st.session_state.chat_log.append("<b>VehicleAdvisor:</b> Awesome! Let’s get started. Just to begin, what region are you located in?")
         st.session_state.asked_keys.add("region")
         st.rerun()
+    
