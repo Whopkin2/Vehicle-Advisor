@@ -60,7 +60,7 @@ def explain_recommendations(recs):
         details.append(f"<b>{row['Brand']} {row['Model']} ({row['Model Year']})</b><br>MSRP Range: {row['MSRP Range']}<br>{row.get('Description', 'No additional description available.')}")
     return "<br><br>".join(details)
 
-st.markdown("## \ud83d\ude97 VehicleAdvisor Chat")
+st.markdown("## 🚗 VehicleAdvisor Chat")
 
 if st.session_state.chat_log:
     for msg in st.session_state.chat_log:
