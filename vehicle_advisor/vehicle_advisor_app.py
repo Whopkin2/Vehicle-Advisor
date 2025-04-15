@@ -17,33 +17,6 @@ def load_data():
 
 df_vehicle_advisor = load_data()
 
-def recommend_vehicles(user_answers, top_n=3):
-    df = df_vehicle_advisor.copy()
-    try:
-        user_budget = float(re.findall(r'\d+', user_answers.get("Budget", "45000").replace("$", "").replace(",", "").strip())[0])
-    except:
-        user_budget = 45000
-
-    df = df[df['MSRP Min'].fillna(999999) <= user_budget * 1.2]
-
-    score_weights = {
-        "Region": 1.0, "Use Category": 1.0, "Yearly Income": 0.6, "Credit Score": 0.6,
-        "Garage Access": 0.5, "Eco-Conscious": 0.8, "Charging Access": 0.8, "Neighborhood Type": 0.9,
-        "Towing Needs": 0.6, "Safety Priority": 0.9, "Tech Features": 0.8, "Car Size": 0.7,
-        "Ownership Recommendation": 0.7, "Employment Status": 0.6, "Travel Frequency": 0.5,
-        "Ownership Duration": 0.5, "Budget": 2.0, "Annual Mileage": 0.6
-    }
-
-    def compute_score(row):
-        return sum(
-            weight for key, weight in score_weights.items()
-            if str(user_answers.get(key, "")).lower() in str(row.get(key, "")).lower()
-        )
-
-    df['score'] = df.apply(compute_score, axis=1)
-    df = df.sort_values(by=['score', 'Model Year'], ascending=[False, False])
-    return df.head(top_n).reset_index(drop=True)
-
 # Setup API
 openai.api_key = os.getenv("OPENAI_API_KEY")
 client = openai.OpenAI(api_key=openai.api_key)
@@ -58,7 +31,6 @@ if "last_recommendations" not in st.session_state:
 if "locked_keys" not in st.session_state:
     st.session_state.locked_keys = set()
 
-# Score weights for question prioritization
 score_weights = {
     "Region": 1.0, "Use Category": 1.0, "Yearly Income": 0.6, "Credit Score": 0.6,
     "Garage Access": 0.5, "Eco-Conscious": 0.8, "Charging Access": 0.8, "Neighborhood Type": 0.9,
@@ -67,12 +39,31 @@ score_weights = {
     "Ownership Duration": 0.5, "Budget": 2.0, "Annual Mileage": 0.6
 }
 
-# Main chat
+def recommend_vehicles(user_answers, top_n=3):
+    df = df_vehicle_advisor.copy()
+    try:
+        user_budget = float(re.findall(r'\d+', user_answers.get("Budget", "45000").replace("$", "").replace(",", "").strip())[0])
+    except:
+        user_budget = 45000
+
+    df = df[df['MSRP Min'].fillna(999999) <= user_budget * 1.2]
+
+    def compute_score(row):
+        return sum(
+            weight for key, weight in score_weights.items()
+            if str(user_answers.get(key, "")).lower() in str(row.get(key, "")).lower()
+        )
+
+    df['score'] = df.apply(compute_score, axis=1)
+    df = df.sort_values(by=['score', 'Model Year'], ascending=[False, False])
+    return df.head(top_n).reset_index(drop=True)
+
+# Chat interface
 st.markdown("## 🚗 VehicleAdvisor Chat")
 
 if st.session_state.chat_log:
     for msg in st.session_state.chat_log:
-        st.markdown(msg, unsafe_allow_html=True)
+        st.markdown(f"<div style='font-family:sans-serif;'>{msg}</div>", unsafe_allow_html=True)
 
     with st.form(key="chat_form", clear_on_submit=True):
         user_input = st.text_input("Your reply:")
@@ -81,13 +72,14 @@ if st.session_state.chat_log:
     if submitted and user_input:
         st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
         profile_summary = "\n".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()])
+
+        # Update locked keys if new info is added
         for key in st.session_state.user_answers:
             st.session_state.locked_keys.add(key.lower())
 
-        # Find next most important unanswered question
         unlocked_questions = [k for k, _ in sorted(score_weights.items(), key=lambda item: item[1], reverse=True)
                               if k.lower() not in st.session_state.locked_keys]
-        
+
         gpt_prompt = f"""You're a friendly, helpful car expert.
 Your job is to build the user's profile and help them find the perfect car.
 
