@@ -101,5 +101,11 @@ Then immediately recommend 1–2 vehicles based on what you’ve learned and exp
 
         st.rerun()
 else:
-    st.session_state.chat_log.append("<b>VehicleAdvisor:</b> Hey there! I’d love to help you find the perfect ride. Just tell me what you're looking for or where you're from, and we'll go from there!")
-    st.rerun()
+    with st.form(key="initial_chat_form", clear_on_submit=True):
+        user_input = st.text_input("Hey there! I’d love to help you find the perfect ride. What brings you in today?")
+        submitted = st.form_submit_button("Start Chat")
+
+    if submitted and user_input:
+        st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
+        st.session_state.chat_log.append("<b>VehicleAdvisor:</b> Awesome! Let’s get started.")
+        st.rerun()
