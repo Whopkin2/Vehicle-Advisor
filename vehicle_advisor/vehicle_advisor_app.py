@@ -42,7 +42,8 @@ score_weights = {
 def recommend_vehicles(user_answers, top_n=3):
     df = df_vehicle_advisor.copy()
     try:
-        user_budget = float(re.findall(r'\d+', user_answers.get("Budget", "45000").replace("$", "").replace(",", "").strip())[0])
+        budget_value = user_answers.get("Budget", "45000")
+        user_budget = float(re.findall(r'\d+', budget_value.replace("$", "").replace(",", "").strip())[0])
     except:
         user_budget = 45000
 
@@ -100,7 +101,7 @@ Once enough info is collected (5+ preferences), recommend their top 3 ideal cars
         response = client.chat.completions.create(
             model="gpt-4",
             messages=[
-                {"role": "system", "content": "You are a vehicle advisor that helps users build their car preferences step by step, and recommend cars after every step."},
+                {"role": "system", "content": "You are a vehicle advisor that helps users build their car preferences step by step, and recommend cars after every step. Do not repeat questions or ask for information already provided."},
                 {"role": "user", "content": gpt_prompt}
             ]
         )
