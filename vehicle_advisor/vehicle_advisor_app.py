@@ -113,7 +113,6 @@ if st.session_state.chat_log:
 
 "
                 f"Update their profile if you learn something new and LOCK that information so you never ask for it again unless the user says they want to change it. NEVER ask about locked preferences: {list(st.session_state.locked_keys)}. Ask ONLY ONE new, helpful question about an UNLOCKED topic from this list of profiling areas: ['Region', 'Use Category', 'Yearly Income', 'Credit Score', 'Garage Access', 'Eco-Conscious', 'Charging Access', 'Neighborhood Type', 'Towing Needs', 'Safety Priority', 'Tech Features', 'Car Size', 'Ownership Recommendation', 'Employment Status', 'Travel Frequency', 'Ownership Duration', 'Budget', 'Annual Mileage']."
-            )"
             )
             response = client.chat.completions.create(
                 model="gpt-4",
