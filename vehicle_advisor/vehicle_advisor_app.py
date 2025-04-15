@@ -95,7 +95,11 @@ Ask ONE NEW helpful question from this list if any remain: {unlocked_questions}.
 
 First, based on the updated info, recommend 1 or 2 matching vehicles and explain why they fit.
 
-Then, ask if the user would like to learn more about those cars. If yes, provide detailed info. If no, continue asking questions to refine their profile.
+Then, ask if the user would like to learn more about those cars.
+Only after they respond should you decide whether to:
+- Provide more info on the cars, or
+- Continue asking a new helpful question from the remaining list.
+Do NOT ask a new question until the user answers the learn-more prompt.
 
 Allow the user to return to question mode at any time if they lose interest in a vehicle.
 
