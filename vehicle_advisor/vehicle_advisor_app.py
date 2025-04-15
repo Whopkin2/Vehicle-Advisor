@@ -95,23 +95,24 @@ if st.session_state.chat_log:
             if k.lower() not in st.session_state.locked_keys
         ]
 
-        gpt_prompt = f"""You're a professional car advisor chatting with a prospective buyer.
+        gpt_prompt = f"""You're a professional, friendly car advisor chatting with a customer who is shopping for a new vehicle.
 
-Here's what the customer has told you so far:
+Here’s what they've told you so far:
 {profile_summary}
 
 They just said:
 "{user_input}"
 
-Your job is to do three things in this exact order:
+Your job is to respond naturally and only do what the user asks:
 
-1. If they asked about a vehicle, give a short paragraph explaining its benefits in their context.
-2. Suggest 1–2 matching vehicles based on their profile so far (or revise recommendations if new info changes them).
-3. End with ONE new helpful question from this list to better refine their match: {unlocked_questions}.
-   DO NOT ask about preferences in this list (already answered): {list(st.session_state.locked_keys)}.
-   If the user changed a previous answer, update it and adjust your response accordingly.
+1. If they asked about a specific vehicle (like "Tell me more about the Camry"), provide a clear, confident summary of that car’s benefits. If they've already seen alternatives like the Accord or Altima, you may compare them — but ONLY if the user requests comparisons or says something like “learn more.”
 
-Always end with this phrase: "Would you like to learn more about one of these cars, or should I ask another question to refine your match?"
+2. If they say “ask another question,” then ask ONE helpful new question from this prioritized list: {unlocked_questions}. Only ask about preferences that are NOT in this list: {list(st.session_state.locked_keys)}.
+
+3. DO NOT ask new questions unless the user explicitly asks for one. Never assume what they want next — let them guide the flow.
+
+Always end with:
+"Would you like to learn more about one of these cars, or should I ask another question to refine your match?"
 """
 
         response = client.chat.completions.create(
