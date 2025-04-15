@@ -165,7 +165,7 @@ if st.session_state.chat_log:
     ).choices[0].message.content
     st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {natural_response}")
     st.session_state.asked_keys.add(next_q.lower())
-                st.rerun()
+    st.rerun()
 
             else:
                 profile_summary = "\n".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()])
@@ -195,4 +195,3 @@ else:
         st.session_state.chat_log.append("<b>VehicleAdvisor:</b> Awesome! Let’s get started. Just to begin, what region are you located in?")
         st.session_state.asked_keys.add("region")
         st.rerun()
-    
