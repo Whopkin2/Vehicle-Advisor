@@ -73,19 +73,26 @@ if st.session_state.chat_log:
     if submitted and user_input:
         st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
 
-        # Auto-detect and lock budget
-        if "budget" in user_input.lower() or "$" in user_input or "k" in user_input.lower():
+        # Auto-detection logic for all keys
+        user_input_lower = user_input.lower()
+
+        if any(kw in user_input_lower for kw in ["$", "budget", "k"]):
             match = re.search(r'(\d{2,3}[,\d{3}]*)', user_input.replace(",", ""))
             if match:
                 st.session_state.user_answers["Budget"] = match.group(1)
                 st.session_state.locked_keys.add("budget")
 
-        # Auto-detect and lock use category
-        if any(term in user_input.lower() for term in ["commute", "commuting", "daily driver", "everyday use"]):
+        if any(term in user_input_lower for term in ["commute", "commuting", "daily driver", "everyday"]):
             st.session_state.user_answers["Use Category"] = "Daily Commute"
             st.session_state.locked_keys.add("use category")
 
-        # Lock all answered keys
+        if "located in" in user_input_lower or "from" in user_input_lower:
+            region_match = re.search(r"(in|from)\s+([a-zA-Z\s]+)", user_input_lower)
+            if region_match:
+                region_value = region_match.group(2).strip().title()
+                st.session_state.user_answers["Region"] = region_value
+                st.session_state.locked_keys.add("region")
+
         for key in st.session_state.user_answers:
             if key.lower() not in st.session_state.locked_keys:
                 st.session_state.locked_keys.add(key.lower())
