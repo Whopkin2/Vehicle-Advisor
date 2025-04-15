@@ -72,9 +72,7 @@ if st.session_state.chat_log:
 
     if submitted and user_input:
         st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
-        profile_summary = "
-".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()])
-
+       profile_summary = "\n".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()])
         # Display visual summary if 7 or more preferences collected
         if len(st.session_state.locked_keys) >= 7:
             st.markdown("### 🧾 Your Vehicle Profile")
