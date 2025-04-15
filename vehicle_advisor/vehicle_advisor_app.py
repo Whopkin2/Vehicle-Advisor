@@ -73,7 +73,7 @@ def recommend_vehicles(user_answers, top_n=2):
     return df.head(top_n).reset_index(drop=True)
 
 # --- UI ---
-st.markdown("## \U0001F697 VehicleAdvisor Chat")
+st.markdown("## VehicleAdvisor Chat")
 
 if st.session_state.chat_log:
     for msg in st.session_state.chat_log:
@@ -122,7 +122,6 @@ if submitted and user_input:
     reply = response.choices[0].message.content
     st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {reply}")
 
-    # Extract and store only recommended vehicles for future detail lookup
     vehicle_names = re.findall(r"\d\.\s*(.*?):", reply)
     matched_vehicles = []
     for name in vehicle_names:
@@ -140,7 +139,7 @@ if not st.session_state.chat_log:
 
 # --- Sidebar Profile ---
 with st.sidebar:
-   st.markdown("### Your Vehicle Preferences")
+    st.markdown("### Your Vehicle Preferences")
     if st.session_state.user_answers:
         for key, val in st.session_state.user_answers.items():
             st.markdown(f"**{key}**: {val}")
