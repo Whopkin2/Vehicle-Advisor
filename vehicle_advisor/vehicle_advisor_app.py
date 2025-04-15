@@ -89,13 +89,13 @@ Here’s what they’ve shared so far:
 
 They just said: {user_input}
 
-Update their profile only if they gave new info.
+Update their profile only if they gave new info. If the budget has already been shared, do NOT ask about it again.
 NEVER ask again about these locked preferences: {list(st.session_state.locked_keys)}.
 Ask ONE NEW helpful question from this list if any remain: {unlocked_questions}.
 
-Then, based on the updated info, recommend 1 or 2 matching vehicles and explain why they fit.
+First, based on the updated info, recommend 1 or 2 matching vehicles and explain why they fit.
 
-Once enough info is collected (5+ preferences), recommend their top 3 ideal cars overall with clear reasons.
+Then, ask ONE helpful new question from the remaining list. Prioritize information that helps refine the match.
 """
 
         response = client.chat.completions.create(
