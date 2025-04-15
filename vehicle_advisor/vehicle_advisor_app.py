@@ -20,13 +20,12 @@ df_vehicle_advisor = load_data()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 client = openai.OpenAI(api_key=openai.api_key)
 
-questions = []  # Removed structured questions. GPT will dynamically ask questions to build the profile.
+questions = []  # GPT dynamically asks questions now
 
 if "user_answers" not in st.session_state:
     st.session_state.user_answers = {}
 if "chat_log" not in st.session_state:
     st.session_state.chat_log = []
-
 
 def recommend_vehicles(user_answers, top_n=3):
     df = df_vehicle_advisor.copy()
@@ -55,14 +54,13 @@ def recommend_vehicles(user_answers, top_n=3):
     df = df.sort_values(by=['score', 'Model Year'], ascending=[False, False])
     return df.head(top_n).reset_index(drop=True)
 
-
 def get_salesman_reply(key, value, user_answers):
     profile = {**user_answers, key: value}
     profile_summary = "\n".join([f"{k}: {v}" for k, v in profile.items()])
     prompt = (
         f"You're a vehicle advisor. You're helping someone find a great vehicle.\n"
         f"So far, they've told you:\n{profile_summary}\n"
-        f"They just said: {key} = {value}. Respond like a car salesman, suggest 1-2 vehicles that might fit so far,"
+        f"They just said: {key} = {value}. Respond like a car salesman, suggest 1-2 vehicles that might fit so far."
     )
     response = client.chat.completions.create(
         model="gpt-4",
@@ -73,7 +71,6 @@ def get_salesman_reply(key, value, user_answers):
     )
     return response.choices[0].message.content
 
-
 st.markdown("## 🚗 VehicleAdvisor Chat")
 
 if st.session_state.chat_log:
@@ -83,18 +80,15 @@ if st.session_state.chat_log:
     user_input = st.text_input("Your reply:", key="chat")
     if st.button("Send", key="submit_chat") and user_input:
         st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
+
         profile_summary = "\n".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()])
         gpt_prompt = (
-            f"You're a vehicle advisor. Your goal is to have a natural back-and-forth chat to understand the user's needs for a new vehicle.
-"
-            f"So far, here's what the user has shared:
-{profile_summary}
-
-"
-            f"User just said: {user_input}
-"
+            f"You're a vehicle advisor. Your goal is to have a natural back-and-forth chat to understand the user's needs for a new vehicle.\n"
+            f"So far, here's what the user has shared:\n{profile_summary}\n\n"
+            f"User just said: {user_input}\n"
             f"Update the profile if applicable. Respond casually, suggest a car if enough data is known, or ask just one follow-up question to better understand their preferences."
         )
+
         response = client.chat.completions.create(
             model="gpt-4",
             messages=[
@@ -108,6 +102,7 @@ if st.session_state.chat_log:
 else:
     st.session_state.chat_log.append("<b>VehicleAdvisor:</b> Hey there! I’d love to help you find the perfect ride. Just tell me what you're looking for or where you're from, and we'll go from there!")
     st.rerun()
+
     st.success("You’re all set! VehicleAdvisor has a few rides in mind for you.")
     recommendations = recommend_vehicles(st.session_state.user_answers)
     for _, row in recommendations.iterrows():
