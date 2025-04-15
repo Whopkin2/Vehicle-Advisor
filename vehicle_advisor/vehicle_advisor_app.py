@@ -36,7 +36,7 @@ score_weights = {
     "Garage Access": 0.5, "Eco-Conscious": 0.8, "Charging Access": 0.8, "Neighborhood Type": 0.9,
     "Towing Needs": 0.6, "Safety Priority": 0.9, "Tech Features": 0.8, "Car Size": 0.7,
     "Ownership Recommendation": 0.7, "Employment Status": 0.6, "Travel Frequency": 0.5,
-    "Ownership Duration": 0.5, "Budget": 2.0, "Annual Mileage": 0.6
+    "Ownership Duration": 0.5, "Budget": 1.5, "Annual Mileage": 0.6
 }
 
 def recommend_vehicles(user_answers, top_n=3):
@@ -95,7 +95,14 @@ Ask ONE NEW helpful question from this list if any remain: {unlocked_questions}.
 
 First, based on the updated info, recommend 1 or 2 matching vehicles and explain why they fit.
 
-Then, ask ONE helpful new question from the remaining list. Prioritize information that helps refine the match.
+Then, ask if the user would like to learn more about those cars. If yes, provide detailed info. If no, continue asking questions to refine their profile.
+
+Allow the user to return to question mode at any time if they lose interest in a vehicle.
+
+Once 7 or more profile preferences are collected, summarize their profile and ask if they want to:
+- Proceed with top 3 car recommendations,
+- Edit any part of their profile, or
+- Restart the process.
 """
 
         response = client.chat.completions.create(
