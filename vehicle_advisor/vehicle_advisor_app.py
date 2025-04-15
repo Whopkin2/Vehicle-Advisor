@@ -82,7 +82,7 @@ Here’s what they’ve shared so far:
 They just said: {user_input}
 
 Update their profile only if new info is provided. NEVER ask about these locked preferences again unless the user changes them: {list(st.session_state.locked_keys)}.
-Ask ONE new helpful question from this list if an unlocked value remains: " + str(list(dict(sorted({"Region": 1.0, "Use Category": 1.0, "Yearly Income": 0.6, "Credit Score": 0.6, "Garage Access": 0.5, "Eco-Conscious": 0.8, "Charging Access": 0.8, "Neighborhood Type": 0.9, "Towing Needs": 0.6, "Safety Priority": 0.9, "Tech Features": 0.8, "Car Size": 0.7, "Ownership Recommendation": 0.7, "Employment Status": 0.6, "Travel Frequency": 0.5, "Ownership Duration": 0.5, "Budget": 2.0, "Annual Mileage": 0.6}.items(), key=lambda item: item[1], reverse=True)).keys())).
+Ask ONE new helpful question from this list if an unlocked value remains: ['Budget', 'Region', 'Neighborhood Type', 'Safety Priority', 'Eco-Conscious', 'Tech Features', 'Charging Access', 'Car Size', 'Ownership Recommendation', 'Use Category', 'Yearly Income', 'Credit Score', 'Towing Needs', 'Employment Status', 'Annual Mileage', 'Garage Access', 'Travel Frequency', 'Ownership Duration'].0, "Use Category": 1.0, "Yearly Income": 0.6, "Credit Score": 0.6, "Garage Access": 0.5, "Eco-Conscious": 0.8, "Charging Access": 0.8, "Neighborhood Type": 0.9, "Towing Needs": 0.6, "Safety Priority": 0.9, "Tech Features": 0.8, "Car Size": 0.7, "Ownership Recommendation": 0.7, "Employment Status": 0.6, "Travel Frequency": 0.5, "Ownership Duration": 0.5, "Budget": 2.0, "Annual Mileage": 0.6}.items(), key=lambda item: item[1], reverse=True)).keys())).
 
 Then immediately recommend 1–2 vehicles based on what you’ve learned and explain why they match that particular new info. This is a process of elimination to narrow down to 3 ideal vehicles."""
 
@@ -107,5 +107,5 @@ else:
 
     if submitted and user_input:
         st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
-        st.session_state.chat_log.append("<b>VehicleAdvisor:</b> Awesome! Let’s get started.")
+        st.session_state.chat_log.append("<b>VehicleAdvisor:</b> Awesome! Let’s get started. Just to begin, what region are you located in?")
         st.rerun()
