@@ -20,14 +20,16 @@ df_vehicle_advisor = load_data()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 client = openai.OpenAI(api_key=openai.api_key)
 
-questions = []  # GPT dynamically asks questions now
-
 if "user_answers" not in st.session_state:
     st.session_state.user_answers = {}
 if "chat_log" not in st.session_state:
     st.session_state.chat_log = []
+if "awaiting_vehicle_detail" not in st.session_state:
+    st.session_state.awaiting_vehicle_detail = False
+if "last_recommendations" not in st.session_state:
+    st.session_state.last_recommendations = []
 
-def recommend_vehicles(user_answers, top_n=3):
+def recommend_vehicles(user_answers, top_n=2):
     df = df_vehicle_advisor.copy()
     try:
         user_budget = float(re.findall(r'\d+', user_answers.get("Budget", "45000").replace("$", "").replace(",", "").strip())[0])
@@ -54,57 +56,64 @@ def recommend_vehicles(user_answers, top_n=3):
     df = df.sort_values(by=['score', 'Model Year'], ascending=[False, False])
     return df.head(top_n).reset_index(drop=True)
 
-def get_salesman_reply(key, value, user_answers):
-    profile = {**user_answers, key: value}
-    profile_summary = "\n".join([f"{k}: {v}" for k, v in profile.items()])
-    prompt = (
-        f"You're a vehicle advisor. You're helping someone find a great vehicle.\n"
-        f"So far, they've told you:\n{profile_summary}\n"
-        f"They just said: {key} = {value}. Respond like a car salesman, suggest 1-2 vehicles that might fit so far."
-    )
-    response = client.chat.completions.create(
-        model="gpt-4",
-        messages=[
-            {"role": "system", "content": "You are a car salesman who speaks casually and helps customers pick vehicles."},
-            {"role": "user", "content": prompt}
-        ]
-    )
-    return response.choices[0].message.content
-
+# UI Title
 st.markdown("## 🚗 VehicleAdvisor Chat")
 
+# Display chat history
 if st.session_state.chat_log:
     for msg in st.session_state.chat_log:
         st.markdown(msg, unsafe_allow_html=True)
 
-    user_input = st.text_input("Your reply:", key="chat")
-    if st.button("Send", key="submit_chat") and user_input:
-        st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
+# Input form (clears after submit)
+with st.form(key="chat_form", clear_on_submit=True):
+    user_input = st.text_input("Your reply:")
+    submitted = st.form_submit_button("Send")
 
-        profile_summary = "\n".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()])
-        gpt_prompt = (
-            f"You're a vehicle advisor. Your goal is to have a natural back-and-forth chat to understand the user's needs for a new vehicle.\n"
-            f"So far, here's what the user has shared:\n{profile_summary}\n\n"
-            f"User just said: {user_input}\n"
-            f"Update the profile if applicable. Respond casually, suggest a car if enough data is known, or ask just one follow-up question to better understand their preferences."
-        )
+if submitted and user_input:
+    st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
 
-        response = client.chat.completions.create(
-            model="gpt-4",
-            messages=[
-                {"role": "system", "content": "You are a helpful car salesman-style vehicle advisor building a profile through a casual conversation."},
-                {"role": "user", "content": gpt_prompt}
-            ]
-        )
-        reply = response.choices[0].message.content
-        st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {reply}")
+    # 1. If user is requesting more info about cars
+    if st.session_state.awaiting_vehicle_detail and "learn" in user_input.lower():
+        detail_output = ""
+        for car in st.session_state.last_recommendations:
+            detail_output += f"**{car['Brand']} {car['Model']} ({car['Model Year']})**\n"
+            detail_output += f"- MSRP Range: {car['MSRP Range']}\n"
+            detail_output += f"- Size: {car.get('Car Size', 'N/A')}\n"
+            detail_output += f"- Safety Features: {car.get('Safety Priority', 'N/A')}\n"
+            detail_output += f"- Technology Features: {car.get('Tech Features', 'N/A')}\n\n"
+        detail_output += "Would you like to continue narrowing your options further?"
+        st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b><br>{detail_output}")
+        st.session_state.awaiting_vehicle_detail = False
         st.rerun()
-else:
-    st.session_state.chat_log.append("<b>VehicleAdvisor:</b> Hey there! I’d love to help you find the perfect ride. Just tell me what you're looking for or where you're from, and we'll go from there!")
+
+    # 2. Otherwise: continue conversation and generate recommendations
+    profile_summary = "\n".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()])
+    gpt_prompt = (
+        f"You are a professional vehicle advisor. You speak in a formal tone and help users choose the best vehicle based on their responses.\n\n"
+        f"Current known preferences:\n{profile_summary}\n\n"
+        f"The user just said: {user_input}\n\n"
+        f"Update the profile as needed. Suggest 1–2 potential vehicle matches based on what you know so far. "
+        f"Then ask: 'Would you like to learn more about these vehicles or continue refining your preferences?'"
+    )
+
+    response = client.chat.completions.create(
+        model="gpt-4",
+        messages=[
+            {"role": "system", "content": "You are a professional and courteous vehicle advisor helping someone select a car."},
+            {"role": "user", "content": gpt_prompt}
+        ]
+    )
+
+    reply = response.choices[0].message.content
+    st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {reply}")
+
+    # Generate new recs and save them
+    recs = recommend_vehicles(st.session_state.user_answers)
+    st.session_state.last_recommendations = recs.to_dict(orient="records")
+    st.session_state.awaiting_vehicle_detail = True
     st.rerun()
 
-    st.success("You’re all set! VehicleAdvisor has a few rides in mind for you.")
-    recommendations = recommend_vehicles(st.session_state.user_answers)
-    for _, row in recommendations.iterrows():
-        st.markdown(f"**{row['Brand']} {row['Model']} ({row['Model Year']})**")
-        st.markdown(f"MSRP Range: {row['MSRP Range']}")
+# Initial greeting if starting fresh
+if not st.session_state.chat_log:
+    st.session_state.chat_log.append("<b>VehicleAdvisor:</b> Welcome. I’m here to help you select a vehicle that suits your needs. To begin, please tell me what you're looking for or where you're located.")
+    st.rerun()
