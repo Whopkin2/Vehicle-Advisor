@@ -44,11 +44,11 @@ def recommend_vehicles(user_answers, top_n=3):
     df = df.sort_values(by=['score', 'Model Year'], ascending=[False, False])
     return df.head(top_n).reset_index(drop=True)
 
-# Setup API
+# OpenAI setup
 openai.api_key = os.getenv("OPENAI_API_KEY")
 client = openai.OpenAI(api_key=openai.api_key)
 
-# Session state init
+# Session state setup
 if "user_answers" not in st.session_state:
     st.session_state.user_answers = {}
 if "chat_log" not in st.session_state:
@@ -58,7 +58,6 @@ if "last_recommendations" not in st.session_state:
 if "locked_keys" not in st.session_state:
     st.session_state.locked_keys = set()
 
-# Score weights
 score_weights = {
     "Region": 1.0, "Use Category": 1.0, "Yearly Income": 0.6, "Credit Score": 0.6,
     "Garage Access": 0.5, "Eco-Conscious": 0.8, "Charging Access": 0.8, "Neighborhood Type": 0.9,
@@ -67,7 +66,7 @@ score_weights = {
     "Ownership Duration": 0.5, "Budget": 2.0, "Annual Mileage": 0.6
 }
 
-# Main chat
+# UI
 st.markdown("## 🚗 VehicleAdvisor Chat")
 
 if st.session_state.chat_log:
@@ -81,44 +80,45 @@ if st.session_state.chat_log:
     if submitted and user_input:
         st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
 
-        # Check for updated preferences and overwrite
+        # Update locked keys if new values detected
         for key in score_weights.keys():
             if key.lower() in user_input.lower():
                 st.session_state.user_answers[key] = user_input
                 st.session_state.locked_keys.add(key.lower())
 
         profile_summary = "\n".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()])
-
-        # Prioritize top-weighted unlocked questions
         unlocked_questions = [
             k for k, _ in sorted(score_weights.items(), key=lambda item: item[1], reverse=True)
             if k.lower() not in st.session_state.locked_keys
         ]
 
-        gpt_prompt = f"""You're a professional, friendly car advisor chatting with a customer who is shopping for a new vehicle.
+        gpt_prompt = f"""You are a professional car advisor having a live conversation with a customer.
 
-Here’s what they've told you so far:
+Here’s what they’ve told you so far:
 {profile_summary}
 
 They just said:
 "{user_input}"
 
-Your job is to respond naturally and only do what the user asks:
+Follow these instructions:
 
-1. If they asked about a specific vehicle (like "Tell me more about the Camry"), provide a clear, confident summary of that car’s benefits. If they've already seen alternatives like the Accord or Altima, you may compare them — but ONLY if the user requests comparisons or says something like “learn more.”
+1. If they asked about a specific car (e.g., "Tell me more about the Camry"), explain that vehicle’s strengths in a few sentences. If they mentioned other cars before, you can compare — but only if they explicitly ask for it.
 
-2. If they say “ask another question,” then ask ONE helpful new question from this prioritized list: {unlocked_questions}. Only ask about preferences that are NOT in this list: {list(st.session_state.locked_keys)}.
+2. If you know at least one of the following: budget, region, or use category — suggest 1 or 2 cars that fit what they’ve said. If none of those are known yet, don’t make recommendations.
 
-3. DO NOT ask new questions unless the user explicitly asks for one. Never assume what they want next — let them guide the flow.
+3. Only ask a follow-up preference question if the user says: "ask another question." If they don’t, follow their lead — they might want to explore a specific brand, compare models, or go deeper into a vehicle.
 
-Always end with:
+4. ENDING RULE:
+- If you recommended any vehicles, close with:
 "Would you like to learn more about one of these cars, or should I ask another question to refine your match?"
+- If no vehicles were mentioned, close with:
+"Would you like me to suggest a few cars to consider, or should I ask you a question to get started?"
 """
 
         response = client.chat.completions.create(
             model="gpt-4",
             messages=[
-                {"role": "system", "content": "You are a conversational car advisor. Act like a professional, friendly car salesman. Follow structure and avoid repeating locked preferences."},
+                {"role": "system", "content": "You are a helpful, professional car advisor. Speak naturally, avoid repeating preferences, and follow the user's lead."},
                 {"role": "user", "content": gpt_prompt}
             ]
         )
