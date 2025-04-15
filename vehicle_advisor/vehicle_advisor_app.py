@@ -82,15 +82,18 @@ if st.session_state.chat_log:
 
         elif "continue refining" in user_input.lower():
             profile_summary = "\n".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()])
+            score_keys = ["Region", "Use Category", "Yearly Income", "Credit Score", "Garage Access", "Eco-Conscious", "Charging Access", "Neighborhood Type", "Towing Needs", "Safety Priority", "Tech Features", "Car Size", "Ownership Recommendation", "Employment Status", "Travel Frequency", "Ownership Duration", "Budget", "Annual Mileage"]
+
             gpt_prompt = (
+
                 f"You're a vehicle advisor. Here's what the user has shared so far:\n{profile_summary}\n\n"
                 f"User just said: {user_input}\n"
-                f"Ask the next best profiling question to refine their vehicle needs. Do NOT repeat anything the user already answered unless they ask to change it. Locked preferences: {list(st.session_state.locked_keys)}."
+                f"Ask ONLY ONE follow-up question at a time to refine their needs further. NEVER repeat or re-ask about locked preferences: {list(st.session_state.locked_keys)}."
             )
             response = client.chat.completions.create(
                 model="gpt-4",
                 messages=[
-                    {"role": "system", "content": "You are a helpful vehicle advisor building a user profile through natural conversation."},
+                    {"role": "system", "content": "You are a helpful vehicle advisor building a user profile through natural conversation. You ask only one question at a time."},
                     {"role": "user", "content": gpt_prompt}
                 ]
             )
@@ -102,13 +105,13 @@ if st.session_state.chat_log:
                 f"You're a vehicle advisor. Your goal is to chat casually and build the user's profile.\n\n"
                 f"So far, they've shared:\n{profile_summary}\n\n"
                 f"User just said: {user_input}\n\n"
-                f"Update their profile if you learn something new and LOCK that information so you never ask for it again unless the user says they want to change it. Do NOT ask again about: {list(st.session_state.locked_keys)}."
-                f"Suggest a car if you're ready, or ask one question to learn more about UNLOCKED topics only."
+                f"Update their profile if you learn something new and LOCK that information so you never ask for it again unless the user says they want to change it. NEVER ask about locked preferences: {list(st.session_state.locked_keys)}. Ask ONLY ONE new, helpful question about an UNLOCKED topic from this list of profiling areas: " +
+        "["Region", "Use Category", "Yearly Income", "Credit Score", "Garage Access", "Eco-Conscious", "Charging Access", "Neighborhood Type", "Towing Needs", "Safety Priority", "Tech Features", "Car Size", "Ownership Recommendation", "Employment Status", "Travel Frequency", "Ownership Duration", "Budget", "Annual Mileage"]"
             )
             response = client.chat.completions.create(
                 model="gpt-4",
                 messages=[
-                    {"role": "system", "content": "You are a friendly car salesman helping users choose a vehicle based on their profile."},
+                    {"role": "system", "content": "You are a friendly car salesman helping users choose a vehicle based on their profile. You must ask just one relevant question at a time."},
                     {"role": "user", "content": gpt_prompt}
                 ]
             )
