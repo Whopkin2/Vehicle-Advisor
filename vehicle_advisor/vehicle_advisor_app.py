@@ -69,59 +69,37 @@ if st.session_state.chat_log:
     if submitted and user_input:
         st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
 
-        if "learn more about those vehicles" in user_input.lower():
-            if not st.session_state.last_recommendations.empty:
-                reply = "<br><br>".join(
-                    [
-                        f"<b>{row['Brand']} {row['Model']} ({row['Model Year']})</b><br>MSRP Range: {row['MSRP Range']}<br>{row.get('Description', 'No additional description available.')}"
-                        for _, row in st.session_state.last_recommendations.iterrows()
-                    ]
-                )
-            else:
-                reply = "I haven't recommended any vehicles yet. Tell me what you're looking for first!"
+        profile_summary = "\n".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()])
 
-        elif "continue refining" in user_input.lower():
-            profile_summary = "\n".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()])
-            gpt_prompt = f"""You're a vehicle advisor. Here's what the user has shared so far:
+        for key in st.session_state.user_answers:
+            st.session_state.locked_keys.add(key.lower())
+
+        gpt_prompt = f"""You're a vehicle advisor helping a user select the best car by narrowing options down with every preference shared.
+
+Here’s what they’ve shared so far:
 {profile_summary}
 
-User just said: {user_input}
-Ask ONLY ONE follow-up question at a time to refine their needs further. NEVER repeat or re-ask about locked preferences: {list(st.session_state.locked_keys)}."""
-            response = client.chat.completions.create(
-                model="gpt-4",
-                messages=[
-                    {"role": "system", "content": "You are a helpful vehicle advisor building a user profile through natural conversation. You ask only one question at a time."},
-                    {"role": "user", "content": gpt_prompt}
-                ]
-            )
-            reply = response.choices[0].message.content
+They just said: {user_input}
 
-        else:
-            profile_summary = "\n".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()])
-            gpt_prompt = f"""You're a vehicle advisor. Your goal is to chat casually and build the user's profile.
+Update their profile only if new info is provided. NEVER ask about these locked preferences again unless the user changes them: {list(st.session_state.locked_keys)}.
+Ask ONE new helpful question from this list if an unlocked value remains: ['Region', 'Use Category', 'Yearly Income', 'Credit Score', 'Garage Access', 'Eco-Conscious', 'Charging Access', 'Neighborhood Type', 'Towing Needs', 'Safety Priority', 'Tech Features', 'Car Size', 'Ownership Recommendation', 'Employment Status', 'Travel Frequency', 'Ownership Duration', 'Budget', 'Annual Mileage'].
 
-So far, they've shared:
-{profile_summary}
+Then immediately recommend 1–2 vehicles based on what you’ve learned and explain why they match that particular new info. This is a process of elimination to narrow down to 3 ideal vehicles."""
 
-User just said: {user_input}
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": "You are a helpful vehicle advisor that updates the user's profile and recommends matching cars after each response."},
+                {"role": "user", "content": gpt_prompt}
+            ]
+        )
 
-Update their profile if you learn something new and LOCK that information so you never ask for it again unless the user says they want to change it. NEVER ask about locked preferences: {list(st.session_state.locked_keys)}. Ask ONLY ONE new, helpful question about an UNLOCKED topic from this list of profiling areas: ['Region', 'Use Category', 'Yearly Income', 'Credit Score', 'Garage Access', 'Eco-Conscious', 'Charging Access', 'Neighborhood Type', 'Towing Needs', 'Safety Priority', 'Tech Features', 'Car Size', 'Ownership Recommendation', 'Employment Status', 'Travel Frequency', 'Ownership Duration', 'Budget', 'Annual Mileage']."""
-            response = client.chat.completions.create(
-                model="gpt-4",
-                messages=[
-                    {"role": "system", "content": "You are a friendly car salesman helping users choose a vehicle based on their profile. You must ask just one relevant question at a time."},
-                    {"role": "user", "content": gpt_prompt}
-                ]
-            )
-            reply = response.choices[0].message.content
-
-            for key in st.session_state.user_answers:
-                st.session_state.locked_keys.add(key.lower())
-
-            st.session_state.last_recommendations = recommend_vehicles(st.session_state.user_answers)
-
+        reply = response.choices[0].message.content
         st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {reply}")
+
+        st.session_state.last_recommendations = recommend_vehicles(st.session_state.user_answers)
+
         st.rerun()
 else:
-    st.session_state.chat_log.append("<b>VehicleAdvisor:</b> Hey there! I’d love to help you find the perfect ride. Let me ask a couple questions and we will go from there!")
+    st.session_state.chat_log.append("<b>VehicleAdvisor:</b> Hey there! I’d love to help you find the perfect ride. Just tell me what you're looking for or where you're from, and we'll go from there!")
     st.rerun()
