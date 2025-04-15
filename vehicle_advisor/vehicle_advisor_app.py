@@ -39,6 +39,28 @@ score_weights = {
     "Ownership Duration": 0.5, "Budget": 1.5, "Annual Mileage": 0.6, "Drive Type": 1.0
 }
 
+field_patterns = {
+    "Budget": ["budget", "$", "k"],
+    "Use Category": ["commute", "commuting", "daily driver", "everyday"],
+    "Region": ["located in", "from"],
+    "Safety Priority": ["safety"],
+    "Tech Features": ["tech"],
+    "Yearly Income": ["income", "salary", "make per year"],
+    "Credit Score": ["credit score", "fico"],
+    "Garage Access": ["garage", "parking"],
+    "Eco-Conscious": ["eco", "environment", "green", "hybrid", "ev"],
+    "Charging Access": ["charging", "charger", "plug in"],
+    "Neighborhood Type": ["neighborhood", "urban", "suburban", "rural"],
+    "Towing Needs": ["towing", "haul", "tow"],
+    "Car Size": ["car size", "compact", "midsize", "full size"],
+    "Ownership Recommendation": ["own", "lease", "rent", "buy"],
+    "Employment Status": ["job", "employment", "work"],
+    "Travel Frequency": ["travel", "trip", "fly", "frequent"],
+    "Ownership Duration": ["how long", "keep", "own for"],
+    "Annual Mileage": ["miles per year", "annual mileage", "drive per year"],
+    "Drive Type": ["awd", "fwd", "rwd", "4wd", "drive type"]
+}
+
 def recommend_vehicles(user_answers, top_n=3):
     df = df_vehicle_advisor.copy()
     try:
@@ -72,26 +94,28 @@ if st.session_state.chat_log:
 
     if submitted and user_input:
         st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
-
-        # Auto-detection logic for all keys
         user_input_lower = user_input.lower()
 
-        if any(kw in user_input_lower for kw in ["$", "budget", "k"]):
-            match = re.search(r'(\d{2,3}[,\d{3}]*)', user_input.replace(",", ""))
-            if match:
-                st.session_state.user_answers["Budget"] = match.group(1)
-                st.session_state.locked_keys.add("budget")
+        # Detect requests to update a field
+        for field in list(st.session_state.locked_keys):
+            if f"update my {field}" in user_input_lower or f"change my {field}" in user_input_lower:
+                st.session_state.locked_keys.remove(field)
+                st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> Got it — feel free to update your {field} preference now.")
 
-        if any(term in user_input_lower for term in ["commute", "commuting", "daily driver", "everyday"]):
-            st.session_state.user_answers["Use Category"] = "Daily Commute"
-            st.session_state.locked_keys.add("use category")
-
-        if "located in" in user_input_lower or "from" in user_input_lower:
-            region_match = re.search(r"(in|from)\s+([a-zA-Z\s]+)", user_input_lower)
-            if region_match:
-                region_value = region_match.group(2).strip().title()
-                st.session_state.user_answers["Region"] = region_value
-                st.session_state.locked_keys.add("region")
+        for field, keywords in field_patterns.items():
+            if field.lower() in st.session_state.locked_keys:
+                continue
+            if field in ["Safety Priority", "Tech Features"]:
+                if any(kw in user_input_lower for kw in keywords) and any(num in user_input_lower for num in [str(i) for i in range(1, 11)]):
+                    match = re.search(r'(\d{1,2})', user_input_lower)
+                    if match:
+                        st.session_state.user_answers[field] = match.group(1)
+                        st.session_state.locked_keys.add(field.lower())
+            elif any(kw in user_input_lower for kw in keywords):
+                match = re.search(r'(\d{2,3}[,\d{3}]*)', user_input.replace(",", "")) if field == "Budget" else None
+                value = match.group(1) if match else user_input.title()
+                st.session_state.user_answers[field] = value
+                st.session_state.locked_keys.add(field.lower())
 
         for key in st.session_state.user_answers:
             if key.lower() not in st.session_state.locked_keys:
@@ -108,6 +132,8 @@ These questions should be based on the score weights — some hold much higher w
 
 Once the user answers a question, HARD LOCK that information — NEVER ask for it again. For example, if they share their budget, that is FINAL. Do not re-ask it. Do not imply it wasn't given.
 
+Only if the user clearly says something like \"update my budget\" or \"change my credit score\" should you allow the field to be modified.
+
 After each question, mention 1–2 cars that could fit the individual's preferences so far, based on the latest answer and all prior locked values.
 You should ask a total of 8 to 10 thoughtful, dynamic questions before recommending the final vehicles that match best.
 
@@ -121,7 +147,7 @@ They just said: {user_input}
 Locked preferences: {list(st.session_state.locked_keys)}
 Remaining preference options to ask about: {unlocked_questions}
 
-Start by responding conversationally. Acknowledge their latest message, then update their profile (only if relevant), recommend 1–2 cars, and ask the next best question. NEVER ask about anything that is already locked.
+Start by responding conversationally. Acknowledge their latest message, then update their profile (only if relevant), recommend 1–2 cars, and ask the next best question. NEVER ask about anything that is already locked unless the user asked to change it.
 Wait for the user to respond before continuing. You must complete 8–10 total questions unless the user asks to skip ahead."""
 
         response = client.chat.completions.create(
