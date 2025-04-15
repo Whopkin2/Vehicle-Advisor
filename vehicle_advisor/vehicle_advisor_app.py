@@ -73,22 +73,35 @@ if st.session_state.chat_log:
     if submitted and user_input:
         st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
 
-        profile_summary = "\n".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()])
+        # Auto-detect and lock budget
+        if "budget" in user_input.lower() or "$" in user_input or "k" in user_input.lower():
+            match = re.search(r'(\d{2,3}[,\d{3}]*)', user_input.replace(",", ""))
+            if match:
+                st.session_state.user_answers["Budget"] = match.group(1)
+                st.session_state.locked_keys.add("budget")
 
+        # Auto-detect and lock use category
+        if any(term in user_input.lower() for term in ["commute", "commuting", "daily driver", "everyday use"]):
+            st.session_state.user_answers["Use Category"] = "Daily Commute"
+            st.session_state.locked_keys.add("use category")
+
+        # Lock all answered keys
         for key in st.session_state.user_answers:
             if key.lower() not in st.session_state.locked_keys:
                 st.session_state.locked_keys.add(key.lower())
+
+        profile_summary = "\n".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()])
 
         unlocked_questions = [k for k, _ in sorted(score_weights.items(), key=lambda item: item[1], reverse=True)
                               if k.lower() not in st.session_state.locked_keys]
 
         gpt_prompt = f"""You are a car chatbot, that is tasked with helping a person or a car salesman find the best cars that fit the needs specified.
-You will look into the the vehicle data csv and ask questions regarding the profile of the individual based off attributes of the cars to find out which car will best suit that individual.
-These questions should be based off the score weights — some hold much higher weights than others because they are more important — but that doesn't mean you ignore the lower weighted ones.
+You will look into the vehicle data CSV and ask questions regarding the profile of the individual based on attributes of the cars to find out which car will best suit that individual.
+These questions should be based on the score weights — some hold much higher weights than others because they are more important — but that doesn't mean you ignore the lower-weighted ones.
 
 Once the user answers a question, HARD LOCK that information — NEVER ask for it again. For example, if they share their budget, that is FINAL. Do not re-ask it. Do not imply it wasn't given.
 
-After each question, mention 2 cars that could fit the individual's preferences so far, based on the latest answer and all prior locked values.
+After each question, mention 1–2 cars that could fit the individual's preferences so far, based on the latest answer and all prior locked values.
 You should ask a total of 8 to 10 thoughtful, dynamic questions before recommending the final vehicles that match best.
 
 You can use charts to visually compare options and highlight matches. Your goal is to be as human and fluid as possible — make the interaction feel natural.
