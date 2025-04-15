@@ -3,6 +3,7 @@ import pandas as pd
 import openai
 import re
 import os
+import random
 
 st.set_page_config(page_title="Vehicle Advisor", layout="centered")
 
@@ -105,7 +106,7 @@ if st.session_state.chat_log:
         for field, keywords in field_patterns.items():
             if field.lower() in st.session_state.locked_keys:
                 continue
-            if field in ["Safety Priority", "Tech Features"]:
+            if field in ["Safety Priority", "Tech Features", "Eco-Conscious"]:
                 if any(kw in user_input_lower for kw in keywords) and any(num in user_input_lower for num in [str(i) for i in range(1, 11)]):
                     match = re.search(r'(\d{1,2})', user_input_lower)
                     if match:
@@ -126,6 +127,12 @@ if st.session_state.chat_log:
         unlocked_questions = [k for k, _ in sorted(score_weights.items(), key=lambda item: item[1], reverse=True)
                               if k.lower() not in st.session_state.locked_keys]
 
+        learn_more_prompt = """
+If the user says 'Tell me more about [car]', give a detailed description from the dataset.
+If the user hasn't said that, after recommending cars, you may occasionally say: "Would you like to learn more about any of these cars?"
+If they say yes, respond with rich info about those cars. Then continue the profiling questions.
+"""
+
         gpt_prompt = f"""You are a car chatbot, that is tasked with helping a person or a car salesman find the best cars that fit the needs specified.
 You will look into the vehicle data CSV and ask questions regarding the profile of the individual based on attributes of the cars to find out which car will best suit that individual.
 These questions should be based on the score weights — some hold much higher weights than others because they are more important — but that doesn't mean you ignore the lower-weighted ones.
@@ -138,6 +145,8 @@ After each question, mention 1–2 cars that could fit the individual's preferen
 You should ask a total of 8 to 10 thoughtful, dynamic questions before recommending the final vehicles that match best.
 
 You can use charts to visually compare options and highlight matches. Your goal is to be as human and fluid as possible — make the interaction feel natural.
+
+{learn_more_prompt}
 
 Here’s what they’ve shared so far:
 {profile_summary}
