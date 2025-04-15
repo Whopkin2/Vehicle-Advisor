@@ -17,37 +17,22 @@ def load_data():
 
 df_vehicle_advisor = load_data()
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
-client = openai.OpenAI(api_key=openai.api_key)
-
-# Initialize session state variables
-for key, default in [
-    ("user_answers", {}), ("chat_log", []), ("last_recommendations", pd.DataFrame()),
-    ("locked_keys", set()), ("vehicle_names_mentioned", []), ("awaiting_answer", False),
-    ("considered_vehicles", []), ("blocked_brands", set()), ("final_recommendation_given", False),
-    ("user_ended_convo", False), ("asked_keys", set())
-]:
-    if key not in st.session_state:
-        st.session_state[key] = default
-
-score_weights = {
-    "Region": 1.0, "Use Category": 1.0, "Yearly Income": 0.6, "Credit Score": 0.6,
-    "Garage Access": 0.5, "Eco-Conscious": 0.8, "Charging Access": 0.8, "Neighborhood Type": 0.9,
-    "Towing Needs": 0.6, "Safety Priority": 0.9, "Tech Features": 0.8, "Car Size": 0.7,
-    "Ownership Recommendation": 0.7, "Employment Status": 0.6, "Travel Frequency": 0.5,
-    "Ownership Duration": 0.5, "Budget": 2.0, "Annual Mileage": 0.6
-}
-
 def recommend_vehicles(user_answers, top_n=3):
     df = df_vehicle_advisor.copy()
     try:
         user_budget = float(re.findall(r'\d+', user_answers.get("Budget", "45000").replace("$", "").replace(",", "").strip())[0])
     except:
         user_budget = 45000
+
     df = df[df['MSRP Min'].fillna(999999) <= user_budget * 1.2]
 
-    for brand in st.session_state.blocked_brands:
-        df = df[~df['Brand'].str.lower().str.contains(brand.lower())]
+    score_weights = {
+        "Region": 1.0, "Use Category": 1.0, "Yearly Income": 0.6, "Credit Score": 0.6,
+        "Garage Access": 0.5, "Eco-Conscious": 0.8, "Charging Access": 0.8, "Neighborhood Type": 0.9,
+        "Towing Needs": 0.6, "Safety Priority": 0.9, "Tech Features": 0.8, "Car Size": 0.7,
+        "Ownership Recommendation": 0.7, "Employment Status": 0.6, "Travel Frequency": 0.5,
+        "Ownership Duration": 0.5, "Budget": 2.0, "Annual Mileage": 0.6
+    }
 
     def compute_score(row):
         return sum(
@@ -59,31 +44,30 @@ def recommend_vehicles(user_answers, top_n=3):
     df = df.sort_values(by=['score', 'Model Year'], ascending=[False, False])
     return df.head(top_n).reset_index(drop=True)
 
-def show_recommendations():
-    top_3 = recommend_vehicles(st.session_state.user_answers, top_n=3)
-    car_names = top_3['Model'].tolist()
-    profile_summary = "\n".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()])
-    explanation_prompt = f"Based on the following user profile:\n{profile_summary}\nExplain why these 3 cars are a perfect fit: {', '.join(car_names)}"
-    explanation = client.chat.completions.create(
-        model="gpt-4",
-        messages=[
-            {"role": "system", "content": "You are a car advisor."},
-            {"role": "user", "content": explanation_prompt}
-        ]
-    ).choices[0].message.content
-    st.session_state.chat_log.append("<b>VehicleAdvisor:</b> Here are some cars that match your current preferences:")
-    for car in car_names:
-        st.session_state.chat_log.append(f"<b>• {car}</b>")
-    st.session_state.chat_log.append(f"<b>Why these cars?</b> {explanation}")
-    st.session_state.chat_log.append("<b>Would you like to ask another question to refine your match or learn more about any of these cars?</b>")
-    st.session_state.last_recommendations = top_3
+# Setup API
+openai.api_key = os.getenv("OPENAI_API_KEY")
+client = openai.OpenAI(api_key=openai.api_key)
 
-st.markdown("""
-    <style>
-    * { font-family: Arial, sans-serif; }
-    </style>
-""", unsafe_allow_html=True)
+# Session state init
+if "user_answers" not in st.session_state:
+    st.session_state.user_answers = {}
+if "chat_log" not in st.session_state:
+    st.session_state.chat_log = []
+if "last_recommendations" not in st.session_state:
+    st.session_state.last_recommendations = pd.DataFrame()
+if "locked_keys" not in st.session_state:
+    st.session_state.locked_keys = set()
 
+# Score weights for question prioritization
+score_weights = {
+    "Region": 1.0, "Use Category": 1.0, "Yearly Income": 0.6, "Credit Score": 0.6,
+    "Garage Access": 0.5, "Eco-Conscious": 0.8, "Charging Access": 0.8, "Neighborhood Type": 0.9,
+    "Towing Needs": 0.6, "Safety Priority": 0.9, "Tech Features": 0.8, "Car Size": 0.7,
+    "Ownership Recommendation": 0.7, "Employment Status": 0.6, "Travel Frequency": 0.5,
+    "Ownership Duration": 0.5, "Budget": 2.0, "Annual Mileage": 0.6
+}
+
+# Main chat
 st.markdown("## 🚗 VehicleAdvisor Chat")
 
 if st.session_state.chat_log:
@@ -96,59 +80,44 @@ if st.session_state.chat_log:
 
     if submitted and user_input:
         st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
+        profile_summary = "\n".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()])
+        for key in st.session_state.user_answers:
+            st.session_state.locked_keys.add(key.lower())
 
-        if user_input.lower() in ["restart", "start over"]:
-            for key in list(st.session_state.keys()):
-                del st.session_state[key]
-            st.experimental_rerun()
+        # Find next most important unanswered question
+        unlocked_questions = [k for k, _ in sorted(score_weights.items(), key=lambda item: item[1], reverse=True)
+                              if k.lower() not in st.session_state.locked_keys]
+        
+        gpt_prompt = f"""You're a friendly, helpful car expert.
+Your job is to build the user's profile and help them find the perfect car.
 
-        budget_match = re.search(r"(?:budget\s*(?:is|to|around|about)?\s*\$?)(\d{2,6})", user_input.lower())
-        if budget_match:
-            new_budget = budget_match.group(1)
-            st.session_state.user_answers["Budget"] = new_budget
-            st.session_state.locked_keys.add("budget")
-            st.session_state.final_recommendation_given = False
-            st.session_state.chat_log.append(f"<i>Updated your budget to ${new_budget}.</i>")
+Here’s what they’ve shared so far:
+{profile_summary}
 
-        for model in st.session_state.considered_vehicles:
-            if f"remove {model.lower()}" in user_input.lower():
-                st.session_state.considered_vehicles.remove(model)
-                st.session_state.chat_log.append(f"<i>Removed {model} from consideration.</i>")
+They just said: {user_input}
 
-        for brand in df_vehicle_advisor['Brand'].unique():
-            if f"no more {brand.lower()}" in user_input.lower() or f"block {brand.lower()}" in user_input.lower():
-                st.session_state.blocked_brands.add(brand)
-                st.session_state.chat_log.append(f"<i>Blocked {brand} from future recommendations.</i>")
+Update their profile only if they gave new info.
+NEVER ask again about these locked preferences: {list(st.session_state.locked_keys)}.
+Ask ONE NEW helpful question from this list if any remain: {unlocked_questions}.
 
-        if "more options" in user_input.lower():
-            st.session_state.final_recommendation_given = False
-            st.rerun()
+Then, based on the updated info, recommend 1 or 2 matching vehicles and explain why they fit.
 
-        if "end conversation" in user_input.lower():
-            st.session_state.user_ended_convo = True
+Once enough info is collected (5+ preferences), recommend their top 3 ideal cars overall with clear reasons.
+"""
 
-        for key in score_weights:
-            if key.lower() in user_input.lower():
-                st.session_state.user_answers[key] = user_input
-                st.session_state.locked_keys.add(key.lower())
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": "You are a vehicle advisor that helps users build their car preferences step by step, and recommend cars after every step."},
+                {"role": "user", "content": gpt_prompt}
+            ]
+        )
 
-        show_recommendations()
+        reply = response.choices[0].message.content
+        st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {reply}")
 
-        if not st.session_state.user_ended_convo:
-            unanswered = [k for k, _ in sorted(score_weights.items(), key=lambda item: -item[1]) if k.lower() not in st.session_state.locked_keys and k.lower() not in st.session_state.asked_keys]
-            if unanswered:
-                next_q = unanswered[0]
-                natural_prompt = f"The user has not provided information about their {next_q}. Ask a casual, conversational follow-up to learn this detail. Be warm, friendly, and sound like you're building a connection."
-                natural_response = client.chat.completions.create(
-                    model="gpt-4",
-                    messages=[
-                        {"role": "system", "content": "You are a helpful, casual, and conversational car advisor trying to get to know the user better to help them find the right car."},
-                        {"role": "user", "content": natural_prompt}
-                    ]
-                ).choices[0].message.content
-                st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {natural_response}")
-                st.session_state.asked_keys.add(next_q.lower())
-                st.rerun()
+        st.session_state.last_recommendations = recommend_vehicles(st.session_state.user_answers)
+        st.rerun()
 
 else:
     with st.form(key="initial_chat_form", clear_on_submit=True):
@@ -158,5 +127,4 @@ else:
     if submitted and user_input:
         st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
         st.session_state.chat_log.append("<b>VehicleAdvisor:</b> Awesome! Let’s get started. Just to begin, what region are you located in?")
-        st.session_state.asked_keys.add("region")
         st.rerun()
