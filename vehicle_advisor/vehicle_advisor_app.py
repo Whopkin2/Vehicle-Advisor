@@ -6,153 +6,125 @@ import os
 
 st.set_page_config(page_title="Vehicle Advisor", layout="centered")
 
-# Load vehicle dataset
 @st.cache_data
 def load_data():
     df = pd.read_csv("vehicle_data.csv")
     df['MSRP Min'] = df['MSRP Range'].apply(
-        lambda x: float(re.findall(r'\$([\d,]+)', str(x))[0].replace(',', ''))
-        if re.findall(r'\$([\d,]+)', str(x)) else None
+        lambda msrp_range: float(re.findall(r'\$([\d,]+)', str(msrp_range))[0].replace(',', ''))
+        if re.findall(r'\$([\d,]+)', str(msrp_range)) else None
     )
     return df
 
-df = load_data()
+df_vehicle_advisor = load_data()
 
-# Set OpenAI API Key
+def recommend_vehicles(user_answers, top_n=3):
+    df = df_vehicle_advisor.copy()
+    try:
+        user_budget = float(re.findall(r'\d+', user_answers.get("Budget", "45000").replace("$", "").replace(",", "").strip())[0])
+    except:
+        user_budget = 45000
+
+    df = df[df['MSRP Min'].fillna(999999) <= user_budget * 1.2]
+
+    score_weights = {
+        "Region": 1.0, "Use Category": 1.0, "Yearly Income": 0.6, "Credit Score": 0.6,
+        "Garage Access": 0.5, "Eco-Conscious": 0.8, "Charging Access": 0.8, "Neighborhood Type": 0.9,
+        "Towing Needs": 0.6, "Safety Priority": 0.9, "Tech Features": 0.8, "Car Size": 0.7,
+        "Ownership Recommendation": 0.7, "Employment Status": 0.6, "Travel Frequency": 0.5,
+        "Ownership Duration": 0.5, "Budget": 2.0, "Annual Mileage": 0.6
+    }
+
+    def compute_score(row):
+        return sum(
+            weight for key, weight in score_weights.items()
+            if str(user_answers.get(key, "")).lower() in str(row.get(key, "")).lower()
+        )
+
+    df['score'] = df.apply(compute_score, axis=1)
+    df = df.sort_values(by=['score', 'Model Year'], ascending=[False, False])
+    return df.head(top_n).reset_index(drop=True)
+
+# Setup API
 openai.api_key = os.getenv("OPENAI_API_KEY")
 client = openai.OpenAI(api_key=openai.api_key)
 
-# Initialize session state
-if "chat_history" not in st.session_state:
-    st.session_state.chat_history = []
-
+# Session state init
 if "user_answers" not in st.session_state:
     st.session_state.user_answers = {}
+if "chat_log" not in st.session_state:
+    st.session_state.chat_log = []
+if "last_recommendations" not in st.session_state:
+    st.session_state.last_recommendations = pd.DataFrame()
+if "locked_keys" not in st.session_state:
+    st.session_state.locked_keys = set()
 
-if "profile_complete" not in st.session_state:
-    st.session_state.profile_complete = False
-
-# Score weights for importance
+# Score weights for question prioritization
 score_weights = {
-    "Budget": 2.0, "Region": 1.0, "Use Category": 1.0, "Yearly Income": 0.6,
-    "Credit Score": 0.6, "Garage Access": 0.5, "Eco-Conscious": 0.8,
-    "Charging Access": 0.8, "Neighborhood Type": 0.9, "Towing Needs": 0.6,
-    "Safety Priority": 0.9, "Tech Features": 0.8, "Car Size": 0.7,
-    "Ownership Recommendation": 0.7, "Employment Status": 0.6,
-    "Travel Frequency": 0.5, "Ownership Duration": 0.5
+    "Region": 1.0, "Use Category": 1.0, "Yearly Income": 0.6, "Credit Score": 0.6,
+    "Garage Access": 0.5, "Eco-Conscious": 0.8, "Charging Access": 0.8, "Neighborhood Type": 0.9,
+    "Towing Needs": 0.6, "Safety Priority": 0.9, "Tech Features": 0.8, "Car Size": 0.7,
+    "Ownership Recommendation": 0.7, "Employment Status": 0.6, "Travel Frequency": 0.5,
+    "Ownership Duration": 0.5, "Budget": 2.0, "Annual Mileage": 0.6
 }
 
-# Helper to get unanswered questions by score priority
-def get_next_question():
-    unanswered = sorted(
-        [(k, v) for k, v in score_weights.items() if k not in st.session_state.user_answers],
-        key=lambda x: -x[1]
-    )
-    if unanswered:
-        field = unanswered[0][0]
-        question_texts = {
-            "Budget": "What's your max budget for this car?",
-            "Use Category": "What will you mostly use the car for — commuting, hauling, family trips, etc.?",
-            "Region": "Which region or state are you in?",
-            "Neighborhood Type": "Do you live in a city, suburb, or rural area?",
-            "Credit Score": "What’s your credit score range looking like?",
-            "Eco-Conscious": "Are you interested in EVs or hybrids?",
-            "Charging Access": "Do you have access to EV charging at home or nearby?",
-            "Safety Priority": "Is top-tier safety a must-have for you?",
-            "Tech Features": "Do you value modern tech like touchscreen, navigation, etc.?",
-            "Car Size": "Do you prefer compact, midsize, or larger vehicles?",
-            "Towing Needs": "Do you need to tow trailers, boats, etc.?",
-            "Yearly Income": "What’s your approximate yearly income?",
-            "Garage Access": "Do you have a garage or dedicated parking?",
-            "Ownership Recommendation": "Would you rather lease or own?",
-            "Employment Status": "What’s your current employment status?",
-            "Travel Frequency": "Do you travel long distances frequently?",
-            "Ownership Duration": "Are you planning to keep this car short-term or long-term?"
-        }
-        return field, question_texts.get(field, "Can you tell me more about your car needs?")
-    return None, None
+# Main chat
+st.markdown("## 🚗 VehicleAdvisor Chat")
 
-# Function to get top 3 car recommendations
-def recommend_vehicles():
-    df_filtered = df.copy()
-    budget = st.session_state.user_answers.get("Budget")
-    if budget:
-        df_filtered = df_filtered[df_filtered["MSRP Min"] <= float(budget)]
+if st.session_state.chat_log:
+    for msg in st.session_state.chat_log:
+        st.markdown(msg, unsafe_allow_html=True)
 
-    eco = st.session_state.user_answers.get("Eco-Conscious")
-    if eco and eco.lower() in ["yes", "true", "y"]:
-        df_filtered = df_filtered[df_filtered["Fuel Type"].str.contains("Hybrid|Electric", na=False)]
+    with st.form(key="chat_form", clear_on_submit=True):
+        user_input = st.text_input("Your reply:")
+        submitted = st.form_submit_button("Send")
 
-    neighborhood = st.session_state.user_answers.get("Neighborhood Type", "").lower()
-    if "city" in neighborhood:
-        df_filtered = df_filtered[df_filtered["Type"].str.contains("Sedan|Compact|Crossover", na=False)]
-    elif "rural" in neighborhood:
-        df_filtered = df_filtered[df_filtered["Type"].str.contains("SUV|Truck", na=False)]
+    if submitted and user_input:
+        st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
+        profile_summary = "\n".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()])
+        for key in st.session_state.user_answers:
+            st.session_state.locked_keys.add(key.lower())
 
-    if df_filtered.empty:
-        return []
+        # Find next most important unanswered question
+        unlocked_questions = [k for k, _ in sorted(score_weights.items(), key=lambda item: item[1], reverse=True)
+                              if k.lower() not in st.session_state.locked_keys]
+        
+        gpt_prompt = f"""You're a friendly, helpful car expert.
+Your job is to build the user's profile and help them find the perfect car.
 
-    top3 = df_filtered.sort_values("MSRP Min").head(3)
-    return top3
+Here’s what they’ve shared so far:
+{profile_summary}
 
-# Function to show recommendation and then question
-def show_suggestion_then_question(suggestion, question):
-    st.markdown(suggestion)
-    st.markdown(question)
+They just said: {user_input}
 
-# Chat UI
-st.markdown("### 🚗 Vehicle Advisor Chat")
-user_input = st.text_input("You:", key="user_input")
+Update their profile only if they gave new info.
+NEVER ask again about these locked preferences: {list(st.session_state.locked_keys)}.
+Ask ONE NEW helpful question from this list if any remain: {unlocked_questions}.
 
-if user_input:
-    st.session_state.chat_history.append(("user", user_input))
-    st.session_state.user_input = ""
+Then, based on the updated info, recommend 1 or 2 matching vehicles and explain why they fit.
 
-    # Store known answers
-    for field in score_weights:
-        if field.lower() in user_input.lower() and field not in st.session_state.user_answers:
-            st.session_state.user_answers[field] = user_input.split()[-1]  # crude grab
+Once enough info is collected (5+ preferences), recommend their top 3 ideal cars overall with clear reasons.
+"""
 
-    # If user says to continue refining
-    if "refine" in user_input.lower():
-        field, next_q = get_next_question()
-        if field and next_q:
-            suggestion = "Got it. Let’s narrow this down a bit more."
-            show_suggestion_then_question(suggestion, next_q)
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": "You are a vehicle advisor that helps users build their car preferences step by step, and recommend cars after every step."},
+                {"role": "user", "content": gpt_prompt}
+            ]
+        )
 
-    # If user says learn more about vehicles
-    elif "learn more" in user_input.lower():
-        top_cars = recommend_vehicles()
-        if top_cars.empty:
-            st.markdown("Couldn’t find more vehicles that match just yet. Let’s refine a bit.")
-        else:
-            for _, row in top_cars.iterrows():
-                st.markdown(f"**{row['Make']} {row['Model']}** — {row['Type']} starting at {row['MSRP Range']}.\n\nFuel Type: {row['Fuel Type']} | Range: {row.get('Range', 'N/A')} | Horsepower: {row.get('Horsepower', 'N/A')}")
+        reply = response.choices[0].message.content
+        st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {reply}")
 
-    # If enough answers gathered
-    elif len(st.session_state.user_answers) >= 6 and not st.session_state.profile_complete:
-        st.session_state.profile_complete = True
-        st.markdown("✅ I’ve gathered enough information. Here are my top 3 car recommendations:")
+        st.session_state.last_recommendations = recommend_vehicles(st.session_state.user_answers)
+        st.rerun()
 
-        top3 = recommend_vehicles()
-        if top3.empty:
-            st.markdown("Hmm, no perfect matches yet. Want to continue refining?")
-        else:
-            for _, row in top3.iterrows():
-                st.markdown(f"**{row['Make']} {row['Model']}** — {row['Type']} | {row['MSRP Range']}")
-            st.markdown("Would you like to **learn more about these vehicles**, or should I **ask another question to refine your match**?")
+else:
+    with st.form(key="initial_chat_form", clear_on_submit=True):
+        user_input = st.text_input("Hey there! I’d love to help you find the perfect ride. What brings you in today?")
+        submitted = st.form_submit_button("Start Chat")
 
-    # Default flow
-    else:
-        field, next_q = get_next_question()
-        if field and next_q:
-            suggestion = "Let’s keep building your profile so I can get the perfect match for you."
-            show_suggestion_then_question(suggestion, next_q)
-        else:
-            st.markdown("I think we’ve got your profile down! Want to see more cars or restart?")
-
-# Show chat history
-st.markdown("### 💬 Chat History")
-for sender, msg in st.session_state.chat_history:
-    role = "You" if sender == "user" else "Advisor"
-    st.markdown(f"**{role}:** {msg}")
+    if submitted and user_input:
+        st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
+        st.session_state.chat_log.append("<b>VehicleAdvisor:</b> Awesome! Let’s get started. Just to begin, what region are you located in?")
+        st.rerun()
