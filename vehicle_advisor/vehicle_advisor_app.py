@@ -49,8 +49,10 @@ def extract_profile_info(user_input):
     if "jersey" in text:
         st.session_state.user_answers["Region"] = "New Jersey"
 
-    if "refine" in text or "more info" in text or "continue" in text:
+    if any(x in text for x in ["refine", "more info", "continue refining"]):
         st.session_state.refine_requested = True
+    if any(x in text for x in ["learn more", "tell me more", "more details"]):
+        st.session_state.awaiting_vehicle_detail = True
 
 # --- Recommend cars based on filtered profile ---
 def recommend_vehicles(user_answers, top_n=2):
@@ -92,7 +94,7 @@ if submitted and user_input:
     st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
     extract_profile_info(user_input)
 
-    if st.session_state.awaiting_vehicle_detail and "learn" in user_input.lower():
+    if st.session_state.awaiting_vehicle_detail and st.session_state.last_recommendations:
         details = ""
         for car in st.session_state.last_recommendations:
             details += f"**{car['Brand']} {car['Model']} ({car['Model Year']})**\n"
@@ -107,13 +109,11 @@ if submitted and user_input:
 
     if st.session_state.refine_requested:
         st.session_state.refine_requested = False
-        st.session_state.awaiting_vehicle_detail = False
         gpt_prompt = (
-            f"You are a professional vehicle advisor. Continue asking follow-up questions to gather missing preferences.\n"
-            f"Avoid asking what has already been answered.\n\n"
-            f"Current Profile:\n" + "\n".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()]) + "\n\n"
+            f"You are a professional vehicle advisor. Ask the user for more information to refine their profile.\n"
+            f"Only ask one follow-up question about missing vehicle preferences, such as budget, brand, size, or usage.\n\n"
+            f"User profile:\n" + "\n".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()]) + "\n\n"
             f"User just said: {user_input}\n"
-            f"Ask one specific follow-up question to refine their needs further."
         )
     else:
         profile_summary = "\n".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()])
@@ -146,7 +146,7 @@ if submitted and user_input:
             matched_vehicles.append(match.iloc[0].to_dict())
 
     st.session_state.last_recommendations = matched_vehicles
-    st.session_state.awaiting_vehicle_detail = True
+    st.session_state.awaiting_vehicle_detail = False
     st.rerun()
 
 if not st.session_state.chat_log:
