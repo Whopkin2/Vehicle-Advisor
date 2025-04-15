@@ -83,8 +83,7 @@ if st.session_state.chat_log:
     user_input = st.text_input("Your reply:", key="chat")
     if st.button("Send", key="submit_chat") and user_input:
         st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
-        profile_summary = "
-".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()])
+        profile_summary = "\n".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()])
         gpt_prompt = (
             f"You're a vehicle advisor. Your goal is to have a natural back-and-forth chat to understand the user's needs for a new vehicle.
 "
