@@ -16,11 +16,11 @@ def load_data():
     return df
 
 df_vehicle_advisor = load_data()
+valid_brands = set(df_vehicle_advisor['Make'].unique())
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 client = openai.OpenAI(api_key=openai.api_key)
 
-# Session state setup
 if "user_answers" not in st.session_state:
     st.session_state.user_answers = {}
 if "chat_log" not in st.session_state:
@@ -68,14 +68,16 @@ field_patterns = {
 
 def recommend_vehicles(user_answers, top_n=3):
     df = df_vehicle_advisor.copy()
-    
-    # Blocked brand filter
+
     if st.session_state.blocked_brands:
         df = df[~df['Make'].isin(st.session_state.blocked_brands)]
 
+    budget_value = user_answers.get("Budget", "45000").replace("$", "").replace(",", "").lower().strip()
     try:
-        budget_value = user_answers.get("Budget", "45000")
-        user_budget = float(re.findall(r'\d+', budget_value.replace("$", "").replace(",", "").strip())[0])
+        if "k" in budget_value:
+            user_budget = float(budget_value.replace("k", "")) * 1000
+        else:
+            user_budget = float(re.findall(r'\d+', budget_value)[0])
     except:
         user_budget = 45000
 
@@ -106,67 +108,71 @@ if st.session_state.chat_log:
     with st.form(key="chat_form", clear_on_submit=True):
         user_input = st.text_input("Your reply:")
         submitted = st.form_submit_button("Send")
+                if submitted and user_input:
+            st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
+            user_input_lower = user_input.lower()
 
-    if submitted and user_input:
-        st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
-        user_input_lower = user_input.lower()
+            # --- Brand blocking/unblocking ---
+            blocked = re.findall(r"(remove|block|exclude|not interested in)\s+([\w\s,&]+)", user_input_lower)
+            unblocked = re.findall(r"(add|include|consider)\s+([\w\s,&]+)", user_input_lower)
 
-        # --- Brand blocking/unblocking ---
-        blocked = re.findall(r"(remove|block|exclude|not interested in)\s+([\w\s,&]+)", user_input_lower)
-        unblocked = re.findall(r"(add|include|consider)\s+([\w\s,&]+)", user_input_lower)
+            if blocked:
+                for _, brand_list in blocked:
+                    for brand in re.split(r"[,&]", brand_list):
+                        clean_brand = brand.strip().title()
+                        if clean_brand in valid_brands:
+                            st.session_state.blocked_brands.add(clean_brand)
+                if st.session_state.blocked_brands:
+                    st.session_state.chat_log.append(
+                        f"<b>VehicleAdvisor:</b> Got it — I’ve removed these brands from future suggestions: {', '.join(st.session_state.blocked_brands)}."
+                    )
 
-        if blocked:
-            for _, brand_list in blocked:
-                for brand in re.split(r"[,&]", brand_list):
-                    clean_brand = brand.strip().title()
-                    if clean_brand:
-                        st.session_state.blocked_brands.add(clean_brand)
-            st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> Got it — I’ve removed these brands from future suggestions: {', '.join(st.session_state.blocked_brands)}.")
+            if unblocked:
+                for _, brand_list in unblocked:
+                    for brand in re.split(r"[,&]", brand_list):
+                        clean_brand = brand.strip().title()
+                        if clean_brand in valid_brands:
+                            st.session_state.blocked_brands.discard(clean_brand)
+                st.session_state.chat_log.append(
+                    f"<b>VehicleAdvisor:</b> No problem — I’ll consider those brands again moving forward."
+                )
 
-        if unblocked:
-            for _, brand_list in unblocked:
-                for brand in re.split(r"[,&]", brand_list):
-                    clean_brand = brand.strip().title()
-                    if clean_brand:
-                        st.session_state.blocked_brands.discard(clean_brand)
-            st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> No problem — I’ll consider these brands again in recommendations.")
+            # --- Update locked fields from user input ---
+            for field in list(score_weights.keys()):
+                if f"change my {field.lower()}" in user_input_lower or f"update my {field.lower()}" in user_input_lower:
+                    st.session_state.locked_keys.discard(field.lower())
+                    st.session_state.user_answers.pop(field, None)
+                    st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> Got it — feel free to update your {field} preference now.")
 
-        # --- Update preferences ---
-        for field in list(score_weights.keys()):
-            if f"change my {field.lower()}" in user_input_lower or f"update my {field.lower()}" in user_input_lower:
-                st.session_state.locked_keys.discard(field.lower())
-                st.session_state.user_answers.pop(field, None)
-                st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> Got it — feel free to update your {field} preference now.")
-
-        for field, keywords in field_patterns.items():
-            if field.lower() in st.session_state.locked_keys or field.lower() in custom_repeat_prevention:
-                continue
-            if any(kw in user_input_lower for kw in keywords):
-                if field in ["Safety Priority", "Tech Features", "Eco-Conscious"]:
-                    match = re.search(r'(\d{1,2})', user_input_lower)
-                    if match:
-                        st.session_state.user_answers[field] = match.group(1)
+            for field, keywords in field_patterns.items():
+                if field.lower() in st.session_state.locked_keys or field.lower() in custom_repeat_prevention:
+                    continue
+                if any(kw in user_input_lower for kw in keywords):
+                    if field in ["Safety Priority", "Tech Features", "Eco-Conscious"]:
+                        match = re.search(r'(\d{1,2})', user_input_lower)
+                        if match:
+                            st.session_state.user_answers[field] = match.group(1)
+                            st.session_state.locked_keys.add(field.lower())
+                    else:
+                        match = re.search(r'(\d{2,3}[,\d{3}]*)', user_input.replace(",", "")) if field in ["Budget", "Credit Score"] else None
+                        value = f"${match.group(1)}" if match and field == "Budget" else match.group(1) if match else user_input.title()
+                        st.session_state.user_answers[field] = value
                         st.session_state.locked_keys.add(field.lower())
-                else:
-                    match = re.search(r'(\d{2,3}[,\d{3}]*)', user_input.replace(",", "")) if field in ["Budget", "Credit Score"] else None
-                    value = f"${match.group(1)}" if match and field == "Budget" else match.group(1) if match else user_input.title()
-                    st.session_state.user_answers[field] = value
-                    st.session_state.locked_keys.add(field.lower())
 
-        for key in st.session_state.user_answers:
-            st.session_state.locked_keys.add(key.lower())
-            custom_repeat_prevention.add(key.lower())
+            for key in st.session_state.user_answers:
+                st.session_state.locked_keys.add(key.lower())
+                custom_repeat_prevention.add(key.lower())
 
-        profile_summary = "\n".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()])
-        unlocked_questions = [k for k in score_weights if k.lower() not in st.session_state.locked_keys]
+            profile_summary = "\n".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()])
+            unlocked_questions = [k for k in score_weights if k.lower() not in st.session_state.locked_keys]
 
-        learn_more_prompt = """
+            learn_more_prompt = """
 If the user says 'Tell me more about [car]', give a detailed description from the dataset.
 If the user hasn't said that, after recommending cars, you may occasionally say: "Would you like to learn more about any of these cars?"
 If they say yes, respond with rich info about those cars. Then continue the profiling questions.
 """
 
-        gpt_prompt = f"""You are a car chatbot, that is tasked with helping a person or a car salesman find the best cars that fit the needs specified.
+            gpt_prompt = f"""You are a car chatbot, that is tasked with helping a person or a car salesman find the best cars that fit the needs specified.
 You will look into the vehicle data CSV and ask questions regarding the profile of the individual based on attributes of the cars to find out which car will best suit that individual.
 These questions should be based on the score weights — some hold much higher weights than others because they are more important — but that doesn't mean you ignore the lower-weighted ones.
 
@@ -194,34 +200,33 @@ Remaining preference options to ask about: {unlocked_questions}
 Start by responding conversationally. Acknowledge their latest message, then update their profile (only if relevant), recommend 1–2 cars, and ask the next best question. NEVER ask about anything that is already locked unless the user asked to change it.
 Wait for the user to respond before continuing. You must complete 8–10 total questions unless the user asks to skip ahead."""
 
-        response = client.chat.completions.create(
-            model="gpt-4",
-            messages=[
-                {"role": "system", "content": "You're a helpful car advisor that builds a user profile and recommends cars without repeating questions."},
-                {"role": "user", "content": gpt_prompt}
-            ]
-        )
+            response = client.chat.completions.create(
+                model="gpt-4",
+                messages=[
+                    {"role": "system", "content": "You're a helpful car advisor that builds a user profile and recommends cars without repeating questions."},
+                    {"role": "user", "content": gpt_prompt}
+                ]
+            )
 
-        reply = response.choices[0].message.content
-        st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {reply}")
+            reply = response.choices[0].message.content
+            st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {reply}")
 
-        if len(st.session_state.locked_keys) >= 8 and not st.session_state.final_recs_shown:
-            st.session_state.final_recs_shown = True
-            final_recs = recommend_vehicles(st.session_state.user_answers, top_n=3)
-            st.session_state.last_recommendations = final_recs
-            st.session_state.chat_log.append("<b>VehicleAdvisor:</b> I’ve gathered enough information. Here are my top 3 car recommendations based on your preferences:")
-            for idx, row in final_recs.iterrows():
-                st.session_state.chat_log.append(
-                    f"<b>{idx+1}. {row['Make']} {row['Model']} ({row['Model Year']})</b> – {row['MSRP Range']}"
-                )
-            st.session_state.chat_log.append("Would you like to restart and build a new profile, or see more cars that match your preferences?")
-        st.rerun()
+            if len(st.session_state.locked_keys) >= 8 and not st.session_state.final_recs_shown:
+                st.session_state.final_recs_shown = True
+                final_recs = recommend_vehicles(st.session_state.user_answers, top_n=3)
+                st.session_state.last_recommendations = final_recs
+                st.session_state.chat_log.append("<b>VehicleAdvisor:</b> I’ve gathered enough information. Here are my top 3 car recommendations based on your preferences:")
+                for idx, row in final_recs.iterrows():
+                    st.session_state.chat_log.append(
+                        f"<b>{idx+1}. {row['Make']} {row['Model']} ({row['Model Year']})</b> – {row['MSRP Range']}"
+                    )
+                st.session_state.chat_log.append("Would you like to restart and build a new profile, or see more cars that match your preferences?")
+            st.rerun()
 
 else:
     with st.form(key="initial_chat_form", clear_on_submit=True):
         user_input = st.text_input("Hey there! I’d love to help you find the perfect ride. What brings you in today?")
         submitted = st.form_submit_button("Start Chat")
-
     if submitted and user_input:
         st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
         st.session_state.chat_log.append("<b>VehicleAdvisor:</b> Awesome! Let’s get started. Just to begin, what region are you located in?")
