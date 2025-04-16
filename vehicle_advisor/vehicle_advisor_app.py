@@ -17,11 +17,10 @@ def load_data():
 
 df_vehicle_advisor = load_data()
 
-# Setup API
 openai.api_key = os.getenv("OPENAI_API_KEY")
 client = openai.OpenAI(api_key=openai.api_key)
 
-# Session state
+# Session state setup
 if "user_answers" not in st.session_state:
     st.session_state.user_answers = {}
 if "chat_log" not in st.session_state:
@@ -32,6 +31,8 @@ if "locked_keys" not in st.session_state:
     st.session_state.locked_keys = set()
 if "final_recs_shown" not in st.session_state:
     st.session_state.final_recs_shown = False
+if "blocked_brands" not in st.session_state:
+    st.session_state.blocked_brands = set()
 
 score_weights = {
     "Region": 1.0, "Use Category": 1.0, "Yearly Income": 0.6, "Credit Score": 0.6,
@@ -67,6 +68,11 @@ field_patterns = {
 
 def recommend_vehicles(user_answers, top_n=3):
     df = df_vehicle_advisor.copy()
+    
+    # Blocked brand filter
+    if st.session_state.blocked_brands:
+        df = df[~df['Make'].isin(st.session_state.blocked_brands)]
+
     try:
         budget_value = user_answers.get("Budget", "45000")
         user_budget = float(re.findall(r'\d+', budget_value.replace("$", "").replace(",", "").strip())[0])
@@ -85,17 +91,14 @@ def recommend_vehicles(user_answers, top_n=3):
     df = df.sort_values(by=['score', 'Model Year'], ascending=[False, False])
     return df.head(top_n).reset_index(drop=True)
 
-# --- UI HEADER ---
 st.markdown("## 🚗 VehicleAdvisor Chat")
 
-# ✅ Restart Profile Button
 if st.button("🔄 Restart Profile"):
-    for key in ["user_answers", "chat_log", "last_recommendations", "locked_keys", "final_recs_shown"]:
+    for key in ["user_answers", "chat_log", "last_recommendations", "locked_keys", "final_recs_shown", "blocked_brands"]:
         if key in st.session_state:
             del st.session_state[key]
     st.rerun()
 
-# Chat log display
 if st.session_state.chat_log:
     for msg in st.session_state.chat_log:
         st.markdown(f"<div style='font-family:sans-serif;'>{msg}</div>", unsafe_allow_html=True)
@@ -108,13 +111,32 @@ if st.session_state.chat_log:
         st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
         user_input_lower = user_input.lower()
 
+        # --- Brand blocking/unblocking ---
+        blocked = re.findall(r"(remove|block|exclude|not interested in)\s+([\w\s,&]+)", user_input_lower)
+        unblocked = re.findall(r"(add|include|consider)\s+([\w\s,&]+)", user_input_lower)
+
+        if blocked:
+            for _, brand_list in blocked:
+                for brand in re.split(r"[,&]", brand_list):
+                    clean_brand = brand.strip().title()
+                    if clean_brand:
+                        st.session_state.blocked_brands.add(clean_brand)
+            st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> Got it — I’ve removed these brands from future suggestions: {', '.join(st.session_state.blocked_brands)}.")
+
+        if unblocked:
+            for _, brand_list in unblocked:
+                for brand in re.split(r"[,&]", brand_list):
+                    clean_brand = brand.strip().title()
+                    if clean_brand:
+                        st.session_state.blocked_brands.discard(clean_brand)
+            st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> No problem — I’ll consider these brands again in recommendations.")
+
+        # --- Update preferences ---
         for field in list(score_weights.keys()):
             if f"change my {field.lower()}" in user_input_lower or f"update my {field.lower()}" in user_input_lower:
                 st.session_state.locked_keys.discard(field.lower())
                 st.session_state.user_answers.pop(field, None)
-                st.session_state.chat_log.append(
-                    f"<b>VehicleAdvisor:</b> Got it — feel free to update your {field} preference now."
-                )
+                st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> Got it — feel free to update your {field} preference now.")
 
         for field, keywords in field_patterns.items():
             if field.lower() in st.session_state.locked_keys or field.lower() in custom_repeat_prevention:
@@ -151,6 +173,8 @@ These questions should be based on the score weights — some hold much higher w
 Once the user answers a question, HARD LOCK that information — NEVER ask for it again. For example, if they share their budget, that is FINAL. Do not re-ask it. Do not imply it wasn't given.
 
 Only if the user clearly says something like "update my budget" or "change my credit score" should you allow the field to be modified.
+
+Blocked brands (do not suggest unless user adds them back): {list(st.session_state.blocked_brands)}
 
 After each question, mention 1–2 cars that could fit the individual's preferences so far, based on the latest answer and all prior locked values.
 You should ask a total of 8 to 10 thoughtful, dynamic questions before recommending the final vehicles that match best.
@@ -203,7 +227,6 @@ else:
         st.session_state.chat_log.append("<b>VehicleAdvisor:</b> Awesome! Let’s get started. Just to begin, what region are you located in?")
         st.rerun()
 
-# Display results and export
 if st.session_state.final_recs_shown and not st.session_state.last_recommendations.empty:
     st.markdown("### 📊 Comparison of Recommended Vehicles")
     st.dataframe(st.session_state.last_recommendations[['Make', 'Model', 'Model Year', 'MSRP Range', 'score']])
