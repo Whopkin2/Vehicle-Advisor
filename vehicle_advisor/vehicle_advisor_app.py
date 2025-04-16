@@ -88,7 +88,7 @@ def recommend_vehicles(user_answers, top_n=3):
 # --- UI HEADER ---
 st.markdown("## 🚗 VehicleAdvisor Chat")
 
-# ✅ Restart Profile Button (fixed)
+# ✅ Restart Profile Button
 if st.button("🔄 Restart Profile"):
     for key in ["user_answers", "chat_log", "last_recommendations", "locked_keys", "final_recs_shown"]:
         if key in st.session_state:
@@ -126,8 +126,8 @@ if st.session_state.chat_log:
                         st.session_state.user_answers[field] = match.group(1)
                         st.session_state.locked_keys.add(field.lower())
                 else:
-                    match = re.search(r'(\d{2,3}[,\d{3}]*)', user_input.replace(",", "")) if field == "Budget" else None
-                    value = f"${match.group(1)}" if match else user_input.title()
+                    match = re.search(r'(\d{2,3}[,\d{3}]*)', user_input.replace(",", "")) if field in ["Budget", "Credit Score"] else None
+                    value = f"${match.group(1)}" if match and field == "Budget" else match.group(1) if match else user_input.title()
                     st.session_state.user_answers[field] = value
                     st.session_state.locked_keys.add(field.lower())
 
@@ -203,7 +203,7 @@ else:
         st.session_state.chat_log.append("<b>VehicleAdvisor:</b> Awesome! Let’s get started. Just to begin, what region are you located in?")
         st.rerun()
 
-# Show results and export
+# Display results and export
 if st.session_state.final_recs_shown and not st.session_state.last_recommendations.empty:
     st.markdown("### 📊 Comparison of Recommended Vehicles")
     st.dataframe(st.session_state.last_recommendations[['Make', 'Model', 'Model Year', 'MSRP Range', 'score']])
