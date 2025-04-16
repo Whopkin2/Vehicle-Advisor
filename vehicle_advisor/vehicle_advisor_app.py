@@ -105,12 +105,16 @@ if st.session_state.chat_log:
     for msg in st.session_state.chat_log:
         st.markdown(f"<div style='font-family:sans-serif;'>{msg}</div>", unsafe_allow_html=True)
 
-    with st.form(key="chat_form", clear_on_submit=True):
-        user_input = st.text_input("Your reply:")
-        submitted = st.form_submit_button("Send")
-                if submitted and user_input:
-            st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
-            user_input_lower = user_input.lower()
+with st.form(key="chat_form", clear_on_submit=True):
+    user_input = st.text_input("Your reply:")
+    submitted = st.form_submit_button("Send")
+
+    if submitted and user_input:
+        st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
+        user_input_lower = user_input.lower()
+
+        # (Continue logic for blocked brands, preferences, GPT prompt, etc.)
+
 
             # --- Brand blocking/unblocking ---
             blocked = re.findall(r"(remove|block|exclude|not interested in)\s+([\w\s,&]+)", user_input_lower)
