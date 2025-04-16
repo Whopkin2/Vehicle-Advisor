@@ -16,11 +16,12 @@ def load_data():
     return df
 
 df_vehicle_advisor = load_data()
-valid_brands = set(df_vehicle_advisor['Brand'].unique())
+valid_brands = set(df_vehicle_advisor['Brand'].unique())  # FIX: changed Make → Brand
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 client = openai.OpenAI(api_key=openai.api_key)
 
+# Initialize session state
 if "user_answers" not in st.session_state:
     st.session_state.user_answers = {}
 if "chat_log" not in st.session_state:
@@ -33,6 +34,8 @@ if "final_recs_shown" not in st.session_state:
     st.session_state.final_recs_shown = False
 if "blocked_brands" not in st.session_state:
     st.session_state.blocked_brands = set()
+if "pending_question" not in st.session_state:
+    st.session_state.pending_question = None
 
 score_weights = {
     "Region": 1.0, "Use Category": 1.0, "Yearly Income": 0.6, "Credit Score": 0.6,
@@ -50,7 +53,7 @@ field_patterns = {
     "Region": ["located in", "from", "live"],
     "Safety Priority": ["safety"],
     "Tech Features": ["tech", "infotainment", "camera"],
-    "Yearly Income": ["income", "salary", "Brand per year"],
+    "Yearly Income": ["income", "salary", "make per year"],
     "Credit Score": ["credit score", "fico"],
     "Garage Access": ["garage", "parking"],
     "Eco-Conscious": ["eco", "environment", "green", "hybrid", "ev"],
@@ -95,7 +98,7 @@ def recommend_vehicles(user_answers, top_n=3):
 st.markdown("## 🚗 VehicleAdvisor Chat")
 
 if st.button("🔄 Restart Profile"):
-    for key in ["user_answers", "chat_log", "last_recommendations", "locked_keys", "final_recs_shown", "blocked_brands"]:
+    for key in ["user_answers", "chat_log", "last_recommendations", "locked_keys", "final_recs_shown", "blocked_brands", "pending_question"]:
         if key in st.session_state:
             del st.session_state[key]
     st.rerun()
@@ -110,31 +113,29 @@ if st.session_state.chat_log:
         if submitted and user_input:
             st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
             user_input_lower = user_input.lower()
+            st.session_state.pending_question = None  # Clear any old pending marker
 
-            # --- Brand blocking/unblocking ---
+            # Brand blocking/unblocking
             blocked = re.findall(r"(remove|block|exclude|not interested in)\s+([\w\s,&]+)", user_input_lower)
             unblocked = re.findall(r"(add|include|consider)\s+([\w\s,&]+)", user_input_lower)
 
             if blocked:
-                for _, brand_list in blocked:
-                    for brand in re.split(r"[,&]", brand_list):
-                        clean_brand = brand.strip().title()
-                        if clean_brand in valid_brands:
-                            st.session_state.blocked_brands.add(clean_brand)
-                st.session_state.chat_log.append(
-                    f"<b>VehicleAdvisor:</b> Got it — I’ve removed these brands from future suggestions: {', '.join(st.session_state.blocked_brands)}."
-                )
+                for _, brands in blocked:
+                    for brand in re.split(r"[,&]", brands):
+                        b = brand.strip().title()
+                        if b in valid_brands:
+                            st.session_state.blocked_brands.add(b)
+                st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> Got it — I’ve removed these brands from future suggestions: {', '.join(st.session_state.blocked_brands)}.")
 
             if unblocked:
-                for _, brand_list in unblocked:
-                    for brand in re.split(r"[,&]", brand_list):
-                        clean_brand = brand.strip().title()
-                        if clean_brand in valid_brands:
-                            st.session_state.blocked_brands.discard(clean_brand)
-                st.session_state.chat_log.append(
-                    f"<b>VehicleAdvisor:</b> No problem — I’ll consider those brands again moving forward."
-                )
+                for _, brands in unblocked:
+                    for brand in re.split(r"[,&]", brands):
+                        b = brand.strip().title()
+                        if b in valid_brands:
+                            st.session_state.blocked_brands.discard(b)
+                st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> Got it — I’ll consider those brands again from now on.")
 
+            # Field updates
             for field in list(score_weights.keys()):
                 if f"change my {field.lower()}" in user_input_lower or f"update my {field.lower()}" in user_input_lower:
                     st.session_state.locked_keys.discard(field.lower())
@@ -156,9 +157,9 @@ if st.session_state.chat_log:
                         st.session_state.user_answers[field] = value
                         st.session_state.locked_keys.add(field.lower())
 
-            for key in st.session_state.user_answers:
-                st.session_state.locked_keys.add(key.lower())
-                custom_repeat_prevention.add(key.lower())
+            for k in st.session_state.user_answers:
+                st.session_state.locked_keys.add(k.lower())
+                custom_repeat_prevention.add(k.lower())
 
             profile_summary = "\n".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()])
             unlocked_questions = [k for k in score_weights if k.lower() not in st.session_state.locked_keys]
@@ -182,7 +183,7 @@ Blocked brands (do not suggest unless user adds them back): {list(st.session_sta
 After each question, mention 1–2 cars that could fit the individual's preferences so far, based on the latest answer and all prior locked values.
 You should ask a total of 8 to 10 thoughtful, dynamic questions before recommending the final vehicles that match best.
 
-You can use charts to visually compare options and highlight matches. Your goal is to be as human and fluid as possible — Brand the interaction feel natural.
+You can use charts to visually compare options and highlight matches. Your goal is to be as human and fluid as possible — make the interaction feel natural.
 
 {learn_more_prompt}
 
@@ -207,17 +208,7 @@ Wait for the user to respond before continuing. You must complete 8–10 total q
 
             reply = response.choices[0].message.content
             st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {reply}")
-
-            if len(st.session_state.locked_keys) >= 8 and not st.session_state.final_recs_shown:
-                st.session_state.final_recs_shown = True
-                final_recs = recommend_vehicles(st.session_state.user_answers, top_n=3)
-                st.session_state.last_recommendations = final_recs
-                st.session_state.chat_log.append("<b>VehicleAdvisor:</b> I’ve gathered enough information. Here are my top 3 car recommendations based on your preferences:")
-                for idx, row in final_recs.iterrows():
-                    st.session_state.chat_log.append(
-                        f"<b>{idx+1}. {row['Brand']} {row['Model']} ({row['Model Year']})</b> – {row['MSRP Range']}"
-                    )
-                st.session_state.chat_log.append("Would you like to restart and build a new profile, or see more cars that match your preferences?")
+            st.session_state.pending_question = True  # A question was asked, wait before final rec
             st.rerun()
 
 else:
@@ -229,9 +220,23 @@ else:
             st.session_state.chat_log.append("<b>VehicleAdvisor:</b> Awesome! Let’s get started. Just to begin, what region are you located in?")
             st.rerun()
 
+# Final rec trigger only if 8+ are locked and no question is pending
+if len(st.session_state.locked_keys) >= 8 and not st.session_state.final_recs_shown and not st.session_state.pending_question:
+    st.session_state.final_recs_shown = True
+    final_recs = recommend_vehicles(st.session_state.user_answers, top_n=3)
+    st.session_state.last_recommendations = final_recs
+    st.session_state.chat_log.append("<b>VehicleAdvisor:</b> I’ve gathered enough information. Here are my top 3 car recommendations based on your preferences:")
+    for idx, row in final_recs.iterrows():
+        st.session_state.chat_log.append(
+            f"<b>{idx+1}. {row['Brand']} {row['Model']} ({row['Model Year']})</b> – {row['MSRP Range']}"
+        )
+    st.session_state.chat_log.append("Would you like to restart and build a new profile, or see more cars that match your preferences?")
+    st.rerun()
+
 if st.session_state.final_recs_shown and not st.session_state.last_recommendations.empty:
     st.markdown("### 📊 Comparison of Recommended Vehicles")
     st.dataframe(st.session_state.last_recommendations[['Brand', 'Model', 'Model Year', 'MSRP Range', 'score']])
+
     full_export = st.session_state.last_recommendations.copy()
     for k, v in st.session_state.user_answers.items():
         full_export[k] = v
