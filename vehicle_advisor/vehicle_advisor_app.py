@@ -88,12 +88,12 @@ def recommend_vehicles(user_answers, top_n=3):
 # --- UI HEADER ---
 st.markdown("## 🚗 VehicleAdvisor Chat")
 
-# Restart button
+# ✅ Restart Profile Button (fixed)
 if st.button("🔄 Restart Profile"):
     for key in ["user_answers", "chat_log", "last_recommendations", "locked_keys", "final_recs_shown"]:
         if key in st.session_state:
             del st.session_state[key]
-    st.experimental_rerun()
+    st.rerun()
 
 # Chat log display
 if st.session_state.chat_log:
@@ -138,7 +138,6 @@ if st.session_state.chat_log:
         profile_summary = "\n".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()])
         unlocked_questions = [k for k in score_weights if k.lower() not in st.session_state.locked_keys]
 
-        # --- GPT PROMPT SECTION (Your original) ---
         learn_more_prompt = """
 If the user says 'Tell me more about [car]', give a detailed description from the dataset.
 If the user hasn't said that, after recommending cars, you may occasionally say: "Would you like to learn more about any of these cars?"
@@ -182,7 +181,6 @@ Wait for the user to respond before continuing. You must complete 8–10 total q
         reply = response.choices[0].message.content
         st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> {reply}")
 
-        # ✅ Final recommendation logic block
         if len(st.session_state.locked_keys) >= 8 and not st.session_state.final_recs_shown:
             st.session_state.final_recs_shown = True
             final_recs = recommend_vehicles(st.session_state.user_answers, top_n=3)
@@ -195,7 +193,6 @@ Wait for the user to respond before continuing. You must complete 8–10 total q
             st.session_state.chat_log.append("Would you like to restart and build a new profile, or see more cars that match your preferences?")
         st.rerun()
 
-# Initial message
 else:
     with st.form(key="initial_chat_form", clear_on_submit=True):
         user_input = st.text_input("Hey there! I’d love to help you find the perfect ride. What brings you in today?")
@@ -206,7 +203,7 @@ else:
         st.session_state.chat_log.append("<b>VehicleAdvisor:</b> Awesome! Let’s get started. Just to begin, what region are you located in?")
         st.rerun()
 
-# ✅ Show recommendations and download
+# Show results and export
 if st.session_state.final_recs_shown and not st.session_state.last_recommendations.empty:
     st.markdown("### 📊 Comparison of Recommended Vehicles")
     st.dataframe(st.session_state.last_recommendations[['Make', 'Model', 'Model Year', 'MSRP Range', 'score']])
