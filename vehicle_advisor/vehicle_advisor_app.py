@@ -68,7 +68,6 @@ field_patterns = {
 
 def recommend_vehicles(user_answers, top_n=3):
     df = df_vehicle_advisor.copy()
-
     if st.session_state.blocked_brands:
         df = df[~df['Make'].isin(st.session_state.blocked_brands)]
 
@@ -100,21 +99,17 @@ if st.button("🔄 Restart Profile"):
         if key in st.session_state:
             del st.session_state[key]
     st.rerun()
-
 if st.session_state.chat_log:
     for msg in st.session_state.chat_log:
         st.markdown(f"<div style='font-family:sans-serif;'>{msg}</div>", unsafe_allow_html=True)
 
-with st.form(key="chat_form", clear_on_submit=True):
-    user_input = st.text_input("Your reply:")
-    submitted = st.form_submit_button("Send")
+    with st.form(key="chat_form", clear_on_submit=True):
+        user_input = st.text_input("Your reply:")
+        submitted = st.form_submit_button("Send")
 
-    if submitted and user_input:
-        st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
-        user_input_lower = user_input.lower()
-
-        # (Continue logic for blocked brands, preferences, GPT prompt, etc.)
-
+        if submitted and user_input:
+            st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
+            user_input_lower = user_input.lower()
 
             # --- Brand blocking/unblocking ---
             blocked = re.findall(r"(remove|block|exclude|not interested in)\s+([\w\s,&]+)", user_input_lower)
@@ -126,10 +121,9 @@ with st.form(key="chat_form", clear_on_submit=True):
                         clean_brand = brand.strip().title()
                         if clean_brand in valid_brands:
                             st.session_state.blocked_brands.add(clean_brand)
-                if st.session_state.blocked_brands:
-                    st.session_state.chat_log.append(
-                        f"<b>VehicleAdvisor:</b> Got it — I’ve removed these brands from future suggestions: {', '.join(st.session_state.blocked_brands)}."
-                    )
+                st.session_state.chat_log.append(
+                    f"<b>VehicleAdvisor:</b> Got it — I’ve removed these brands from future suggestions: {', '.join(st.session_state.blocked_brands)}."
+                )
 
             if unblocked:
                 for _, brand_list in unblocked:
@@ -141,7 +135,6 @@ with st.form(key="chat_form", clear_on_submit=True):
                     f"<b>VehicleAdvisor:</b> No problem — I’ll consider those brands again moving forward."
                 )
 
-            # --- Update locked fields from user input ---
             for field in list(score_weights.keys()):
                 if f"change my {field.lower()}" in user_input_lower or f"update my {field.lower()}" in user_input_lower:
                     st.session_state.locked_keys.discard(field.lower())
@@ -231,15 +224,14 @@ else:
     with st.form(key="initial_chat_form", clear_on_submit=True):
         user_input = st.text_input("Hey there! I’d love to help you find the perfect ride. What brings you in today?")
         submitted = st.form_submit_button("Start Chat")
-    if submitted and user_input:
-        st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
-        st.session_state.chat_log.append("<b>VehicleAdvisor:</b> Awesome! Let’s get started. Just to begin, what region are you located in?")
-        st.rerun()
+        if submitted and user_input:
+            st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
+            st.session_state.chat_log.append("<b>VehicleAdvisor:</b> Awesome! Let’s get started. Just to begin, what region are you located in?")
+            st.rerun()
 
 if st.session_state.final_recs_shown and not st.session_state.last_recommendations.empty:
     st.markdown("### 📊 Comparison of Recommended Vehicles")
     st.dataframe(st.session_state.last_recommendations[['Make', 'Model', 'Model Year', 'MSRP Range', 'score']])
-
     full_export = st.session_state.last_recommendations.copy()
     for k, v in st.session_state.user_answers.items():
         full_export[k] = v
