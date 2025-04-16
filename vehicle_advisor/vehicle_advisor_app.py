@@ -16,7 +16,7 @@ def load_data():
     return df
 
 df_vehicle_advisor = load_data()
-valid_brands = set(df_vehicle_advisor['Make'].unique())
+valid_brands = set(df_vehicle_advisor['Brand'].unique())
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 client = openai.OpenAI(api_key=openai.api_key)
@@ -50,7 +50,7 @@ field_patterns = {
     "Region": ["located in", "from", "live"],
     "Safety Priority": ["safety"],
     "Tech Features": ["tech", "infotainment", "camera"],
-    "Yearly Income": ["income", "salary", "make per year"],
+    "Yearly Income": ["income", "salary", "Brand per year"],
     "Credit Score": ["credit score", "fico"],
     "Garage Access": ["garage", "parking"],
     "Eco-Conscious": ["eco", "environment", "green", "hybrid", "ev"],
@@ -69,7 +69,7 @@ field_patterns = {
 def recommend_vehicles(user_answers, top_n=3):
     df = df_vehicle_advisor.copy()
     if st.session_state.blocked_brands:
-        df = df[~df['Make'].isin(st.session_state.blocked_brands)]
+        df = df[~df['Brand'].isin(st.session_state.blocked_brands)]
 
     budget_value = user_answers.get("Budget", "45000").replace("$", "").replace(",", "").lower().strip()
     try:
@@ -182,7 +182,7 @@ Blocked brands (do not suggest unless user adds them back): {list(st.session_sta
 After each question, mention 1–2 cars that could fit the individual's preferences so far, based on the latest answer and all prior locked values.
 You should ask a total of 8 to 10 thoughtful, dynamic questions before recommending the final vehicles that match best.
 
-You can use charts to visually compare options and highlight matches. Your goal is to be as human and fluid as possible — make the interaction feel natural.
+You can use charts to visually compare options and highlight matches. Your goal is to be as human and fluid as possible — Brand the interaction feel natural.
 
 {learn_more_prompt}
 
@@ -215,7 +215,7 @@ Wait for the user to respond before continuing. You must complete 8–10 total q
                 st.session_state.chat_log.append("<b>VehicleAdvisor:</b> I’ve gathered enough information. Here are my top 3 car recommendations based on your preferences:")
                 for idx, row in final_recs.iterrows():
                     st.session_state.chat_log.append(
-                        f"<b>{idx+1}. {row['Make']} {row['Model']} ({row['Model Year']})</b> – {row['MSRP Range']}"
+                        f"<b>{idx+1}. {row['Brand']} {row['Model']} ({row['Model Year']})</b> – {row['MSRP Range']}"
                     )
                 st.session_state.chat_log.append("Would you like to restart and build a new profile, or see more cars that match your preferences?")
             st.rerun()
@@ -231,7 +231,7 @@ else:
 
 if st.session_state.final_recs_shown and not st.session_state.last_recommendations.empty:
     st.markdown("### 📊 Comparison of Recommended Vehicles")
-    st.dataframe(st.session_state.last_recommendations[['Make', 'Model', 'Model Year', 'MSRP Range', 'score']])
+    st.dataframe(st.session_state.last_recommendations[['Brand', 'Model', 'Model Year', 'MSRP Range', 'score']])
     full_export = st.session_state.last_recommendations.copy()
     for k, v in st.session_state.user_answers.items():
         full_export[k] = v
