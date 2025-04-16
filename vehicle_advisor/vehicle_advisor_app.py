@@ -3,7 +3,6 @@ import pandas as pd
 import openai
 import re
 import os
-import random
 
 st.set_page_config(page_title="Vehicle Advisor", layout="centered")
 
@@ -22,7 +21,7 @@ df_vehicle_advisor = load_data()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 client = openai.OpenAI(api_key=openai.api_key)
 
-# Session state init
+# Session state
 if "user_answers" not in st.session_state:
     st.session_state.user_answers = {}
 if "chat_log" not in st.session_state:
@@ -44,10 +43,10 @@ custom_repeat_prevention = set()
 
 field_patterns = {
     "Budget": ["budget", "$", "k"],
-    "Use Category": ["commute", "commuting", "daily driver", "everyday"],
-    "Region": ["located in", "from"],
+    "Use Category": ["commute", "commuting", "daily driver", "everyday", "leisure"],
+    "Region": ["located in", "from", "live"],
     "Safety Priority": ["safety"],
-    "Tech Features": ["tech"],
+    "Tech Features": ["tech", "infotainment", "camera"],
     "Yearly Income": ["income", "salary", "make per year"],
     "Credit Score": ["credit score", "fico"],
     "Garage Access": ["garage", "parking"],
@@ -61,7 +60,7 @@ field_patterns = {
     "Travel Frequency": ["travel", "trip", "fly", "frequent"],
     "Ownership Duration": ["how long", "keep", "own for"],
     "Annual Mileage": ["miles per year", "annual mileage", "drive per year"],
-    "Drive Type": ["awd", "fwd", "rwd", "4wd", "drive type"]
+    "Drive Type": ["awd", "fwd", "rwd", "4wd", "rear wheel", "front wheel"]
 }
 
 def recommend_vehicles(user_answers, top_n=3):
@@ -85,7 +84,7 @@ def recommend_vehicles(user_answers, top_n=3):
     return df.head(top_n).reset_index(drop=True)
 
 # Chat interface
-st.markdown("## \U0001F697 VehicleAdvisor Chat")
+st.markdown("## 🚗 VehicleAdvisor Chat")
 
 if st.session_state.chat_log:
     for msg in st.session_state.chat_log:
@@ -99,76 +98,62 @@ if st.session_state.chat_log:
         st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
         user_input_lower = user_input.lower()
 
-        # Detect requests to update a field
-        for field in list(st.session_state.locked_keys):
-            if f"update my {field}" in user_input_lower or f"change my {field}" in user_input_lower:
-                st.session_state.locked_keys.remove(field)
-                st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> Got it — feel free to update your {field} preference now.")
+        # Allow users to update preferences
+        for field in list(score_weights.keys()):
+            if f"change my {field.lower()}" in user_input_lower or f"update my {field.lower()}" in user_input_lower:
+                st.session_state.locked_keys.discard(field.lower())
+                st.session_state.user_answers.pop(field, None)
+                st.session_state.chat_log.append(
+                    f"<b>VehicleAdvisor:</b> Got it — feel free to update your {field} preference now."
+                )
 
+        # Extract field values from user input
         for field, keywords in field_patterns.items():
             if field.lower() in st.session_state.locked_keys or field.lower() in custom_repeat_prevention:
                 continue
-            if field in ["Safety Priority", "Tech Features", "Eco-Conscious"]:
-                if any(kw in user_input_lower for kw in keywords) and any(num in user_input_lower for num in [str(i) for i in range(1, 11)]):
+            if any(kw in user_input_lower for kw in keywords):
+                if field in ["Safety Priority", "Tech Features", "Eco-Conscious"]:
                     match = re.search(r'(\d{1,2})', user_input_lower)
                     if match:
                         st.session_state.user_answers[field] = match.group(1)
                         st.session_state.locked_keys.add(field.lower())
-            elif any(kw in user_input_lower for kw in keywords):
-                match = re.search(r'(\d{2,3}[,\d{3}]*)', user_input.replace(",", "")) if field == "Budget" else None
-                value = match.group(1) if match else user_input.title()
-                st.session_state.user_answers[field] = value
-                st.session_state.locked_keys.add(field.lower())
+                else:
+                    match = re.search(r'(\d{2,3}[,\d{3}]*)', user_input.replace(",", "")) if field == "Budget" else None
+                    value = f"${match.group(1)}" if match else user_input.title()
+                    st.session_state.user_answers[field] = value
+                    st.session_state.locked_keys.add(field.lower())
 
-        # Prevent repeat prompts by tracking custom fields already asked or answered
-        for answered_field in st.session_state.user_answers:
-            custom_repeat_prevention.add(answered_field.lower())
-
+        # Lock all current keys to prevent repeats
         for key in st.session_state.user_answers:
-            if key.lower() not in st.session_state.locked_keys:
-                st.session_state.locked_keys.add(key.lower())
+            st.session_state.locked_keys.add(key.lower())
+            custom_repeat_prevention.add(key.lower())
 
         profile_summary = "\n".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()])
-
-        unlocked_questions = [k for k, _ in sorted(score_weights.items(), key=lambda item: item[1], reverse=True)
-                              if k.lower() not in st.session_state.locked_keys]
+        unlocked_questions = [k for k in score_weights if k.lower() not in st.session_state.locked_keys]
 
         learn_more_prompt = """
 If the user says 'Tell me more about [car]', give a detailed description from the dataset.
 If the user hasn't said that, after recommending cars, you may occasionally say: "Would you like to learn more about any of these cars?"
-If they say yes, respond with rich info about those cars. Then continue the profiling questions.
 """
 
-        gpt_prompt = f"""You are a car chatbot, that is tasked with helping a person or a car salesman find the best cars that fit the needs specified.
-You will look into the vehicle data CSV and ask questions regarding the profile of the individual based on attributes of the cars to find out which car will best suit that individual.
-These questions should be based on the score weights — some hold much higher weights than others because they are more important — but that doesn't mean you ignore the lower-weighted ones.
+        gpt_prompt = f"""
+You are a car advisor chatbot. You’re helping someone find the perfect vehicle by asking strategic questions based on the most important scoring factors.
 
-Once the user answers a question, HARD LOCK that information — NEVER ask for it again. For example, if they share their budget, that is FINAL. Do not re-ask it. Do not imply it wasn't given.
+- NEVER ask about anything already in the locked list: {list(st.session_state.locked_keys)}
+- Only ask questions from this list: {unlocked_questions}
+- Continue the conversation naturally and conversationally.
+- Recommend 1–2 vehicles based on updated profile.
 
-Only if the user clearly says something like \"update my budget\" or \"change my credit score\" should you allow the field to be modified.
-
-After each question, mention 1–2 cars that could fit the individual's preferences so far, based on the latest answer and all prior locked values.
-You should ask a total of 8 to 10 thoughtful, dynamic questions before recommending the final vehicles that match best.
-
-You can use charts to visually compare options and highlight matches. Your goal is to be as human and fluid as possible — make the interaction feel natural.
-
-{learn_more_prompt}
-
-Here’s what they’ve shared so far:
+Here’s what they’ve shared:
 {profile_summary}
 
-They just said: {user_input}
-
-Locked preferences: {list(st.session_state.locked_keys)}
-Remaining preference options to ask about: {unlocked_questions}
-
-Start by responding conversationally. Acknowledge their latest message, then update their profile (only if relevant), recommend 1–2 cars, and ask the next best question. NEVER ask about anything that is already locked unless the user asked to change it.
-Wait for the user to respond before continuing. You must complete 8–10 total questions unless the user asks to skip ahead."""
+New message: {user_input}
+"""
 
         response = client.chat.completions.create(
             model="gpt-4",
             messages=[
-                {"role": "system", "content": "You are a vehicle advisor that helps users build their car preferences step by step, and recommend cars after every step. Do not repeat questions or ask for information already provided."},
+                {"role": "system", "content": "You're a helpful car advisor that builds a user profile and recommends cars without repeating questions."},
                 {"role": "user", "content": gpt_prompt}
             ]
         )
