@@ -138,17 +138,38 @@ if st.session_state.chat_log:
         profile_summary = "\n".join([f"{k}: {v}" for k, v in st.session_state.user_answers.items()])
         unlocked_questions = [k for k in score_weights if k.lower() not in st.session_state.locked_keys]
 
-        gpt_prompt = f"""
-You are a car advisor chatbot. You’re helping someone find the perfect vehicle by asking strategic questions based on the most important scoring factors.
+        # --- GPT PROMPT SECTION (Your original) ---
+        learn_more_prompt = """
+If the user says 'Tell me more about [car]', give a detailed description from the dataset.
+If the user hasn't said that, after recommending cars, you may occasionally say: "Would you like to learn more about any of these cars?"
+If they say yes, respond with rich info about those cars. Then continue the profiling questions.
+"""
 
-- NEVER ask about anything already in the locked list: {list(st.session_state.locked_keys)}
-- Only ask questions from this list: {unlocked_questions}
+        gpt_prompt = f"""You are a car chatbot, that is tasked with helping a person or a car salesman find the best cars that fit the needs specified.
+You will look into the vehicle data CSV and ask questions regarding the profile of the individual based on attributes of the cars to find out which car will best suit that individual.
+These questions should be based on the score weights — some hold much higher weights than others because they are more important — but that doesn't mean you ignore the lower-weighted ones.
 
-Here’s what they’ve shared:
+Once the user answers a question, HARD LOCK that information — NEVER ask for it again. For example, if they share their budget, that is FINAL. Do not re-ask it. Do not imply it wasn't given.
+
+Only if the user clearly says something like "update my budget" or "change my credit score" should you allow the field to be modified.
+
+After each question, mention 1–2 cars that could fit the individual's preferences so far, based on the latest answer and all prior locked values.
+You should ask a total of 8 to 10 thoughtful, dynamic questions before recommending the final vehicles that match best.
+
+You can use charts to visually compare options and highlight matches. Your goal is to be as human and fluid as possible — make the interaction feel natural.
+
+{learn_more_prompt}
+
+Here’s what they’ve shared so far:
 {profile_summary}
 
-User just said: {user_input}
-"""
+They just said: {user_input}
+
+Locked preferences: {list(st.session_state.locked_keys)}
+Remaining preference options to ask about: {unlocked_questions}
+
+Start by responding conversationally. Acknowledge their latest message, then update their profile (only if relevant), recommend 1–2 cars, and ask the next best question. NEVER ask about anything that is already locked unless the user asked to change it.
+Wait for the user to respond before continuing. You must complete 8–10 total questions unless the user asks to skip ahead."""
 
         response = client.chat.completions.create(
             model="gpt-4",
@@ -164,7 +185,7 @@ User just said: {user_input}
         # ✅ Final recommendation logic block
         if len(st.session_state.locked_keys) >= 8 and not st.session_state.final_recs_shown:
             st.session_state.final_recs_shown = True
-            final_recs = recomend_vehicles(st.session_state.user_answers, top_n=3)
+            final_recs = recommend_vehicles(st.session_state.user_answers, top_n=3)
             st.session_state.last_recommendations = final_recs
             st.session_state.chat_log.append("<b>VehicleAdvisor:</b> I’ve gathered enough information. Here are my top 3 car recommendations based on your preferences:")
             for idx, row in final_recs.iterrows():
@@ -185,12 +206,11 @@ else:
         st.session_state.chat_log.append("<b>VehicleAdvisor:</b> Awesome! Let’s get started. Just to begin, what region are you located in?")
         st.rerun()
 
-# ✅ Optional: Show table and download link if final recs shown
+# ✅ Show recommendations and download
 if st.session_state.final_recs_shown and not st.session_state.last_recommendations.empty:
     st.markdown("### 📊 Comparison of Recommended Vehicles")
     st.dataframe(st.session_state.last_recommendations[['Make', 'Model', 'Model Year', 'MSRP Range', 'score']])
 
-    # Export
     full_export = st.session_state.last_recommendations.copy()
     for k, v in st.session_state.user_answers.items():
         full_export[k] = v
