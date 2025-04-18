@@ -85,9 +85,9 @@ def recommend_vehicles(user_answers, top_n=3):
     df = df.sort_values(by=['score', 'Model Year'], ascending=[False, False])
     return df.head(top_n).reset_index(drop=True)
 
-st.title("\ud83d\ude97 Vehicle Advisor")
+st.title("Vehicle Advisor")
 
-if st.button("\ud83d\udd04 Restart Profile"):
+if st.button("🔄 Restart Profile"):
     for key in ["user_answers", "chat_log", "locked_keys", "final_recs_shown", "blocked_brands", "preferred_brands", "current_question_index", "last_recommendations"]:
         if key in st.session_state:
             del st.session_state[key]
