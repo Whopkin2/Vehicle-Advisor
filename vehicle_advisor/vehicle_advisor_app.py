@@ -120,6 +120,7 @@ if current_index < len(fixed_questions):
 
             recs = recommend_vehicles(st.session_state.user_answers, top_n=2)
             st.session_state.last_recommendations = recs
+
             for idx, row in recs.iterrows():
                 explanation = f"Based on your input for {field.lower()}, this vehicle matches well."
 if field == "Region":
@@ -135,51 +136,64 @@ elif field == "Towing Needs":
 elif field == "Drive Type":
     explanation = f"Given your drive type preference of {user_input}, this car is a strong match for terrain and control."
 
-st.session_state.chat_log.append(
-    f"<b>Suggested:</b> {row['Brand']} {row['Model']} ({row['Model Year']}) – {row['MSRP Range']}<br><i>Why this fits:</i> {explanation}"
-)
+                explanation = f"Based on your input for {field.lower()}, this vehicle matches well."
+                if field == "Region":
+                    explanation = f"Designed for your region ({user_input}), this car handles diverse weather and road conditions well."
+                elif field == "Use Category":
+                    explanation = f"Since you mentioned '{user_input}', this model is known for performance and comfort in that category."
+                elif field == "Eco-Conscious":
+                    explanation = f"This vehicle offers strong eco-performance, ideal for environmentally conscious drivers like you."
+                elif field == "Car Size":
+                    explanation = f"With your preference for a {user_input.lower()} vehicle, this model fits perfectly in terms of space and handling."
+                elif field == "Towing Needs":
+                    explanation = f"This vehicle has strong towing capabilities, making it a great match for your needs."
+                elif field == "Drive Type":
+                    explanation = f"Given your drive type preference of {user_input}, this car is a strong match for terrain and control."
+
+                st.session_state.chat_log.append(
+                    f"<b>Suggested:</b> {row['Brand']} {row['Model']} ({row['Model Year']}) – {row['MSRP Range']}<br><i>Why this fits:</i> {explanation}"
+                )
 
             st.session_state.current_question_index += 1
             st.rerun()
 else:
     if not st.session_state.final_recs_shown:
-    st.session_state.final_recs_shown = True
-    profile_summary_text = "
+        st.session_state.final_recs_shown = True
+        profile_summary_text = "
 ".join([f"- {k}: {v}" for k, v in st.session_state.user_answers.items()])
-    st.session_state.chat_log.append("<b>VehicleAdvisor:</b> Based on your profile, here’s a quick summary of what you’re looking for:<br><br>" + profile_summary_text.replace("
+        st.session_state.chat_log.append("<b>VehicleAdvisor:</b> Based on your profile, here’s a quick summary of what you’re looking for:<br><br>" + profile_summary_text.replace("
 ", "<br>") + "<br><br>Let’s check out your top 3 vehicle matches.")
-    final_recs = recommend_vehicles(st.session_state.user_answers, top_n=3)
-    st.session_state.last_recommendations = final_recs
+        final_recs = recommend_vehicles(st.session_state.user_answers, top_n=3)
+        st.session_state.last_recommendations = final_recs
 
-    profile_summary = "
+        profile_summary = "
 ".join([f"- {k}: {v}" for k, v in st.session_state.user_answers.items()])
-    vehicle_descriptions = []
-    for idx, row in final_recs.iterrows():
-        description_prompt = f"""
+        for idx, row in final_recs.iterrows():
+            description_prompt = f"""
 You are a helpful vehicle advisor. Here's the user's profile:
 {profile_summary}
 
 Recommend the following vehicle and explain why it suits their needs:
 - {row['Brand']} {row['Model']} ({row['Model Year']}) – {row['MSRP Range']}
 """
-        try:
-            response = client.chat.completions.create(
-                model="gpt-4",
-                messages=[
-                    {"role": "system", "content": "You are a helpful assistant that explains vehicle recommendations to match user profiles."},
-                    {"role": "user", "content": description_prompt}
-                ]
+            try:
+                response = client.chat.completions.create(
+                    model="gpt-4",
+                    messages=[
+                        {"role": "system", "content": "You are a helpful assistant that explains vehicle recommendations to match user profiles."},
+                        {"role": "user", "content": description_prompt}
+                    ]
+                )
+                explanation = response.choices[0].message.content.strip()
+            except Exception as e:
+                explanation = "Explanation currently unavailable due to a technical issue."
+
+            st.session_state.chat_log.append(
+                f"<b>{idx+1}. {row['Brand']} {row['Model']} ({row['Model Year']})</b> – {row['MSRP Range']}<br><i>Why this fits your profile:</i> {explanation}"
             )
-            explanation = response.choices[0].message.content.strip()
-        except Exception as e:
-            explanation = "Explanation currently unavailable due to a technical issue."
 
-        st.session_state.chat_log.append(
-            f"<b>{idx+1}. {row['Brand']} {row['Model']} ({row['Model Year']})</b> – {row['MSRP Range']}<br><i>Why this fits your profile:</i> {explanation}"
-        )
-
-    st.session_state.chat_log.append("If you want a comparison table of these cars, just ask!")
-    st.rerun()
+        st.session_state.chat_log.append("If you want a comparison table of these cars, just ask!")
+        st.rerun()
 
 if st.session_state.final_recs_shown and not st.session_state.last_recommendations.empty:
     with st.form(key="followup_form"):
