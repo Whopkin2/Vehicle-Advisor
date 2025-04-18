@@ -8,7 +8,7 @@ st.set_page_config(page_title="Vehicle Advisor", layout="centered")
 
 @st.cache_data
 def load_data():
-    df = pd.read_csv("vehicle_data.csv")
+    df = pd.read_csv("data = pd.read_csv("vehicle_advisor/vehicle_data.csv")
     df['MSRP Min'] = df['MSRP Range'].apply(
         lambda msrp_range: float(re.findall(r'\$([\d,]+)', str(msrp_range))[0].replace(',', ''))
         if re.findall(r'\$([\d,]+)', str(msrp_range)) else None
