@@ -122,6 +122,7 @@ if current_index < len(fixed_questions):
             st.session_state.last_recommendations = recs
 
             for idx, row in recs.iterrows():
+                
                 explanation = f"Based on your input for {field.lower()}, this vehicle matches well."
 if field == "Region":
     explanation = f"Designed for your region ({user_input}), this car handles diverse weather and road conditions well."
