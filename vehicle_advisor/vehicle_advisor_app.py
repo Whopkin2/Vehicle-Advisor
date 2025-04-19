@@ -94,7 +94,7 @@ if st.button("🔄 Restart Profile"):
     st.rerun()
 
 if not st.session_state.chat_log and st.session_state.current_question_index == -1:
-    st.session_state.chat_log.append("<b>VehicleAdvisor:</b> Hey there! I’m here to help you find the perfect vehicle. Let’s get started with a few quick questions.")
+    st.session_state.chat_log.append("<b>VehicleAdvisor:</b> <span style= 'font-weight:normal'> Hey there! I’m here to help you find the perfect vehicle. Let’s get started with a few quick questions.")
     st.session_state.current_question_index = 0
     st.rerun()
 
