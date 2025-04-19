@@ -111,48 +111,81 @@ if current_index < len(fixed_questions):
         user_input = st.text_input(question)
         submitted = st.form_submit_button("Send")
 
-        if submitted and user_input:
-            st.session_state.user_answers[field] = user_input
-            st.session_state.locked_keys.add(field.lower())
-            st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
-            st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> Thanks! I've noted your {field.lower()}.")
+       # Define expected keywords for each field
+expected_fields_keywords = {
+    "Region": ["north", "south", "east", "west", "midwest", "northeast", "southeast", "pacific", "central"],
+    "Use Category": ["commuting", "family", "off-road", "offroading", "utility", "city", "work", "daily", "leisure"],
+    "Budget": ["$", "k", "000", "usd", "dollars"],
+    "Credit Score": ["poor", "fair", "good", "very good", "excellent", "score", "credit", "600", "700", "800"],
+    "Yearly Income": ["$", "k", "000", "income", "salary"],
+    "Car Size": ["compact", "midsize", "fullsize", "suv", "sedan", "truck", "crossover"],
+    "Eco-Conscious": ["yes", "no"],
+    "Garage Access": ["yes", "no"],
+    "Charging Access": ["yes", "no"],
+    "Towing Needs": ["yes", "no"],
+    "Neighborhood Type": ["urban", "suburban", "rural", "city", "town"],
+    "Drive Type": ["awd", "fwd", "rwd", "all wheel", "front wheel", "rear wheel"],
+    "Safety Priority": ["yes", "no"],
+    "Tech Features": ["yes", "no"],
+    "Travel Frequency": ["yes", "no", "often", "rarely", "frequent"]
+}
 
-            # 🔒 Auto-block brands based on negative mentions
-            if "not interested in" in user_input.lower():
-                for brand in valid_brands:
-                    if brand.lower() in user_input.lower():
-                        st.session_state.blocked_brands.add(brand)
+if submitted and user_input:
+    keywords = expected_fields_keywords.get(field, [])
+    if keywords and not any(k in user_input.lower() for k in keywords):
+        st.session_state.chat_log.append(
+            f"<b>VehicleAdvisor:</b> Hmm... I didn’t quite catch your answer about your {field.lower()}. Could you rephrase it?"
+        )
+        st.rerun()
 
-            # ✅ Generate recommendations AFTER blocking
-            recs = recommend_vehicles(st.session_state.user_answers, top_n=2)
-            st.session_state.last_recommendations = recs
+    st.session_state.user_answers[field] = user_input
+    st.session_state.locked_keys.add(field.lower())
+    st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
+    st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> Thanks! I've noted your {field.lower()}.")
 
-            for idx, row in recs.iterrows():
-                if field == "Region":
-                    explanation = f"Designed for your region ({user_input}), this car handles diverse weather and road conditions well."
-                elif field == "Use Category":
-                    if any(b.lower() in user_input.lower() and "not interested" in user_input.lower() for b in valid_brands):
-                        explanation = f"This model may appear despite your preferences — let me know if you'd like to exclude certain brands."
-                    else:
-                        explanation = f"Since you mentioned '{user_input}', this model is known for performance and comfort in that category."
-                elif field == "Eco-Conscious":
-                    explanation = f"This vehicle offers strong eco-performance, ideal for environmentally conscious drivers like you."
-                elif field == "Car Size":
-                    explanation = f"With your preference for a {user_input.lower()} vehicle, this model fits perfectly in terms of space and handling."
-                elif field == "Towing Needs":
-                    explanation = f"This vehicle has strong towing capabilities, making it a great match for your needs."
-                elif field == "Drive Type":
-                    explanation = f"Given your drive type preference of {user_input}, this car is a strong match for terrain and control."
-                elif field == "Neighborhood Type":
-                    explanation = f"Since you live in a {user_input.lower()} area, this vehicle is suited for your driving environment — whether tight city streets or open rural roads."
-                elif field == "Tech Features":
-                    explanation = f"As someone interested in tech, this vehicle includes the advanced features you're looking for."
+    if "not interested in" in user_input.lower():
+        for brand in valid_brands:
+            if brand.lower() in user_input.lower():
+                st.session_state.blocked_brands.add(brand)
+
+    recs = recommend_vehicles(st.session_state.user_answers, top_n=2)
+    st.session_state.last_recommendations = recs
+
+    for idx, row in recs.iterrows():
+        if field == "Region":
+            explanation = f"This model is known for strong performance across various climates — great for areas like {user_input} with diverse weather."
+        elif field == "Use Category":
+            if any(b.lower() in user_input.lower() and "not interested" in user_input.lower() for b in valid_brands):
+                explanation = f"This model may appear despite your preferences — let me know if you'd like to exclude certain brands."
+            else:
+                category = row.get("Use Category", "").lower()
+                if "off-road" in category:
+                    explanation = "Rugged build, high clearance, and traction systems make it excellent for off-road and utility driving."
+                elif "commuting" in category:
+                    explanation = "Great for daily use — it’s efficient, maneuverable, and reliable for frequent drives."
+                elif "family" in category:
+                    explanation = "Spacious, safe, and loaded with comfort features — ideal for family needs."
                 else:
-                    explanation = f"Based on your input for {field.lower()}, this vehicle matches well."
+                    explanation = f"This model fits your intended use case of '{user_input}'."
+        elif field == "Eco-Conscious" and user_input.lower() == "yes":
+            explanation = f"This model is eco-friendly — with either hybrid or electric powertrains to reduce emissions and save on fuel."
+        elif field == "Car Size":
+            explanation = f"As a {row['Car Size']} vehicle, it aligns well with your space, visibility, and handling expectations."
+        elif field == "Towing Needs":
+            explanation = f"This model supports towing — making it suitable for trailers, boats, or equipment hauling."
+        elif field == "Drive Type":
+            explanation = f"It features {row['Drive Type']} — giving you great control and traction for your driving preference."
+        elif field == "Neighborhood Type":
+            explanation = f"This model suits {user_input.lower()} settings — whether navigating urban streets or open rural roads."
+        elif field == "Tech Features":
+            explanation = f"Packed with advanced driver assistance and smart features for a modern driving experience."
+        else:
+            explanation = f"Based on your input for {field.lower()}, this vehicle matches well."
 
-                st.session_state.chat_log.append(
-                    f"<b>Suggested:</b> {row['Brand']} {row['Model']} ({row['Model Year']}) – {row['MSRP Range']}<br><i>Why this fits:</i> {explanation}"
-                )
+        st.session_state.chat_log.append(
+            f"<b>Suggested:</b> {row['Brand']} {row['Model']} ({row['Model Year']}) – {row['MSRP Range']}<br><i>Why this fits:</i> {explanation}"
+        )
 
-            st.session_state.current_question_index += 1
-            st.rerun()
+    st.session_state.current_question_index += 1
+    st.rerun()
+ 
