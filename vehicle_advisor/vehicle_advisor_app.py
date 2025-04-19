@@ -143,7 +143,7 @@ if submitted and user_input:
     keywords = expected_fields_keywords.get(field, [])
     if keywords and not any(k in user_input.lower() for k in keywords):
         st.session_state.chat_log.append(
-            f"<b>VehicleAdvisor:</b> Hmm... I didn’t quite catch your answer about your {field.lower()}. Could you rephrase it?"
+            f"<b>VehicleAdvisor:</b> Thank you for providing that feedback, it will help me give you a more accurate car recommendation. Could you now answer my question regarding {field.lower()}?"
         )
         st.rerun()
 
