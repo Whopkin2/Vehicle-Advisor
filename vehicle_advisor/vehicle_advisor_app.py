@@ -103,8 +103,7 @@ if st.session_state.chat_log:
         st.markdown(f"<div style='font-family:sans-serif;'>{msg}</div>", unsafe_allow_html=True)
 
 current_index = st.session_state.current_question_index
-
-    if current_index < len(fixed_questions):
+if current_index < len(fixed_questions):
     field = fixed_questions[current_index]['field']
     question = fixed_questions[current_index]['question']
 
