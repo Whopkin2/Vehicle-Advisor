@@ -134,10 +134,10 @@ if submitted and user_input:
     if "not interested in" in user_input.lower():
         for brand in valid_brands:
             if re.search(rf"\b{re.escape(brand.lower())}\b", user_input.lower()):
-            st.session_state.blocked_brands.add(brand)
-            st.session_state.chat_log.append(
-                f"<b>VehicleAdvisor:</b> Got it — I'll exclude <b>{brand}</b> from future recommendations."
-            )
+                st.session_state.blocked_brands.add(brand)
+                st.session_state.chat_log.append(
+                    f"<b>VehicleAdvisor:</b> Got it — I'll exclude <b>{brand}</b> from future recommendations."
+                )
 
     # ✅ Validate the current field's input using keyword matching
     keywords = expected_fields_keywords.get(field, [])
