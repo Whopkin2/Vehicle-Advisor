@@ -104,7 +104,7 @@ if st.session_state.chat_log:
 
 current_index = st.session_state.current_question_index
 
-if current_index < len(fixed_questions):
+    if current_index < len(fixed_questions):
     field = fixed_questions[current_index]['field']
     question = fixed_questions[current_index]['question']
 
@@ -112,18 +112,48 @@ if current_index < len(fixed_questions):
         user_input = st.text_input(question)
         submitted = st.form_submit_button("Send")
 
-       if submitted and user_input:
+        if submitted and user_input:
             st.session_state.user_answers[field] = user_input
             st.session_state.locked_keys.add(field.lower())
             st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
             st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> Thanks! I've noted your {field.lower()}.")
 
             # 🔒 Auto-block brands based on negative mentions
-                if "not interested in" in user_input.lower():
-                    for brand in valid_brands:
-                        if brand.lower() in user_input.lower():
-                            st.session_state.blocked_brands.add(brand)
+            if "not interested in" in user_input.lower():
+                for brand in valid_brands:
+                    if brand.lower() in user_input.lower():
+                        st.session_state.blocked_brands.add(brand)
 
-    # ✅ Generate recommendations AFTER blocking
-    recs = recommend_vehicles(st.session_state.user_answers, top_n=2)
+            # ✅ Generate recommendations AFTER blocking
+            recs = recommend_vehicles(st.session_state.user_answers, top_n=2)
+            st.session_state.last_recommendations = recs
 
+            for idx, row in recs.iterrows():
+                if field == "Region":
+                    explanation = f"Designed for your region ({user_input}), this car handles diverse weather and road conditions well."
+                elif field == "Use Category":
+                    if any(b.lower() in user_input.lower() and "not interested" in user_input.lower() for b in valid_brands):
+                        explanation = f"This model may appear despite your preferences — let me know if you'd like to exclude certain brands."
+                    else:
+                        explanation = f"Since you mentioned '{user_input}', this model is known for performance and comfort in that category."
+                elif field == "Eco-Conscious":
+                    explanation = f"This vehicle offers strong eco-performance, ideal for environmentally conscious drivers like you."
+                elif field == "Car Size":
+                    explanation = f"With your preference for a {user_input.lower()} vehicle, this model fits perfectly in terms of space and handling."
+                elif field == "Towing Needs":
+                    explanation = f"This vehicle has strong towing capabilities, making it a great match for your needs."
+                elif field == "Drive Type":
+                    explanation = f"Given your drive type preference of {user_input}, this car is a strong match for terrain and control."
+                elif field == "Neighborhood Type":
+                    explanation = f"Since you live in a {user_input.lower()} area, this vehicle is suited for your driving environment — whether tight city streets or open rural roads."
+                elif field == "Tech Features":
+                    explanation = f"As someone interested in tech, this vehicle includes the advanced features you're looking for."
+                else:
+                    explanation = f"Based on your input for {field.lower()}, this vehicle matches well."
+
+                st.session_state.chat_log.append(
+                    f"<b>Suggested:</b> {row['Brand']} {row['Model']} ({row['Model Year']}) – {row['MSRP Range']}<br><i>Why this fits:</i> {explanation}"
+                )
+
+            st.session_state.current_question_index += 1
+            st.rerun()
