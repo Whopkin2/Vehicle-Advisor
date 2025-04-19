@@ -136,6 +136,9 @@ if submitted and user_input:
         for brand in valid_brands:
             if brand.lower() in user_input.lower():
                 st.session_state.blocked_brands.add(brand)
+                st.session_state.chat_log.append(
+                    f"<b>VehicleAdvisor:</b> Got it — I'll exclude <b>{brand}</b> from future recommendations."
+                )
 
     # ✅ Validate the current field's input using keyword matching
     keywords = expected_fields_keywords.get(field, [])
@@ -201,6 +204,6 @@ if submitted and user_input:
             f"<b>Suggested:</b> {row['Brand']} {row['Model']} ({row['Model Year']}) – {row['MSRP Range']}<br><i>Why this fits:</i> {explanation}"
         )
 
-    # Move to the next question
+    # 👉 Move to the next question
     st.session_state.current_question_index += 1
     st.rerun()
