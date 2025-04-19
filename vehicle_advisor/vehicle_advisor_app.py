@@ -47,21 +47,21 @@ score_weights = {
 }
 
 fixed_questions = [
-    {"field": "Region", "question": "What region are you located in?"},
-    {"field": "Use Category", "question": "What will you mainly use this vehicle for?"},
-    {"field": "Budget", "question": "What’s your vehicle budget?"},
-    {"field": "Credit Score", "question": "What is your approximate credit score?"},
-    {"field": "Yearly Income", "question": "What’s your annual income range?"},
-    {"field": "Car Size", "question": "What size of vehicle do you prefer?"},
-    {"field": "Eco-Conscious", "question": "Are you looking for an eco-friendly vehicle?"},
-    {"field": "Garage Access", "question": "Do you have access to a garage or secure parking?"},
-    {"field": "Charging Access", "question": "Do you have access to EV charging?"},
-    {"field": "Towing Needs", "question": "Do you need the vehicle to handle towing?"},
-    {"field": "Neighborhood Type", "question": "Is your area more rural, urban, or suburban?"},
-    {"field": "Drive Type", "question": "Do you prefer AWD, FWD, or RWD?"},
-    {"field": "Safety Priority", "question": "Is safety a top priority for you?"},
-    {"field": "Tech Features", "question": "Do you want advanced tech features?"},
-    {"field": "Travel Frequency", "question": "Do you travel long distances often?"}
+    {"field": "Region", "question": "What region are you located in? (e.g., North East, South West, Mid-West)"},
+    {"field": "Use Category", "question": "What will you mainly use this vehicle for? (e.g., Commuting, Family, Off-Roading, Utility)"},
+    {"field": "Budget", "question": "What’s your vehicle budget? (e.g., $30k, $45,000, under $50k)"},
+    {"field": "Credit Score", "question": "What is your approximate credit score? (e.g., Poor, Fair, Good, Very Good, Excellent, 650)"},
+    {"field": "Yearly Income", "question": "What’s your annual income range? (e.g., $50k, $90,000, over $120k)"},
+    {"field": "Car Size", "question": "What size of vehicle do you prefer? (e.g., Compact, Midsize, Fullsize, SUV, Truck, Crossover)"},
+    {"field": "Eco-Conscious", "question": "Are you looking for an eco-friendly vehicle? (Yes/No)"},
+    {"field": "Garage Access", "question": "Do you have access to a garage or secure parking? (Yes/No)"},
+    {"field": "Charging Access", "question": "Do you have access to EV charging? (Yes/No)"},
+    {"field": "Towing Needs", "question": "Do you need the vehicle to handle towing? (Yes/No)"},
+    {"field": "Neighborhood Type", "question": "Is your area more rural, urban, or suburban? (e.g., Urban, Suburban, Rural)"},
+    {"field": "Drive Type", "question": "Do you prefer AWD, FWD, or RWD? (All Wheel, Front Wheel, Rear Wheel)"},
+    {"field": "Safety Priority", "question": "Is safety a top priority for you? (Yes/No)"},
+    {"field": "Tech Features", "question": "Do you want advanced tech features? (Yes/No)"},
+    {"field": "Travel Frequency", "question": "Do you travel long distances often? (Yes/No)"},
 ]
 
 def recommend_vehicles(user_answers, top_n=3):
