@@ -21,56 +21,51 @@ def load_data():
 
 df = load_data()
 
-# Initialize chat history and shortlist
+# Initialize session state
 if "messages" not in st.session_state:
     st.session_state.messages = []
 if "shortlist" not in st.session_state:
     st.session_state.shortlist = []
+if "question_step" not in st.session_state:
+    st.session_state.question_step = 0
+if "answers" not in st.session_state:
+    st.session_state.answers = {}
+
+# Expanded questions based on typical car features
+questions = [
+    "What type of car are you looking for? (e.g., SUV, Sedan, Truck)",
+    "What is your maximum budget? (numbers only)",
+    "Any preferred brand? (optional)",
+    "Any minimum model year? (optional)",
+    "Any maximum mileage? (optional)",
+    "Do you prefer electric vehicles? (yes/no)",
+    "Do you need a car with AWD or 4WD? (yes/no)",
+    "Do you need a third-row seat? (yes/no)",
+    "Do you prefer a luxury brand? (yes/no)",
+    "What's your maximum monthly payment goal? (optional)"
+]
 
 # Helper functions
-def extract_budget(prompt):
-    match = re.search(r'(?:under|below|less than|around)\s*\$?(\d+)', prompt)
-    if match:
-        return int(match.group(1))
-    return None
+def extract_int(text):
+    numbers = re.findall(r'\d+', text)
+    return int(numbers[0]) if numbers else None
 
-def extract_year(prompt):
-    match = re.search(r'(\d{4})', prompt)
-    if match:
-        return int(match.group(1))
-    return None
+def yes_no_to_bool(text):
+    return text.strip().lower() in ["yes", "y"]
 
-def extract_mileage(prompt):
-    match = re.search(r'(?:under|below|less than)\s*(\d{1,3}(?:,\d{3})*)\s*miles', prompt)
-    if match:
-        mileage = int(match.group(1).replace(",", ""))
-        return mileage
-    return None
-
-# Generate smart response
-def generate_vehicle_response(prompt):
-    prompt = prompt.lower()
-
-    budget = extract_budget(prompt)
-    year = extract_year(prompt)
-    mileage = extract_mileage(prompt)
-    brand = None
-
-    for known_brand in df['Brand'].unique():
-        if known_brand in prompt:
-            brand = known_brand
-            break
-
+def generate_vehicle_recommendations(answers):
     filtered = df.copy()
 
-    if brand:
-        filtered = filtered[filtered['Brand'].str.contains(brand, case=False, na=False)]
-    if budget:
-        filtered = filtered[filtered['MSRP Min'] <= budget]
-    if year and 'Year' in filtered.columns:
-        filtered = filtered[filtered['Year'] >= year]
-    if mileage and 'Mileage' in filtered.columns:
-        filtered = filtered[filtered['Mileage'] <= mileage]
+    if answers.get("type"):
+        filtered = filtered[filtered['Model'].str.contains(answers["type"], case=False, na=False)]
+    if answers.get("brand"):
+        filtered = filtered[filtered['Brand'].str.contains(answers["brand"], case=False, na=False)]
+    if answers.get("budget"):
+        filtered = filtered[filtered['MSRP Min'] <= answers["budget"]]
+    if answers.get("year") and 'Year' in filtered.columns:
+        filtered = filtered[filtered['Year'] >= answers["year"]]
+    if answers.get("mileage") and 'Mileage' in filtered.columns:
+        filtered = filtered[filtered['Mileage'] <= answers["mileage"]]
 
     if filtered.empty:
         return "🚫 Sorry, I couldn't find any vehicles matching your description."
@@ -151,19 +146,46 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Accept user input
-if prompt := st.chat_input("Tell me what you're looking for in a vehicle 🚙"):
-    with st.chat_message("user"):
-        st.markdown(prompt)
-    st.session_state.messages.append({"role": "user", "content": prompt})
+# Conversation flow
+if st.session_state.question_step < len(questions):
+    question = questions[st.session_state.question_step]
+    user_input = st.chat_input(question)
 
+    if user_input:
+        st.session_state.messages.append({"role": "user", "content": user_input})
+        idx = st.session_state.question_step
+        if idx == 0:
+            st.session_state.answers["type"] = user_input
+        elif idx == 1:
+            st.session_state.answers["budget"] = extract_int(user_input)
+        elif idx == 2:
+            st.session_state.answers["brand"] = user_input.lower()
+        elif idx == 3:
+            st.session_state.answers["year"] = extract_int(user_input)
+        elif idx == 4:
+            st.session_state.answers["mileage"] = extract_int(user_input)
+        elif idx == 5:
+            st.session_state.answers["electric"] = yes_no_to_bool(user_input)
+        elif idx == 6:
+            st.session_state.answers["awd"] = yes_no_to_bool(user_input)
+        elif idx == 7:
+            st.session_state.answers["third_row"] = yes_no_to_bool(user_input)
+        elif idx == 8:
+            st.session_state.answers["luxury"] = yes_no_to_bool(user_input)
+        elif idx == 9:
+            st.session_state.answers["monthly_payment"] = extract_int(user_input)
+
+        st.session_state.question_step += 1
+
+else:
+    # Generate vehicle recommendations
     with st.chat_message("assistant"):
-        response_text = generate_vehicle_response(prompt)
+        response_text = generate_vehicle_recommendations(st.session_state.answers)
         streamed_response = st.write_stream(stream_response(response_text))
 
-    st.session_state.messages.append({"role": "assistant", "content": response_text})
+    st.session_state.messages.append({"role": "assistant", "content": "Recommendations provided."})
 
-# Allow user to request PDF report
+# Allow user to request PDF report and restart
 if st.session_state.shortlist:
     st.markdown("---")
     st.header("📄 Your Shortlist")
@@ -181,3 +203,10 @@ if st.session_state.shortlist:
         temp_pdf_path = create_shortlist_pdf()
         with open(temp_pdf_path, "rb") as pdf_file:
             st.download_button(label="Download Your Shortlist PDF", data=pdf_file, file_name="Vehicle_Shortlist.pdf", mime="application/pdf")
+
+if st.button("🔄 Restart Profile"):
+    st.session_state.question_step = 0
+    st.session_state.answers = {}
+    st.session_state.messages = []
+    st.session_state.shortlist = []
+    st.experimental_rerun()
