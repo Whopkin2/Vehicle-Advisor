@@ -15,9 +15,8 @@ st.title("🚗 Vehicle Advisor Chatbot")
 @st.cache_data
 def load_data():
     df = pd.read_csv("https://raw.githubusercontent.com/Whopkin2/Vehicle-Advisor/main/vehicle_advisor/vehicle_data.csv")
-    df['Brand'] = df['Brand'].str.lower()
-    df['Category'] = df['Category'].str.lower()
-    df['Fuel Type'] = df['Fuel Type'].str.lower()
+    if 'Brand' in df.columns:
+        df['Brand'] = df['Brand'].str.lower()
     return df
 
 df = load_data()
@@ -55,22 +54,7 @@ def generate_vehicle_response(prompt):
     budget = extract_budget(prompt)
     year = extract_year(prompt)
     mileage = extract_mileage(prompt)
-    category = None
-    fuel_type = None
     brand = None
-
-    categories = ["suv", "sedan", "truck", "coupe", "wagon", "van", "luxury"]
-    fuels = ["electric", "hybrid", "gas", "diesel"]
-
-    for cat in categories:
-        if cat in prompt:
-            category = cat
-            break
-
-    for fuel in fuels:
-        if fuel in prompt:
-            fuel_type = fuel
-            break
 
     for known_brand in df['Brand'].unique():
         if known_brand in prompt:
@@ -79,10 +63,6 @@ def generate_vehicle_response(prompt):
 
     filtered = df.copy()
 
-    if category:
-        filtered = filtered[filtered['Category'].str.contains(category, case=False, na=False)]
-    if fuel_type:
-        filtered = filtered[filtered['Fuel Type'].str.contains(fuel_type, case=False, na=False)]
     if brand:
         filtered = filtered[filtered['Brand'].str.contains(brand, case=False, na=False)]
     if budget:
@@ -99,13 +79,7 @@ def generate_vehicle_response(prompt):
 
     for _, vehicle in top_cars.iterrows():
         with st.expander(f"🔎 {vehicle['Brand'].title()} {vehicle['Model']}"):
-            st.markdown(f"- **Category:** {vehicle['Category'].title()}")
-            st.markdown(f"- **Fuel Type:** {vehicle['Fuel Type'].title()}")
             st.markdown(f"- **Starting Price:** ${vehicle['MSRP Min']:,}")
-            if 'Drive Type' in vehicle:
-                st.markdown(f"- **Drive Type:** {vehicle['Drive Type']}")
-            if 'Transmission' in vehicle:
-                st.markdown(f"- **Transmission:** {vehicle['Transmission']}")
             if st.button(f"⭐ Save {vehicle['Brand'].title()} {vehicle['Model']} to Shortlist", key=f"save_{vehicle['Model']}"):
                 st.session_state.shortlist.append(vehicle)
                 st.success(f"Added {vehicle['Brand'].title()} {vehicle['Model']} to your shortlist!")
@@ -118,33 +92,49 @@ def stream_response(text):
         yield word + " "
         time.sleep(0.02)
 
-# Function to create and send PDF
+# Function to create PDF
+def create_shortlist_pdf():
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Helvetica", size=16)
+    pdf.cell(0, 10, "Your Shortlisted Vehicles", ln=True, align="C")
+    pdf.ln(5)
+    pdf.set_draw_color(0, 0, 0)
+    pdf.set_line_width(0.5)
+    pdf.line(10, 30, 200, 30)
+    pdf.ln(10)
+
+    pdf.set_font("Helvetica", size=12)
+    pdf.set_fill_color(230, 230, 230)
+    pdf.cell(60, 10, "Brand", border=1, fill=True)
+    pdf.cell(80, 10, "Model", border=1, fill=True)
+    pdf.cell(40, 10, "Price", border=1, ln=True, fill=True)
+
+    for vehicle in st.session_state.shortlist:
+        pdf.cell(60, 10, vehicle['Brand'].title(), border=1)
+        pdf.cell(80, 10, str(vehicle['Model']), border=1)
+        pdf.cell(40, 10, f"${int(vehicle['MSRP Min']):,}", border=1, ln=True)
+
+    temp_pdf = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
+    pdf.output(temp_pdf.name)
+    return temp_pdf.name
+
+# Function to send PDF via email
 def send_pdf_via_email(email_address):
     if not st.session_state.shortlist:
         st.error("Shortlist is empty!")
         return
 
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", size=12)
-
-    pdf.cell(200, 10, txt="Your Shortlisted Vehicles", ln=True, align='C')
-    pdf.ln(10)
-
-    for idx, vehicle in enumerate(st.session_state.shortlist, 1):
-        pdf.cell(0, 10, f"{idx}. {vehicle['Brand'].title()} {vehicle['Model']} - ${vehicle['MSRP Min']:,}", ln=True)
-
-    temp_pdf = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
-    pdf.output(temp_pdf.name)
+    temp_pdf_path = create_shortlist_pdf()
 
     message = MIMEMultipart()
     message['From'] = "your-email@gmail.com"
     message['To'] = email_address
     message['Subject'] = "Your Vehicle Advisor Shortlist"
-    body = "Please find attached your shortlisted vehicles."
+    body = "Please find attached your personalized shortlist of vehicles.\n\nThank you for using Vehicle Advisor!"
     message.attach(MIMEText(body, 'plain'))
 
-    with open(temp_pdf.name, "rb") as f:
+    with open(temp_pdf_path, "rb") as f:
         attach = MIMEApplication(f.read(), _subtype="pdf")
         attach.add_header('Content-Disposition', 'attachment', filename="Shortlist.pdf")
         message.attach(attach)
@@ -186,3 +176,8 @@ if st.session_state.shortlist:
             send_pdf_via_email(email_input)
         else:
             st.error("Please enter a valid email address.")
+
+    if st.button("⬇️ Download PDF Now"):
+        temp_pdf_path = create_shortlist_pdf()
+        with open(temp_pdf_path, "rb") as pdf_file:
+            st.download_button(label="Download Your Shortlist PDF", data=pdf_file, file_name="Vehicle_Shortlist.pdf", mime="application/pdf")
