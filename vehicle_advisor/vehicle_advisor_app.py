@@ -1,208 +1,188 @@
 import streamlit as st
 import pandas as pd
-import openai
+import time
 import re
-import os
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.application import MIMEApplication
+from email.mime.text import MIMEText
+from fpdf import FPDF
+import tempfile
 
-st.set_page_config(page_title="Vehicle Advisor", layout="centered")
+st.title("🚗 Vehicle Advisor Chatbot")
 
+# Load vehicle data from GitHub
 @st.cache_data
 def load_data():
-    df = pd.read_csv("vehicle_advisor/vehicle_data.csv")
-    df['MSRP Min'] = df['MSRP Range'].apply(
-        lambda msrp_range: float(re.findall(r'\$([\d,]+)', str(msrp_range))[0].replace(',', ''))
-        if re.findall(r'\$([\d,]+)', str(msrp_range)) else None
-    )
+    df = pd.read_csv("https://raw.githubusercontent.com/Whopkin2/Vehicle-Advisor/main/vehicle_advisor/vehicle_data.csv")
+    df['Brand'] = df['Brand'].str.lower()
+    df['Category'] = df['Category'].str.lower()
+    df['Fuel Type'] = df['Fuel Type'].str.lower()
     return df
 
-df_vehicle_advisor = load_data()
-valid_brands = set(df_vehicle_advisor['Brand'].unique())
+df = load_data()
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
-client = openai.OpenAI(api_key=openai.api_key)
+# Initialize chat history and shortlist
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+if "shortlist" not in st.session_state:
+    st.session_state.shortlist = []
 
-if "user_answers" not in st.session_state:
-    st.session_state.user_answers = {}
-if "chat_log" not in st.session_state:
-    st.session_state.chat_log = []
-if "locked_keys" not in st.session_state:
-    st.session_state.locked_keys = set()
-if "final_recs_shown" not in st.session_state:
-    st.session_state.final_recs_shown = False
-if "blocked_brands" not in st.session_state:
-    st.session_state.blocked_brands = set()
-if "preferred_brands" not in st.session_state:
-    st.session_state.preferred_brands = set()
-if "current_question_index" not in st.session_state:
-    st.session_state.current_question_index = -1
-if "last_recommendations" not in st.session_state:
-    st.session_state.last_recommendations = pd.DataFrame()
+# Helper functions
+def extract_budget(prompt):
+    match = re.search(r'(?:under|below|less than|around)\s*\$?(\d+)', prompt)
+    if match:
+        return int(match.group(1))
+    return None
 
-score_weights = {
-    "Region": 1.0, "Use Category": 1.0, "Yearly Income": 0.6, "Credit Score": 0.6,
-    "Garage Access": 0.5, "Eco-Conscious": 0.8, "Charging Access": 0.8, "Neighborhood Type": 0.9,
-    "Towing Needs": 0.6, "Safety Priority": 0.9, "Tech Features": 0.8, "Car Size": 0.7,
-    "Ownership Recommendation": 0.7, "Employment Status": 0.6, "Travel Frequency": 0.5,
-    "Ownership Duration": 0.5, "Budget": 1.5, "Annual Mileage": 0.6, "Drive Type": 1.0
-}
+def extract_year(prompt):
+    match = re.search(r'(\d{4})', prompt)
+    if match:
+        return int(match.group(1))
+    return None
 
-fixed_questions = [
-    {"field": "Region", "question": "What region are you located in? (Options: North, South, East, West, Midwest, Northeast, Southeast, Pacific, Central)"},
-    {"field": "Use Category", "question": "What will you mainly use this vehicle for? (Options: Commuting, Family, Off-Roading, Utility, City, Work, Daily, Leisure)"},
-    {"field": "Budget", "question": "What’s your vehicle budget? (Example formats: $30,000, $45k, under $50k, 60k)"},
-    {"field": "Credit Score", "question": "What is your approximate credit score? (Options: Poor, Fair, Good, Very Good, Excellent, or numeric: 600, 700, 800)"},
-    {"field": "Yearly Income", "question": "What’s your annual income range? (Example formats: $50,000, 75k, over $100k)"},
-    {"field": "Car Size", "question": "What size of vehicle do you prefer? (Options: Compact, Midsize, Fullsize, SUV, Sedan, Truck, Crossover)"},
-    {"field": "Eco-Conscious", "question": "Are you looking for an eco-friendly vehicle? (Options: Yes, No)"},
-    {"field": "Garage Access", "question": "Do you have access to a garage or secure parking? (Options: Yes, No)"},
-    {"field": "Charging Access", "question": "Do you have access to EV charging? (Options: Yes, No)"},
-    {"field": "Towing Needs", "question": "Do you need the vehicle to handle towing? (Options: Yes, No)"},
-    {"field": "Neighborhood Type", "question": "Is your area more rural, urban, or suburban? (Options: Urban, Suburban, Rural, City, Town)"},
-    {"field": "Drive Type", "question": "Do you prefer AWD, FWD, or RWD? (Options: AWD, FWD, RWD, All Wheel, Front Wheel, Rear Wheel)"},
-    {"field": "Safety Priority", "question": "Is safety a top priority for you? (Options: Yes, No)"},
-    {"field": "Tech Features", "question": "Do you want advanced tech features? (Options: Yes, No)"},
-    {"field": "Travel Frequency", "question": "Do you travel long distances often? (Options: Yes, No, Often, Rarely, Frequent)"}
-]
+def extract_mileage(prompt):
+    match = re.search(r'(?:under|below|less than)\s*(\d{1,3}(?:,\d{3})*)\s*miles', prompt)
+    if match:
+        mileage = int(match.group(1).replace(",", ""))
+        return mileage
+    return None
 
-def recommend_vehicles(user_answers, top_n=3):
-    df = df_vehicle_advisor.copy()
-    if st.session_state.blocked_brands:
-        df = df[~df['Brand'].isin(st.session_state.blocked_brands)]
-    if st.session_state.preferred_brands:
-        df = df[df['Brand'].isin(st.session_state.preferred_brands)]
+# Generate smart response
+def generate_vehicle_response(prompt):
+    prompt = prompt.lower()
 
-    budget_value = user_answers.get("Budget", "45000").replace("$", "").replace(",", "").lower().strip()
-    try:
-        user_budget = float(budget_value.replace("k", "")) * 1000 if "k" in budget_value else float(re.findall(r'\d+', budget_value)[0])
-    except:
-        user_budget = 45000
-    df = df[df['MSRP Min'].fillna(999999) <= user_budget * 1.2]
+    budget = extract_budget(prompt)
+    year = extract_year(prompt)
+    mileage = extract_mileage(prompt)
+    category = None
+    fuel_type = None
+    brand = None
 
-    def compute_score(row):
-        return sum(weight for key, weight in score_weights.items() if str(user_answers.get(key, "")).lower() in str(row.get(key, "")).lower())
+    categories = ["suv", "sedan", "truck", "coupe", "wagon", "van", "luxury"]
+    fuels = ["electric", "hybrid", "gas", "diesel"]
 
-    df['score'] = df.apply(compute_score, axis=1)
-    df = df.sort_values(by=['score', 'Model Year'], ascending=[False, False])
-    return df.head(top_n).reset_index(drop=True)
+    for cat in categories:
+        if cat in prompt:
+            category = cat
+            break
 
-st.title("Vehicle Advisor")
+    for fuel in fuels:
+        if fuel in prompt:
+            fuel_type = fuel
+            break
 
-if st.button("🔄 Restart Profile"):
-    for key in ["user_answers", "chat_log", "locked_keys", "final_recs_shown", "blocked_brands", "preferred_brands", "current_question_index", "last_recommendations"]:
-        if key in st.session_state:
-            del st.session_state[key]
-    st.rerun()
+    for known_brand in df['Brand'].unique():
+        if known_brand in prompt:
+            brand = known_brand
+            break
 
-if not st.session_state.chat_log and st.session_state.current_question_index == -1:
-    st.session_state.chat_log.append("<b>VehicleAdvisor:</b> <span style= 'font-weight:normal'> Hey there! I’m here to help you find the perfect vehicle. Let’s get started with a few quick questions.")
-    st.session_state.current_question_index = 0
-    st.rerun()
+    filtered = df.copy()
 
-if st.session_state.chat_log:
-    for msg in st.session_state.chat_log:
-        st.markdown(f"<div style='font-family:sans-serif;'>{msg}</div>", unsafe_allow_html=True)
+    if category:
+        filtered = filtered[filtered['Category'].str.contains(category, case=False, na=False)]
+    if fuel_type:
+        filtered = filtered[filtered['Fuel Type'].str.contains(fuel_type, case=False, na=False)]
+    if brand:
+        filtered = filtered[filtered['Brand'].str.contains(brand, case=False, na=False)]
+    if budget:
+        filtered = filtered[filtered['MSRP Min'] <= budget]
+    if year and 'Year' in filtered.columns:
+        filtered = filtered[filtered['Year'] >= year]
+    if mileage and 'Mileage' in filtered.columns:
+        filtered = filtered[filtered['Mileage'] <= mileage]
 
-current_index = st.session_state.current_question_index
-if current_index < len(fixed_questions):
-    field = fixed_questions[current_index]['field']
-    question = fixed_questions[current_index]['question']
+    if filtered.empty:
+        return "🚫 Sorry, I couldn't find any vehicles matching your description."
 
-    with st.form(key="qa_form", clear_on_submit=True):
-        user_input = st.text_input(question)
-        submitted = st.form_submit_button("Send")
+    top_cars = filtered.sample(min(3, len(filtered)))
 
-       # Define expected keywords for each field
-expected_fields_keywords = {
-    "Region": ["north", "south", "east", "west", "midwest", "northeast", "southeast", "pacific", "central"],
-    "Use Category": ["commuting", "family", "off-road", "offroading", "utility", "city", "work", "daily", "leisure"],
-    "Budget": ["$", "k", "000", "usd", "dollars"],
-    "Credit Score": ["poor", "fair", "good", "very good", "excellent", "score", "credit", "600", "700", "800"],
-    "Yearly Income": ["$", "k", "000", "income", "salary"],
-    "Car Size": ["compact", "midsize", "fullsize", "suv", "sedan", "truck", "crossover"],
-    "Eco-Conscious": ["yes", "no"],
-    "Garage Access": ["yes", "no"],
-    "Charging Access": ["yes", "no"],
-    "Towing Needs": ["yes", "no"],
-    "Neighborhood Type": ["urban", "suburban", "rural", "city", "town"],
-    "Drive Type": ["awd", "fwd", "rwd", "all wheel", "front wheel", "rear wheel"],
-    "Safety Priority": ["yes", "no"],
-    "Tech Features": ["yes", "no"],
-    "Travel Frequency": ["yes", "no", "often", "rarely", "frequent"]
-}
+    for _, vehicle in top_cars.iterrows():
+        with st.expander(f"🔎 {vehicle['Brand'].title()} {vehicle['Model']}"):
+            st.markdown(f"- **Category:** {vehicle['Category'].title()}")
+            st.markdown(f"- **Fuel Type:** {vehicle['Fuel Type'].title()}")
+            st.markdown(f"- **Starting Price:** ${vehicle['MSRP Min']:,}")
+            if 'Drive Type' in vehicle:
+                st.markdown(f"- **Drive Type:** {vehicle['Drive Type']}")
+            if 'Transmission' in vehicle:
+                st.markdown(f"- **Transmission:** {vehicle['Transmission']}")
+            if st.button(f"⭐ Save {vehicle['Brand'].title()} {vehicle['Model']} to Shortlist", key=f"save_{vehicle['Model']}"):
+                st.session_state.shortlist.append(vehicle)
+                st.success(f"Added {vehicle['Brand'].title()} {vehicle['Model']} to your shortlist!")
 
-if submitted and user_input:
-    if "not interested in" in user_input.lower():
-        for brand in valid_brands:
-            if re.search(rf"\b{re.escape(brand.lower())}\b", user_input.lower()):
-                st.session_state.blocked_brands.add(brand)
-                st.session_state.chat_log.append(
-                    f"<b>VehicleAdvisor:</b> Got it — I'll exclude <b>{brand}</b> from future recommendations."
-                )
+    return "Here are a few vehicles you might like!"
 
-    # ✅ Validate the current field's input using keyword matching
-    keywords = expected_fields_keywords.get(field, [])
-    if keywords and not any(k in user_input.lower() for k in keywords):
-        st.session_state.chat_log.append(
-            f"<b>VehicleAdvisor:</b> Thank you for providing that feedback, it will help me give you a more accurate car recommendation. Could you now answer my question regarding {field.lower()}?"
-        )
-        st.rerun()
+# Streamed response simulator
+def stream_response(text):
+    for word in text.split():
+        yield word + " "
+        time.sleep(0.02)
 
-    # ✅ Save the valid answer and move forward
-    st.session_state.user_answers[field] = user_input
-    st.session_state.locked_keys.add(field.lower())
-    st.session_state.chat_log.append(f"<b>You:</b> {user_input}")
-    st.session_state.chat_log.append(f"<b>VehicleAdvisor:</b> Thanks! I've noted your {field.lower()}.")
+# Function to create and send PDF
+def send_pdf_via_email(email_address):
+    if not st.session_state.shortlist:
+        st.error("Shortlist is empty!")
+        return
 
-    # 🔁 Generate and store recommendations
-    recs = recommend_vehicles(st.session_state.user_answers, top_n=2)
-    st.session_state.last_recommendations = recs
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
 
-    for idx, row in recs.iterrows():
-        explanation = ""
+    pdf.cell(200, 10, txt="Your Shortlisted Vehicles", ln=True, align='C')
+    pdf.ln(10)
 
-        if field == "Region":
-            explanation = f"This model is known for strong performance across various climates — great for areas like {user_input} with diverse weather."
+    for idx, vehicle in enumerate(st.session_state.shortlist, 1):
+        pdf.cell(0, 10, f"{idx}. {vehicle['Brand'].title()} {vehicle['Model']} - ${vehicle['MSRP Min']:,}", ln=True)
 
-        elif field == "Use Category":
-            if any(b.lower() in user_input.lower() and "not interested" in user_input.lower() for b in valid_brands):
-                explanation = f"This model may appear despite your preferences — let me know if you'd like to exclude certain brands."
-            else:
-                category = row.get("Use Category", "").lower()
-                if "off-road" in category:
-                    explanation = "Rugged build, high clearance, and traction systems make it excellent for off-road and utility driving."
-                elif "commuting" in category:
-                    explanation = "Great for daily use — it’s efficient, maneuverable, and reliable for frequent drives."
-                elif "family" in category:
-                    explanation = "Spacious, safe, and loaded with comfort features — ideal for family needs."
-                else:
-                    explanation = f"This model fits your intended use case of '{user_input}'."
+    temp_pdf = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
+    pdf.output(temp_pdf.name)
 
-        elif field == "Eco-Conscious" and user_input.lower() == "yes":
-            explanation = "This model is eco-friendly — with either hybrid or electric powertrains to reduce emissions and save on fuel."
+    message = MIMEMultipart()
+    message['From'] = "your-email@gmail.com"
+    message['To'] = email_address
+    message['Subject'] = "Your Vehicle Advisor Shortlist"
+    body = "Please find attached your shortlisted vehicles."
+    message.attach(MIMEText(body, 'plain'))
 
-        elif field == "Car Size":
-            explanation = f"As a {row['Car Size'].lower()} vehicle, it aligns well with your space, visibility, and handling expectations."
+    with open(temp_pdf.name, "rb") as f:
+        attach = MIMEApplication(f.read(), _subtype="pdf")
+        attach.add_header('Content-Disposition', 'attachment', filename="Shortlist.pdf")
+        message.attach(attach)
 
-        elif field == "Towing Needs" and user_input.lower() == "yes":
-            explanation = "This model supports towing — suitable for trailers, boats, or work equipment."
+    server = smtplib.SMTP('smtp.gmail.com', 587)
+    server.starttls()
+    server.login("your-email@gmail.com", "your-app-password")
+    server.send_message(message)
+    server.quit()
+    st.success(f"📧 Email sent successfully to {email_address}!")
 
-        elif field == "Drive Type":
-            explanation = f"It features {row['Drive Type']} — giving you enhanced control and traction to suit your driving style."
+# Display chat history
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
 
-        elif field == "Neighborhood Type":
-            explanation = f"Perfect for {user_input.lower()} environments — whether navigating tight city streets or handling open rural roads."
+# Accept user input
+if prompt := st.chat_input("Tell me what you're looking for in a vehicle 🚙"):
+    with st.chat_message("user"):
+        st.markdown(prompt)
+    st.session_state.messages.append({"role": "user", "content": prompt})
 
-        elif field == "Tech Features" and user_input.lower() == "yes":
-            explanation = "Packed with smart features like driver assistance, infotainment, and connected apps."
+    with st.chat_message("assistant"):
+        response_text = generate_vehicle_response(prompt)
+        streamed_response = st.write_stream(stream_response(response_text))
 
+    st.session_state.messages.append({"role": "assistant", "content": response_text})
+
+# Allow user to request PDF report
+if st.session_state.shortlist:
+    st.markdown("---")
+    st.header("📄 Your Shortlist")
+    for vehicle in st.session_state.shortlist:
+        st.write(f"- {vehicle['Brand'].title()} {vehicle['Model']} (${vehicle['MSRP Min']:,})")
+
+    email_input = st.text_input("Enter your email address to receive the shortlist PDF:")
+    if st.button("📧 Send PDF Report"):
+        if email_input:
+            send_pdf_via_email(email_input)
         else:
-            explanation = f"Based on your input for {field.lower()}, this vehicle is a strong match."
-
-        # 🧠 Append the final recommendation message
-        st.session_state.chat_log.append(
-            f"<b>Suggested:</b> {row['Brand']} {row['Model']} ({row['Model Year']}) – {row['MSRP Range']}<br><i>Why this fits:</i> {explanation}"
-        )
-
-    # 👉 Move to the next question
-    st.session_state.current_question_index += 1
-    st.rerun()
+            st.error("Please enter a valid email address.")
