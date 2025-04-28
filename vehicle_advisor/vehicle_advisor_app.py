@@ -147,52 +147,68 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 
 # Conversation flow
-if st.session_state.question_step < len(questions):
-    question = questions[st.session_state.question_step]
-    user_input = st.chat_input(question)
+if "current_question" not in st.session_state:
+    st.session_state.current_question = "🚗 What type of car are you looking for? (e.g., SUV, Sedan, Truck)"
 
-    if user_input:
-        st.session_state.messages.append({"role": "user", "content": user_input})
-        idx = st.session_state.question_step
+user_input = st.chat_input("Type your answer here...")
 
-        if idx == 0:
-            st.session_state.answers["type"] = user_input
-            bot_reply = f"🚗 Great choice! A {user_input.lower()} sounds good. What's your maximum budget?"
-        elif idx == 1:
-            st.session_state.answers["budget"] = extract_int(user_input)
-            bot_reply = f"💵 Got it — targeting under ${extract_int(user_input):,}. Any preferred brand?"
-        elif idx == 2:
-            st.session_state.answers["brand"] = user_input.lower()
-            bot_reply = "🏷️ Brand preference noted. What's your minimum model year?"
-        elif idx == 3:
-            st.session_state.answers["year"] = extract_int(user_input)
-            bot_reply = f"📅 We'll aim for {user_input} and newer. Any maximum mileage?"
-        elif idx == 4:
-            st.session_state.answers["mileage"] = extract_int(user_input)
-            bot_reply = f"🛣️ Mileage limit of {user_input} miles noted. Prefer electric vehicles? (yes/no)"
-        elif idx == 5:
-            st.session_state.answers["electric"] = yes_no_to_bool(user_input)
-            bot_reply = "🔋 Electric preference saved. Need AWD or 4WD? (yes/no)"
-        elif idx == 6:
-            st.session_state.answers["awd"] = yes_no_to_bool(user_input)
-            bot_reply = "🚙 AWD/4WD preference noted. Need a third-row seat? (yes/no)"
-        elif idx == 7:
-            st.session_state.answers["third_row"] = yes_no_to_bool(user_input)
-            bot_reply = "👨‍👩‍👧‍👦 Third-row seating noted. Prefer a luxury brand? (yes/no)"
-        elif idx == 8:
-            st.session_state.answers["luxury"] = yes_no_to_bool(user_input)
-            bot_reply = "💎 Luxury preference recorded. What's your maximum monthly payment?"
-        elif idx == 9:
-            st.session_state.answers["monthly_payment"] = extract_int(user_input)
-            bot_reply = "✅ Thanks! Let me find the best vehicles for you now..."
+if user_input:
+    st.session_state.messages.append({"role": "user", "content": user_input})
+    idx = st.session_state.question_step
 
-        st.session_state.messages.append({"role": "assistant", "content": bot_reply})
-        st.session_state.question_step += 1
+    # Save the answer and set next bot question
+    if idx == 0:
+        st.session_state.answers["type"] = user_input
+        bot_reply = "💬 Great choice! Now, what's your maximum budget?"
+    elif idx == 1:
+        st.session_state.answers["budget"] = extract_int(user_input)
+        bot_reply = "💵 Got it! Any preferred brand you'd like?"
+    elif idx == 2:
+        st.session_state.answers["brand"] = user_input.lower()
+        bot_reply = "🏷️ Brand preference noted. What's the minimum model year you're aiming for?"
+    elif idx == 3:
+        st.session_state.answers["year"] = extract_int(user_input)
+        bot_reply = "📅 Minimum year saved! What's your maximum mileage?"
+    elif idx == 4:
+        st.session_state.answers["mileage"] = extract_int(user_input)
+        bot_reply = "🛣️ Mileage limit noted. Prefer an electric vehicle? (yes/no)"
+    elif idx == 5:
+        st.session_state.answers["electric"] = yes_no_to_bool(user_input)
+        bot_reply = "🔋 Electric preference saved. Need AWD or 4WD? (yes/no)"
+    elif idx == 6:
+        st.session_state.answers["awd"] = yes_no_to_bool(user_input)
+        bot_reply = "🚙 AWD/4WD preference noted. Need a third-row seat? (yes/no)"
+    elif idx == 7:
+        st.session_state.answers["third_row"] = yes_no_to_bool(user_input)
+        bot_reply = "👨‍👩‍👧‍👦 Third-row seating noted. Prefer a luxury brand? (yes/no)"
+    elif idx == 8:
+        st.session_state.answers["luxury"] = yes_no_to_bool(user_input)
+        bot_reply = "💎 Luxury preference recorded. What's your maximum monthly payment?"
+    elif idx == 9:
+        st.session_state.answers["monthly_payment"] = extract_int(user_input)
+        bot_reply = "✅ Thanks! Let me find the best vehicles for you now..."
+
+    st.session_state.messages.append({"role": "assistant", "content": bot_reply})
+    st.session_state.question_step += 1
+
+    # Update what the next question should be
+    if st.session_state.question_step <= 9:
+        st.session_state.current_question = bot_reply
+    else:
+        st.session_state.current_question = None
+
+# After answering all questions
+if st.session_state.question_step > 9:
+    with st.chat_message("assistant"):
+        response_text = generate_vehicle_recommendations(st.session_state.answers)
+        streamed_response = stream_response(response_text)
+        st.write_stream(streamed_response)
+
+    st.session_state.messages.append({"role": "assistant", "content": "🚗 Here are vehicles matching your preferences!"})
 
 else:
     with st.chat_message("assistant"):
-        response_text = generate_vehicle_recommendations(st.session_state.answers)
-        streamed_response = st.write_stream(stream_response(response_text))
+        st.markdown(st.session_state.current_question)
 
     st.session_state.messages.append({"role": "assistant", "content": "🚗 Here are vehicles matching your preferences!"})
 if st.session_state.shortlist:
