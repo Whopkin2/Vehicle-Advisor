@@ -106,6 +106,12 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
+# If no messages yet, start conversation
+if len(st.session_state.messages) == 0:
+    with st.chat_message("assistant"):
+        st.markdown(st.session_state.current_question)
+    st.session_state.messages.append({"role": "assistant", "content": st.session_state.current_question})
+
 # Conversation flow
 user_input = st.chat_input("Type your answer here...")
 
@@ -157,11 +163,24 @@ if user_input:
     if not filtered.empty:
         filtered = filtered.sort_values(by=["MSRP Min", "Year", "Mileage"], ascending=[True, False, True])
         top_cars = filtered.head(2)
-        response = "🔎 Based on your answers so far, here are two cars you might like:\n"
+        response = "🔎 Based on your answers so far, here are two cars you might love:
+"
         for _, car in top_cars.iterrows():
-            explanation = f"✅ The {car['Brand'].title()} {car['Model']} fits because it's affordable at ${car['MSRP Min']:,}, "
-            explanation += f"offers modern features, and matches your desired specifications."
-            response += f"\n- **{car['Brand'].title()} {car['Model']}** — {explanation}"
+            price = f"${car['MSRP Min']:,}"
+            name = f"{car['Brand'].title()} {car['Model']}"
+            if 'Fuel Type' in car and 'electric' in str(car['Fuel Type']).lower():
+                reason = "⚡ Eco-friendly electric drive and modern features."
+            elif car['Brand'].lower() in ['bmw', 'mercedes', 'audi', 'lexus', 'cadillac', 'infiniti', 'acura', 'volvo']:
+                reason = "💎 Premium luxury and brand prestige."
+            elif 'Mileage' in car and car['Mileage'] is not None and car['Mileage'] < 30000:
+                reason = "🛡️ Very low mileage — almost like new!"
+            else:
+                reason = "✅ A perfect match for affordability and reliability."
+            response += f"**✨ {name}**
+- 💲 **Price:** {price}
+- {reason}
+
+"
         st.session_state.messages.append({"role": "assistant", "content": response})
 
     # Prepare next question
@@ -191,8 +210,25 @@ if user_input:
 
 if st.session_state.question_step > 9:
     with st.chat_message("assistant"):
-        final_text = "🚗 Here are vehicles matching your complete profile!"
-        st.markdown(final_text)
+        summary_parts = []
+        if st.session_state.answers.get("type"):
+            summary_parts.append(f"looking for a {st.session_state.answers['type'].lower()}")
+        if st.session_state.answers.get("budget"):
+            summary_parts.append(f"under ${st.session_state.answers['budget']:,}")
+        if st.session_state.answers.get("year"):
+            summary_parts.append(f"model year {st.session_state.answers['year']} or newer")
+        if st.session_state.answers.get("mileage"):
+            summary_parts.append(f"less than {st.session_state.answers['mileage']:,} miles")
+        if st.session_state.answers.get("electric"):
+            if st.session_state.answers['electric']:
+                summary_parts.append("preferably electric")
+        if st.session_state.answers.get("luxury"):
+            if st.session_state.answers['luxury']:
+                summary_parts.append("from a luxury brand")
+
+        summary_text = ", ".join(summary_parts)
+        st.markdown(f"🚗 Based on your preferences ({summary_text}), here are your top matches:")
+
         final_response = generate_vehicle_recommendations(st.session_state.answers)
         st.write_stream(stream_response(final_response))
 
