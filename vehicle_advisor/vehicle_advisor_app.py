@@ -30,20 +30,8 @@ if "question_step" not in st.session_state:
     st.session_state.question_step = 0
 if "answers" not in st.session_state:
     st.session_state.answers = {}
-
-# Expanded questions based on typical car features
-questions = [
-    "What type of car are you looking for? (e.g., SUV, Sedan, Truck)",
-    "What is your maximum budget? (numbers only)",
-    "Any preferred brand? (optional)",
-    "Any minimum model year? (optional)",
-    "Any maximum mileage? (optional)",
-    "Do you prefer electric vehicles? (yes/no)",
-    "Do you need a car with AWD or 4WD? (yes/no)",
-    "Do you need a third-row seat? (yes/no)",
-    "Do you prefer a luxury brand? (yes/no)",
-    "What's your maximum monthly payment goal? (optional)"
-]
+if "current_question" not in st.session_state:
+    st.session_state.current_question = "🚗 What type of car are you looking for? (e.g., SUV, Sedan, Truck)"
 
 # Helper functions
 def extract_int(text):
@@ -52,34 +40,6 @@ def extract_int(text):
 
 def yes_no_to_bool(text):
     return text.strip().lower() in ["yes", "y"]
-
-def generate_vehicle_recommendations(answers):
-    filtered = df.copy()
-
-    if answers.get("type"):
-        filtered = filtered[filtered['Model'].str.contains(answers["type"], case=False, na=False)]
-    if answers.get("brand"):
-        filtered = filtered[filtered['Brand'].str.contains(answers["brand"], case=False, na=False)]
-    if answers.get("budget"):
-        filtered = filtered[filtered['MSRP Min'] <= answers["budget"]]
-    if answers.get("year") and 'Year' in filtered.columns:
-        filtered = filtered[filtered['Year'] >= answers["year"]]
-    if answers.get("mileage") and 'Mileage' in filtered.columns:
-        filtered = filtered[filtered['Mileage'] <= answers["mileage"]]
-
-    if filtered.empty:
-        return "🚫 Sorry, I couldn't find any vehicles matching your description."
-
-    top_cars = filtered.sample(min(3, len(filtered)))
-
-    for _, vehicle in top_cars.iterrows():
-        with st.expander(f"🔎 {vehicle['Brand'].title()} {vehicle['Model']}"):
-            st.markdown(f"- **Starting Price:** ${vehicle['MSRP Min']:,}")
-            if st.button(f"⭐ Save {vehicle['Brand'].title()} {vehicle['Model']} to Shortlist", key=f"save_{vehicle['Model']}"):
-                st.session_state.shortlist.append(vehicle)
-                st.success(f"Added {vehicle['Brand'].title()} {vehicle['Model']} to your shortlist!")
-
-    return "Here are a few vehicles you might like!"
 
 # Streamed response simulator
 def stream_response(text):
@@ -147,70 +107,96 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 
 # Conversation flow
-if "current_question" not in st.session_state:
-    st.session_state.current_question = "🚗 What type of car are you looking for? (e.g., SUV, Sedan, Truck)"
-
 user_input = st.chat_input("Type your answer here...")
 
 if user_input:
     st.session_state.messages.append({"role": "user", "content": user_input})
     idx = st.session_state.question_step
 
-    # Save the answer and set next bot question
+    # Save answers
     if idx == 0:
         st.session_state.answers["type"] = user_input
-        bot_reply = "💬 Great choice! Now, what's your maximum budget?"
     elif idx == 1:
         st.session_state.answers["budget"] = extract_int(user_input)
-        bot_reply = "💵 Got it! Any preferred brand you'd like?"
     elif idx == 2:
         st.session_state.answers["brand"] = user_input.lower()
-        bot_reply = "🏷️ Brand preference noted. What's the minimum model year you're aiming for?"
     elif idx == 3:
         st.session_state.answers["year"] = extract_int(user_input)
-        bot_reply = "📅 Minimum year saved! What's your maximum mileage?"
     elif idx == 4:
         st.session_state.answers["mileage"] = extract_int(user_input)
-        bot_reply = "🛣️ Mileage limit noted. Prefer an electric vehicle? (yes/no)"
     elif idx == 5:
         st.session_state.answers["electric"] = yes_no_to_bool(user_input)
-        bot_reply = "🔋 Electric preference saved. Need AWD or 4WD? (yes/no)"
     elif idx == 6:
         st.session_state.answers["awd"] = yes_no_to_bool(user_input)
-        bot_reply = "🚙 AWD/4WD preference noted. Need a third-row seat? (yes/no)"
     elif idx == 7:
         st.session_state.answers["third_row"] = yes_no_to_bool(user_input)
-        bot_reply = "👨‍👩‍👧‍👦 Third-row seating noted. Prefer a luxury brand? (yes/no)"
     elif idx == 8:
         st.session_state.answers["luxury"] = yes_no_to_bool(user_input)
-        bot_reply = "💎 Luxury preference recorded. What's your maximum monthly payment?"
     elif idx == 9:
         st.session_state.answers["monthly_payment"] = extract_int(user_input)
+
+    # Recommend cars dynamically
+    luxury_brands = ['bmw', 'mercedes', 'audi', 'lexus', 'cadillac', 'infiniti', 'acura', 'volvo']
+    filtered = df.copy()
+
+    if st.session_state.answers.get("type"):
+        filtered = filtered[filtered['Model'].str.contains(st.session_state.answers["type"], case=False, na=False)]
+    if st.session_state.answers.get("brand"):
+        filtered = filtered[filtered['Brand'].str.contains(st.session_state.answers["brand"], case=False, na=False)]
+    if st.session_state.answers.get("budget"):
+        filtered = filtered[filtered['MSRP Min'] <= st.session_state.answers["budget"]]
+    if st.session_state.answers.get("year") and 'Year' in filtered.columns:
+        filtered = filtered[filtered['Year'] >= st.session_state.answers["year"]]
+    if st.session_state.answers.get("mileage") and 'Mileage' in filtered.columns:
+        filtered = filtered[filtered['Mileage'] <= st.session_state.answers["mileage"]]
+    if st.session_state.answers.get("electric") == True:
+        filtered = filtered[filtered['Fuel Type'].str.contains('electric', case=False, na=False)]
+    if st.session_state.answers.get("luxury") == True:
+        filtered = filtered[filtered['Brand'].isin(luxury_brands)]
+
+    if not filtered.empty:
+        filtered = filtered.sort_values(by=["MSRP Min", "Year", "Mileage"], ascending=[True, False, True])
+        top_cars = filtered.head(2)
+        response = "🔎 Based on your answers so far, here are two cars you might like:\n"
+        for _, car in top_cars.iterrows():
+            explanation = f"✅ The {car['Brand'].title()} {car['Model']} fits because it's affordable at ${car['MSRP Min']:,}, "
+            explanation += f"offers modern features, and matches your desired specifications."
+            response += f"\n- **{car['Brand'].title()} {car['Model']}** — {explanation}"
+        st.session_state.messages.append({"role": "assistant", "content": response})
+
+    # Prepare next question
+    if idx == 0:
+        bot_reply = "💬 Great choice! Now, what's your maximum budget?"
+    elif idx == 1:
+        bot_reply = "🏷️ Any preferred brand you'd like?"
+    elif idx == 2:
+        bot_reply = "📅 What's the minimum model year you're aiming for?"
+    elif idx == 3:
+        bot_reply = "🛣️ What's your maximum mileage?"
+    elif idx == 4:
+        bot_reply = "🔋 Do you prefer electric vehicles? (yes/no)"
+    elif idx == 5:
+        bot_reply = "🚙 Need AWD or 4WD? (yes/no)"
+    elif idx == 6:
+        bot_reply = "👨‍👩‍👧‍👦 Need a third-row seat? (yes/no)"
+    elif idx == 7:
+        bot_reply = "💎 Prefer a luxury brand? (yes/no)"
+    elif idx == 8:
+        bot_reply = "💵 What's your maximum monthly payment goal?"
+    else:
         bot_reply = "✅ Thanks! Let me find the best vehicles for you now..."
 
     st.session_state.messages.append({"role": "assistant", "content": bot_reply})
     st.session_state.question_step += 1
 
-    # Update what the next question should be
-    if st.session_state.question_step <= 9:
-        st.session_state.current_question = bot_reply
-    else:
-        st.session_state.current_question = None
-
-# After answering all questions
 if st.session_state.question_step > 9:
     with st.chat_message("assistant"):
-        response_text = generate_vehicle_recommendations(st.session_state.answers)
-        streamed_response = stream_response(response_text)
-        st.write_stream(streamed_response)
+        final_text = "🚗 Here are vehicles matching your complete profile!"
+        st.markdown(final_text)
+        final_response = generate_vehicle_recommendations(st.session_state.answers)
+        st.write_stream(stream_response(final_response))
 
-    st.session_state.messages.append({"role": "assistant", "content": "🚗 Here are vehicles matching your preferences!"})
-
-else:
-    with st.chat_message("assistant"):
-        st.markdown(st.session_state.current_question)
-
-    st.session_state.messages.append({"role": "assistant", "content": "🚗 Here are vehicles matching your preferences!"})
+# Shortlist and PDF download
 if st.session_state.shortlist:
     st.markdown("---")
     st.header("📄 Your Shortlist")
@@ -230,8 +216,5 @@ if st.session_state.shortlist:
             st.download_button(label="Download Your Shortlist PDF", data=pdf_file, file_name="Vehicle_Shortlist.pdf", mime="application/pdf")
 
 if st.button("🔄 Restart Profile"):
-    st.session_state.question_step = 0
-    st.session_state.answers = {}
-    st.session_state.messages = []
-    st.session_state.shortlist = []
-    st.experimental_rerun()
+    st.session_state.clear()
+    st.rerun()
