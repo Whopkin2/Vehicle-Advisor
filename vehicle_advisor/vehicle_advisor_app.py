@@ -88,6 +88,23 @@ def send_pdf_via_email(email_address):
     server.quit()
     st.success(f"📧 Email sent successfully to {email_address}!")
 
+def prioritize_by_budget(filtered):
+    budget = st.session_state.answers.get("budget", 0)
+    preferred_brands = []
+    if budget <= 25000:
+        preferred_brands = ['toyota', 'honda', 'nissan', 'hyundai', 'ford', 'kia', 'mazda']
+    elif 25001 <= budget <= 50000:
+        preferred_brands = ['acura', 'lexus', 'subaru', 'volkswagen', 'ford', 'chevrolet', 'chevy']
+    elif budget > 50000:
+        preferred_brands = ['bmw', 'mercedes', 'audi', 'lexus', 'cadillac', 'tesla']
+    if preferred_brands:
+        filtered['preferred'] = filtered['Brand'].apply(lambda x: 0 if x.lower() in preferred_brands else 1)
+        filtered = filtered.sort_values(by=['preferred', 'MSRP Min', 'Year', 'Mileage'], ascending=[True, True, False, True])
+        filtered = filtered.drop(columns=['preferred'])
+    else:
+        filtered = filtered.sort_values(by=['MSRP Min', 'Year', 'Mileage'], ascending=[True, False, True])
+    return filtered
+
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
@@ -102,6 +119,7 @@ user_input = st.chat_input("Type your answer here...")
 if user_input:
     st.session_state.messages.append({"role": "user", "content": user_input})
     idx = st.session_state.question_step
+
     if idx == 0:
         st.session_state.answers["type"] = user_input
     elif idx == 1:
@@ -140,119 +158,61 @@ if user_input:
     if st.session_state.answers.get("luxury") == True:
         filtered = filtered[filtered['Brand'].isin(luxury_brands)]
 
+    filtered = prioritize_by_budget(filtered)
+
     if not filtered.empty:
-        filtered = filtered.sort_values(by=["MSRP Min", "Year", "Mileage"], ascending=[True, False, True])
         top_cars = filtered.head(2)
-        response = "\ud83d\udd0e Based on your answers so far, here are two cars you might love:\n"
+        response = "🔎 Based on your answers so far, here are two cars you might love:\n"
         for _, car in top_cars.iterrows():
             price = f"${car['MSRP Min']:,}"
             name = f"{car['Brand'].title()} {car['Model']}"
+            reason = "✅ A great match for your preferences."
             if 'Fuel Type' in car and 'electric' in str(car['Fuel Type']).lower():
-                reason = "\u26a1 Eco-friendly electric drive and modern features."
+                reason = "⚡ Eco-friendly electric drive and modern features."
             elif car['Brand'].lower() in luxury_brands:
-                reason = "\ud83d\udc8e Premium luxury and brand prestige."
+                reason = "💎 Premium luxury and brand prestige."
             elif 'Mileage' in car and car['Mileage'] is not None and car['Mileage'] < 30000:
-                reason = "\ud83d\udee1\ufe0f Very low mileage \u2014 almost like new!"
-            else:
-                reason = "\u2705 A perfect match for affordability and reliability."
-            response += f"**\u2728 {name}**\n- \ud83d\udcb2 **Price:** {price}\n- {reason}\n\n"
+                reason = "🛡️ Very low mileage — almost like new!"
+            response += f"**✨ {name}**\n- 💲 **Price:** {price}\n- {reason}\n\n"
         st.session_state.messages.append({"role": "assistant", "content": response})
 
     if idx == 0:
-        bot_reply = "\ud83d\udcac Great choice! Now, what's your maximum budget?"
+        bot_reply = "💬 Great choice! Now, what's your maximum budget?"
     elif idx == 1:
-        bot_reply = "\ud83c\udff7\ufe0f Any preferred brand you'd like?"
+        bot_reply = "🏷️ Any preferred brand you'd like?"
     elif idx == 2:
-        bot_reply = "\ud83d\udcc5 What's the minimum model year you're aiming for?"
+        bot_reply = "📅 What's the minimum model year you're aiming for?"
     elif idx == 3:
-        bot_reply = "\ud83d\udeb3\ufe0f What's your maximum mileage?"
+        bot_reply = "🛣️ What's your maximum mileage?"
     elif idx == 4:
-        bot_reply = "\ud83d\udd0b Do you prefer electric vehicles? (yes/no)"
+        bot_reply = "🔋 Do you prefer electric vehicles? (yes/no)"
     elif idx == 5:
-        bot_reply = "\ud83d\ude99 Need AWD or 4WD? (yes/no)"
+        bot_reply = "🚙 Need AWD or 4WD? (yes/no)"
     elif idx == 6:
-        bot_reply = "\ud83d\udc68‍\ud83d\udc67‍\ud83d\udc66 Need a third-row seat? (yes/no)"
+        bot_reply = "👨‍👩‍👧‍👦 Need a third-row seat? (yes/no)"
     elif idx == 7:
-        bot_reply = "\ud83d\udc8e Prefer a luxury brand? (yes/no)"
+        bot_reply = "💎 Prefer a luxury brand? (yes/no)"
     elif idx == 8:
-        bot_reply = "\ud83d\udcb5 What's your maximum monthly payment goal?"
+        bot_reply = "💵 What's your maximum monthly payment goal?"
     else:
-        bot_reply = "\u2705 Thanks! Let me find the best vehicles for you now..."
+        bot_reply = "✅ Thanks! Let me find the best vehicles for you now..."
 
     st.session_state.messages.append({"role": "assistant", "content": bot_reply})
     st.session_state.question_step += 1
 
 if st.session_state.question_step > 9:
     with st.chat_message("assistant"):
-        summary_parts = []
-        if st.session_state.answers.get("type"):
-            summary_parts.append(f"looking for a {st.session_state.answers['type'].lower()}")
-        if st.session_state.answers.get("budget"):
-            summary_parts.append(f"under ${st.session_state.answers['budget']:,}")
-        if st.session_state.answers.get("year"):
-            summary_parts.append(f"model year {st.session_state.answers['year']} or newer")
-        if st.session_state.answers.get("mileage"):
-            summary_parts.append(f"less than {st.session_state.answers['mileage']:,} miles")
-        if st.session_state.answers.get("electric") and st.session_state.answers['electric']:
-            summary_parts.append("preferably electric")
-        if st.session_state.answers.get("luxury") and st.session_state.answers['luxury']:
-            summary_parts.append("from a luxury brand")
-
-        summary_text = ", ".join(summary_parts)
-        st.markdown(f"\ud83d\ude97 Based on your preferences ({summary_text}), here are your top matches:")
-
-        filtered = df.copy()
-        if st.session_state.answers.get("type"):
-            filtered = filtered[filtered['Model'].str.contains(st.session_state.answers["type"], case=False, na=False)]
-        if st.session_state.answers.get("brand"):
-            filtered = filtered[filtered['Brand'].str.contains(st.session_state.answers["brand"], case=False, na=False)]
-        if st.session_state.answers.get("budget"):
-            filtered = filtered[filtered['MSRP Min'] <= st.session_state.answers["budget"]]
-        if st.session_state.answers.get("year") and 'Year' in filtered.columns:
-            filtered = filtered[filtered['Year'] >= st.session_state.answers['year']]
-        if st.session_state.answers.get("mileage") and 'Mileage' in filtered.columns:
-            filtered = filtered[filtered['Mileage'] <= st.session_state.answers['mileage']]
-        if st.session_state.answers.get("electric") == True:
-            filtered = filtered[filtered['Fuel Type'].str.contains('electric', case=False, na=False)]
-        if st.session_state.answers.get("luxury") == True:
-            filtered = filtered[filtered['Brand'].isin(luxury_brands)]
-
+        st.markdown("🚗 Based on your final preferences, here are your top matches:")
+        filtered = prioritize_by_budget(df)
         if not filtered.empty:
-            filtered = filtered.sort_values(by=["MSRP Min", "Year", "Mileage"], ascending=[True, False, True])
             top_cars = filtered.head(3)
             for _, car in top_cars.iterrows():
                 price = f"${car['MSRP Min']:,}"
                 name = f"{car['Brand'].title()} {car['Model']}"
-                if 'Fuel Type' in car and 'electric' in str(car['Fuel Type']).lower():
-                    reason = "\u26a1 Eco-friendly electric drive and modern features."
-                elif car['Brand'].lower() in luxury_brands:
-                    reason = "\ud83d\udc8e Premium luxury and brand prestige."
-                elif 'Mileage' in car and car['Mileage'] is not None and car['Mileage'] < 30000:
-                    reason = "\ud83d\udee1\ufe0f Very low mileage \u2014 almost like new!"
-                else:
-                    reason = "\u2705 A great match for affordability and reliability."
-                st.markdown(f"**\u2728 {name}**\n- \ud83d\udcb2 **Price:** {price}\n- {reason}\n")
+                st.markdown(f"**✨ {name}**\n- 💲 **Price:** {price}")
         else:
-            st.markdown("\u2757 No cars matched all your preferences. You might want to loosen one or two preferences and try again!")
+            st.markdown("❗ No cars matched your preferences. Try adjusting some options!")
 
-if st.session_state.shortlist:
-    st.markdown("---")
-    st.header("\ud83d\udcc4 Your Shortlist")
-    for vehicle in st.session_state.shortlist:
-        st.write(f"- {vehicle['Brand'].title()} {vehicle['Model']} (${vehicle['MSRP Min']:,})")
-
-    email_input = st.text_input("Enter your email address to receive the shortlist PDF:")
-    if st.button("\ud83d\udce7 Send PDF Report"):
-        if email_input:
-            send_pdf_via_email(email_input)
-        else:
-            st.error("Please enter a valid email address.")
-
-    if st.button("\u2b07\ufe0f Download PDF Now"):
-        temp_pdf_path = create_shortlist_pdf()
-        with open(temp_pdf_path, "rb") as pdf_file:
-            st.download_button(label="Download Your Shortlist PDF", data=pdf_file, file_name="Vehicle_Shortlist.pdf", mime="application/pdf")
-
-if st.button("\ud83d\udd04 Restart Profile"):
+if st.button("🔄 Restart Profile"):
     st.session_state.clear()
     st.rerun()
