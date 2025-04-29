@@ -178,9 +178,17 @@ if prompt := st.chat_input("Type your answer..."):
         st.session_state.question_index += 1
 
     filtered = filter_cars()
+    if st.session_state.question_index >= len(questions):
+    recommend_final_cars(filtered)
+else:
     with st.chat_message("assistant"):
-        st.markdown("\U0001F698 **Current Best Vehicle Matches:**")
-        recommend_final_cars(filtered if st.session_state.question_index >= len(questions) else filtered.head(2))
+        st.markdown("\U0001F698 **Current Best Vehicle Matches:**"
+        top = filtered.head(2)
+        car_list = "\n".join([
+            f"- {row['Brand'].title()} {row['Model'].title()} (MSRP Range: {row['MSRP Range']})"
+            for _, row in top.iterrows()
+        ])
+        st.markdown(car_list)
 
     if st.session_state.question_index < len(questions):
         next_q = questions[st.session_state.question_index]["question"]
