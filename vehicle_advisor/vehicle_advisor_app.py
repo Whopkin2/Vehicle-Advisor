@@ -26,7 +26,7 @@ df = load_vehicle_data()
 # Setup OpenAI
 client = openai.OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
-# Questions list
+# Questions
 questions = [
     {"key": "vehicle_type", "question": "What type of vehicle are you looking for? (Sedan, SUV, Truck, Coupe, etc.)"},
     {"key": "car_size", "question": "What size of vehicle do you want? (Compact, Midsize, Full-size, etc.)"},
@@ -65,14 +65,14 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# ✅ Force-show first question if blank
+# ✅ Force show first question if empty
 if st.session_state.question_index == 0 and len(st.session_state.messages) == 0:
     first_q = questions[0]["question"]
     with st.chat_message("assistant"):
         st.markdown(first_q)
     st.session_state.messages.append({"role": "assistant", "content": first_q})
 
-# 🔍 Filtering logic
+# 🔍 Softer, smarter filtering
 def filter_cars():
     filtered = df.copy()
     for key, value in st.session_state.answers.items():
@@ -84,49 +84,49 @@ def filter_cars():
                 filtered = filtered[filtered["Min Price"] <= float(value.replace('$', '').replace(',', ''))]
             except: pass
         elif key == "fuel_type" and "Fuel Type" in filtered.columns:
-            filtered = filtered[filtered["Fuel Type"].str.lower() == value]
+            filtered = filtered[filtered["Fuel Type"].str.lower().str.contains(value, na=False)]
         elif key == "vehicle_type" and "Vehicle Type" in filtered.columns:
-            filtered = filtered[filtered["Vehicle Type"].str.lower() == value]
+            filtered = filtered[filtered["Vehicle Type"].str.lower().str.contains(value, na=False)]
         elif key == "car_size" and "Car Size" in filtered.columns:
-            filtered = filtered[filtered["Car Size"].str.lower() == value]
+            filtered = filtered[filtered["Car Size"].str.lower().str.contains(value, na=False)]
         elif key == "region" and "Region" in filtered.columns:
-            filtered = filtered[filtered["Region"].str.lower() == value]
+            filtered = filtered[filtered["Region"].str.lower().str.contains(value, na=False)]
         elif key == "brand" and "Brand" in filtered.columns:
-            filtered = filtered[filtered["Brand"].str.lower() == value]
+            filtered = filtered[filtered["Brand"].str.lower().str.contains(value, na=False)]
         elif key == "eco_conscious" and "Eco-Conscious" in filtered.columns:
-            filtered = filtered[filtered["Eco-Conscious"].str.lower() == value]
+            filtered = filtered[filtered["Eco-Conscious"].str.lower().str.contains(value, na=False)]
         elif key == "charging_access" and "Charging Access" in filtered.columns:
-            filtered = filtered[filtered["Charging Access"].str.lower() == value]
+            filtered = filtered[filtered["Charging Access"].str.lower().str.contains(value, na=False)]
         elif key == "neighborhood_type" and "Neighborhood Type" in filtered.columns:
-            filtered = filtered[filtered["Neighborhood Type"].str.lower() == value]
+            filtered = filtered[filtered["Neighborhood Type"].str.lower().str.contains(value, na=False)]
         elif key == "towing_needs" and "Towing Needs" in filtered.columns:
-            filtered = filtered[filtered["Towing Needs"].str.lower() == value]
+            filtered = filtered[filtered["Towing Needs"].str.lower().str.contains(value, na=False)]
         elif key == "tech_features" and "Tech Features" in filtered.columns:
             filtered = filtered[filtered["Tech Features"].str.lower().str.contains(value, na=False)]
         elif key == "safety_priority" and "Safety Priority" in filtered.columns:
             filtered = filtered[filtered["Safety Priority"].str.lower().str.contains(value, na=False)]
         elif key == "garage_access" and "Garage Access" in filtered.columns:
-            filtered = filtered[filtered["Garage Access"].str.lower() == value]
+            filtered = filtered[filtered["Garage Access"].str.lower().str.contains(value, na=False)]
         elif key == "employment_status" and "Employment Status" in filtered.columns:
-            filtered = filtered[filtered["Employment Status"].str.lower() == value]
+            filtered = filtered[filtered["Employment Status"].str.lower().str.contains(value, na=False)]
         elif key == "credit_score" and "Credit Score" in filtered.columns:
             try:
                 score = int(value.replace('+','').strip())
                 filtered = filtered[pd.to_numeric(filtered["Credit Score"], errors='coerce') >= score]
             except: pass
         elif key == "travel_frequency" and "Travel Frequency" in filtered.columns:
-            filtered = filtered[filtered["Travel Frequency"].str.lower() == value]
+            filtered = filtered[filtered["Travel Frequency"].str.lower().str.contains(value, na=False)]
         elif key == "ownership_duration" and "Ownership Duration" in filtered.columns:
-            filtered = filtered[filtered["Ownership Duration"].str.lower() == value]
+            filtered = filtered[filtered["Ownership Duration"].str.lower().str.contains(value, na=False)]
         elif key == "ownership_recommendation" and "Ownership Recommendation" in filtered.columns:
-            filtered = filtered[filtered["Ownership Recommendation"].str.lower() == value]
+            filtered = filtered[filtered["Ownership Recommendation"].str.lower().str.contains(value, na=False)]
         elif key == "yearly_income" and "Yearly Income" in filtered.columns:
             try:
                 income = int(value.replace('$', '').replace(',', ''))
                 filtered = filtered[pd.to_numeric(filtered["Yearly Income"], errors='coerce') <= income * 2]
             except: pass
         elif key == "use_category" and "Use Category" in filtered.columns:
-            filtered = filtered[filtered["Use Category"].str.lower() == value]
+            filtered = filtered[filtered["Use Category"].str.lower().str.contains(value, na=False)]
         elif key == "mpg_range" and "MPG/Range" in filtered.columns:
             try:
                 mpg = int(value.split()[0])
@@ -134,7 +134,7 @@ def filter_cars():
             except: pass
     return filtered
 
-# 🔮 GPT car recommender
+# 🔮 GPT recommender
 def recommend_cars(filtered):
     top = filtered.head(2)
     if top.empty:
@@ -158,7 +158,7 @@ def recommend_cars(filtered):
     )
     return st.write_stream(stream)
 
-# 💬 Chat input
+# 💬 Chat input flow
 if prompt := st.chat_input("Type your answer..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
