@@ -122,13 +122,20 @@ def recommend_cars(filtered_cars):
     if top_cars.empty:
         return st.markdown("_No matching vehicles yet based on current inputs._")
     
-    car_list = "\n".join([f"- {row['Brand'].title()} {row['Model'].title()} (${row['Min Price']:.0f})" for _, row in top_cars.iterrows()])
-    profile_context = "\n".join([f"{k.replace('_', ' ').title()}: {v}" for k, v in st.session_state.answers.items()])
+    car_list = "\n".join([
+        f"- {row['Brand'].title()} {row['Model'].title()} (MSRP Range: {row['MSRP Range']})"
+        for _, row in top_cars.iterrows()
+    ])
+    
+    profile_context = "\n".join([
+        f"{k.replace('_', ' ').title()}: {v}" for k, v in st.session_state.answers.items()
+    ])
 
     prompt = (
         f"User profile:\n{profile_context}\n\n"
         f"Available cars:\n{car_list}\n\n"
         f"Pick the two best options matching user's preferences and explain briefly why."
+        f" Mention the correct MSRP Range when you describe each car."
     )
 
     stream = client.chat.completions.create(
