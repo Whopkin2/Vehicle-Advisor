@@ -156,7 +156,7 @@ def recommend_final_cars(filtered):
         messages=[{"role": "user", "content": prompt}],
         stream=True,
     )
-    return st.write_stream(stream)
+    return st.markdown(f"<pre style='font-family: Arial; font-size: 16px;'>{''.join([chunk.choices[0].delta.get('content', '') for chunk in stream])}</pre>", unsafe_allow_html=True)
 
 # User input
 if prompt := st.chat_input("Type your answer..."):
