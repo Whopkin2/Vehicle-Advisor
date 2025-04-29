@@ -58,21 +58,21 @@ if "answers" not in st.session_state:
 if "question_index" not in st.session_state:
     st.session_state.question_index = 0
 
-st.title("🚗 Vehicle Advisor Chatbot")
+st.title("\U0001F697 Vehicle Advisor Chatbot")
 
 # Show previous messages
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# ✅ Force show first question if empty
+# Show first question if empty
 if st.session_state.question_index == 0 and len(st.session_state.messages) == 0:
     first_q = questions[0]["question"]
     with st.chat_message("assistant"):
         st.markdown(first_q)
     st.session_state.messages.append({"role": "assistant", "content": first_q})
 
-# 🔍 Softer, smarter filtering
+# Filter cars (fuzzy logic)
 def filter_cars():
     filtered = df.copy()
     for key, value in st.session_state.answers.items():
@@ -134,28 +134,23 @@ def filter_cars():
             except: pass
     return filtered
 
-# 🔮 GPT recommender
+# GPT final recommender (3 cars)
 def recommend_final_cars(filtered):
     top = filtered.head(3)
     if top.empty:
         return st.markdown("_No matching vehicles found for full profile._")
-    
     car_list = "\n".join([
         f"- {row['Brand'].title()} {row['Model'].title()} (MSRP Range: {row['MSRP Range']})"
         for _, row in top.iterrows()
     ])
-    
     profile = "\n".join([
         f"{k.replace('_',' ').title()}: {v}" for k,v in st.session_state.answers.items()
     ])
-
     prompt = (
         f"Here is the full user profile:\n{profile}\n\n"
         f"Available cars:\n{car_list}\n\n"
-        f"Please recommend the top 3 vehicles that best match the user's full profile. "
-        f"Explain briefly why each fits well and include the MSRP Range."
+        f"Please recommend the top 3 vehicles that best match the user's full profile. Explain briefly why each fits well and include the MSRP Range."
     )
-
     stream = client.chat.completions.create(
         model="gpt-4",
         messages=[{"role": "user", "content": prompt}],
@@ -163,7 +158,7 @@ def recommend_final_cars(filtered):
     )
     return st.write_stream(stream)
 
-# 💬 Chat input flow
+# User input
 if prompt := st.chat_input("Type your answer..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
@@ -176,17 +171,11 @@ if prompt := st.chat_input("Type your answer..."):
 
     filtered = filter_cars()
     with st.chat_message("assistant"):
-        st.markdown("🚘 **Current Best Vehicle Matches:**")
-        recommend_cars(filtered)
+        st.markdown("\U0001F698 **Current Best Vehicle Matches:**")
+        recommend_final_cars(filtered if st.session_state.question_index >= len(questions) else filtered.head(2))
 
     if st.session_state.question_index < len(questions):
         next_q = questions[st.session_state.question_index]["question"]
         with st.chat_message("assistant"):
             st.markdown(next_q)
         st.session_state.messages.append({"role": "assistant", "content": next_q})
-    else:
-        filtered = filter_cars()
-        with st.chat_message("assistant"):
-            st.markdown("✅ You've completed all questions. Here are your top 3 recommended vehicles:")
-            recommend_final_cars(filtered)
-
