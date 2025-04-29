@@ -10,7 +10,7 @@ st.title("🚗 Vehicle Advisor — Smart Filter with GPT Insights")
 
 @st.cache_data
 def load_data():
-    return pd.read_csv("vehicle_data.csv")
+    return pd.read_csv("https://raw.githubusercontent.com/Whopkin2/Vehicle-Advisor/main/vehicle_advisor/vehicle_data.csv")
 
 df = load_data()
 
