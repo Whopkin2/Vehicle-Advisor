@@ -4,6 +4,7 @@ import openai
 import re
 import numpy as np
 
+st.set_page_config(page_title="Vehicle Advisor Chatbot", layout="centered")
 st.title("🚗 Vehicle Advisor Chatbot")
 
 client = openai.OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
@@ -59,16 +60,16 @@ def flexible_filter(df, answers):
     filtered = df.copy()
 
     if answers.get("type") and 'Category' in filtered.columns:
-        filtered = filtered[filtered['Category'].str.lower() == answers["type"].lower()]
+        filtered = filtered[filtered['Category'].str.lower().str.contains(answers["type"].lower(), na=False)]
 
     if answers.get("region") in ["northeast", "midwest"]:
         if 'Drive Type' in filtered.columns:
             filtered = filtered[filtered['Drive Type'].str.contains('awd|4wd', case=False, na=False)]
 
-    if answers.get("budget"):
+    if answers.get("budget") and 'MSRP Min' in filtered.columns:
         filtered = filtered[filtered['MSRP Min'] <= answers["budget"]]
 
-    if answers.get("brands"):
+    if answers.get("brands") and 'Brand' in filtered.columns:
         brand_filter = filtered['Brand'].apply(lambda x: any(brand in x for brand in answers['brands']))
         filtered = filtered[brand_filter]
 
@@ -78,10 +79,10 @@ def flexible_filter(df, answers):
     if answers.get("mileage") and 'Mileage' in filtered.columns:
         filtered = filtered[filtered['Mileage'] <= answers["mileage"]]
 
-    if answers.get("electric") == True:
+    if answers.get("electric") and 'Fuel Type' in filtered.columns:
         filtered = filtered[filtered['Fuel Type'].str.contains('electric', case=False, na=False)]
 
-    if answers.get("luxury") == True:
+    if answers.get("luxury") == True and 'Brand' in filtered.columns:
         filtered = filtered[filtered['Brand'].isin(luxury_brands)]
 
     return filtered
@@ -89,21 +90,43 @@ def flexible_filter(df, answers):
 def generate_reasoning_gpt(car, answers):
     brand = car['Brand'].title()
     model = car['Model']
-    car_type = answers.get("type", "vehicle")
-    region = answers.get("region", "your region")
-    budget = f"${answers.get('budget'):,}" if answers.get('budget') else "your budget"
 
-    prompt = (
-        f"Explain in 2-3 sentences why a {brand} {model} would be a good fit for a user looking for a {car_type}, "
-        f"living in the {region}, with a budget around {budget}. "
-        f"Highlight any features that make it especially suitable, such as luxury, AWD, fuel economy, or reliability."
-    )
+    prompt_parts = [
+        f"The user is considering the {brand} {model} as a vehicle recommendation."
+    ]
+
+    if answers.get("type"):
+        prompt_parts.append(f"They are looking for a {answers['type']}.")
+    if answers.get("region"):
+        prompt_parts.append(f"They are located in the {answers['region']} region.")
+    if answers.get("budget"):
+        prompt_parts.append(f"Their budget is around ${answers['budget']:,}.")
+    if answers.get("brands"):
+        prompt_parts.append(f"They prefer brands like {', '.join(answers['brands']).title()}.")
+    if answers.get("year"):
+        prompt_parts.append(f"They want a car newer than {answers['year']}.")
+    if answers.get("mileage"):
+        prompt_parts.append(f"They want under {answers['mileage']:,} miles.")
+    if answers.get("electric"):
+        prompt_parts.append("They are interested in electric vehicles.")
+    if answers.get("awd"):
+        prompt_parts.append("They would like AWD or 4WD capability.")
+    if answers.get("third_row"):
+        prompt_parts.append("They need a third-row seat.")
+    if answers.get("luxury"):
+        prompt_parts.append("They are looking for a luxury brand.")
+    if answers.get("monthly_payment"):
+        prompt_parts.append(f"Their max monthly payment is ${answers['monthly_payment']:,}.")
+
+    prompt_parts.append("In 2-3 sentences, explain why this vehicle is a good match for the user's needs based on the above preferences.")
+
+    prompt = " ".join(prompt_parts)
 
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[{"role": "user", "content": prompt}],
         temperature=0.7,
-        max_tokens=120
+        max_tokens=150
     )
 
     return response.choices[0].message.content.strip()
