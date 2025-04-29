@@ -60,39 +60,48 @@ def clean_brand_input(text):
 def flexible_filter(df, answers):
     filtered = df.copy()
 
+    # 1. Enforce exact match for Category (e.g., Truck, SUV, Sedan)
     if answers.get("type") and 'Category' in filtered.columns:
-        filtered = filtered[filtered['Category'].str.lower() == answers["type"].lower()]
+        selected_type = answers["type"].strip().lower()
+        filtered = filtered[filtered['Category'].str.strip().str.lower() == selected_type]
 
-    if answers.get("region") in ["northeast", "midwest"]:
+    # 2. AWD/4WD required by region (northeast, midwest)
+    if answers.get("region") and answers["region"].strip().lower() in ["northeast", "midwest"]:
         if 'Drive Type' in filtered.columns:
-            filtered = filtered[filtered['Drive Type'].str.contains('awd|4wd', case=False, na=False)]
+            filtered = filtered[filtered['Drive Type'].str.contains(r'\b(awd|4wd)\b', case=False, na=False)]
 
-    if answers.get("budget"):
+    # 3. Budget cap on MSRP Min
+    if answers.get("budget") and 'MSRP Min' in filtered.columns:
         filtered = filtered[filtered['MSRP Min'] <= answers["budget"]]
 
-    if answers.get("brands"):
-        if answers["brands"]:
-            brand_filter = filtered['Brand'].apply(lambda x: any(brand in x for brand in answers['brands']))
-            filtered = filtered[brand_filter]
+    # 4. Filter by preferred brands
+    if answers.get("brands") and 'Brand' in filtered.columns:
+        user_brands = [b.strip().lower() for b in answers["brands"]]
+        filtered = filtered[filtered['Brand'].str.lower().isin(user_brands)]
 
+    # 5. Minimum acceptable model year
     if answers.get("year") and 'Year' in filtered.columns:
         filtered = filtered[filtered['Year'] >= answers["year"]]
 
+    # 6. Vehicle mileage threshold (how used the vehicle is)
     if answers.get("max_mileage") and 'Mileage' in filtered.columns:
         filtered = filtered[filtered['Mileage'] <= answers["max_mileage"]]
 
-    if answers.get("electric") == True:
+    # 7. Electric vehicle only if explicitly requested
+    if answers.get("electric") == True and 'Fuel Type' in filtered.columns:
         filtered = filtered[filtered['Fuel Type'].str.contains('electric', case=False, na=False)]
 
-    if answers.get("awd") == True:
-        if 'Drive Type' in filtered.columns:
-            filtered = filtered[filtered['Drive Type'].str.contains('awd|4wd', case=False, na=False)]
+    # 8. AWD/4WD if user specifically said yes
+    if answers.get("awd") == True and 'Drive Type' in filtered.columns:
+        filtered = filtered[filtered['Drive Type'].str.contains(r'\b(awd|4wd)\b', case=False, na=False)]
 
-    if answers.get("luxury") == True:
-        filtered = filtered[filtered['Brand'].isin(luxury_brands)]
+    # 9. Luxury brand enforcement
+    if answers.get("luxury") == True and 'Brand' in filtered.columns:
+        filtered = filtered[filtered['Brand'].str.lower().isin([b.lower() for b in luxury_brands])]
 
-    if answers.get("monthly_payment"):
-        estimated_max_price = answers["monthly_payment"] * 60  # Assume simple 5-year loan, no interest
+    # 10. Monthly payment → estimate max price
+    if answers.get("monthly_payment") and 'MSRP Min' in filtered.columns:
+        estimated_max_price = answers["monthly_payment"] * 60  # Approx 5-year loan, no interest
         filtered = filtered[filtered['MSRP Min'] <= estimated_max_price]
 
     return filtered
