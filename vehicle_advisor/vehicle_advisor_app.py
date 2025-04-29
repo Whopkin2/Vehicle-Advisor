@@ -147,12 +147,12 @@ def filter_cars():
         elif key == "use_category" and "Use Category" in filtered.columns:
             filtered = filtered[filtered["Use Category"].str.lower() == value]
 
-            elif 'before' in value:
-                try:
-                    year = int(value.split('before')[-1].strip())
-                    filtered = filtered[pd.to_numeric(filtered["Model Year"], errors='coerce') <= year]
-                except:
-                    pass
+        elif 'before' in value:
+            try:
+                year = int(value.split('before')[-1].strip())
+                filtered = filtered[pd.to_numeric(filtered["Model Year"], errors='coerce') <= year]
+            except:
+                pass
 
         elif key == "mpg_range" and "MPG/Range" in filtered.columns:
             try:
