@@ -40,7 +40,7 @@ questions = [
     {"key": "tech_features", "question": "What level of tech features do you want? (Basic, Moderate)"},
     {"key": "safety_priority", "question": "How important are safety features to you? (High)"},
     {"key": "garage_access", "question": "Do you have a garage for your vehicle? (Yes or No)"},
-    {"key": "employment_status", "question": "What is your employment status? (Employed, Student, Retired)"},
+    {"key": "employment_status", "question": "What is your employment status? (Full-time, Part-time, Student, Retired)"},
     {"key": "credit_score", "question": "What is your approximate credit score? (e.g., 700+)"},
     {"key": "travel_frequency", "question": "How often do you travel long distances? (Often, Occasionally, Rarely)"},
     {"key": "ownership_duration", "question": "How long do you plan to own the vehicle? (Short term, Long term)"},
