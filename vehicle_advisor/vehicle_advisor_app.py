@@ -240,7 +240,6 @@ if st.session_state.question_step > 9:
         if st.session_state.answers.get("luxury") == True:
             filtered = filtered[filtered['Brand'].isin(luxury_brands)]
 
-        # ✅ Only now prioritize by budget
         filtered = prioritize_by_budget(filtered)
 
         if not filtered.empty:
@@ -251,7 +250,7 @@ if st.session_state.question_step > 9:
                 st.markdown(f"**✨ {name}**\n- 💲 **Price:** {price}")
         else:
             st.markdown("❗ No cars matched your preferences. Try adjusting some options!")
-            
+
 if st.button("🔄 Restart Profile"):
     st.session_state.clear()
     st.rerun()
