@@ -82,8 +82,18 @@ def filter_cars():
 
         if key == "budget":
             try:
-                filtered = filtered[filtered["Min Price"] <= float(value.replace('$', '').replace(',', ''))]
+                max_budget = float(value.replace('$', '').replace(',', '').replace('k', '000').split()[0])
+                # Extract max price from MSRP Range
+                filtered["Max Price"] = filtered["MSRP Range"].str.extract(r'\$?\d+[kK]?-?\$?(\d+[kK]?)')[0]
+                filtered["Max Price"] = (
+                    filtered["Max Price"]
+                    .str.replace('k', '000', case=False)
+                    .str.replace(',', '')
+                    .astype(float)
+                )
+                filtered = filtered[filtered["Max Price"] <= max_budget]
             except: pass
+
 
         elif key == "new_or_used":
             if "used" in value:
