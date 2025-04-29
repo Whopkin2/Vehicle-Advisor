@@ -13,6 +13,15 @@ def load_data():
     df = pd.read_csv("https://raw.githubusercontent.com/Whopkin2/Vehicle-Advisor/main/vehicle_data.csv")
     if 'Brand' in df.columns:
         df['Brand'] = df['Brand'].str.lower()
+
+    # ✅ Extract MSRP Min and MSRP Max from MSRP Range
+    if 'MSRP Range' in df.columns:
+        df['MSRP Min'] = df['MSRP Range'].str.extract(r'\$([\d,]+)')[0]
+        df['MSRP Min'] = df['MSRP Min'].str.replace(',', '').astype(float)
+
+        df['MSRP Max'] = df['MSRP Range'].str.extract(r'-\s*\$([\d,]+)')[0]
+        df['MSRP Max'] = df['MSRP Max'].str.replace(',', '').astype(float)
+
     return df
 
 df = load_data()
