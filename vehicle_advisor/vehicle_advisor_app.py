@@ -36,6 +36,16 @@ if "blocked_brands" not in st.session_state:
 if "profile_complete" not in st.session_state:
     st.session_state.profile_complete = False
 
+if "current_question_asked" not in st.session_state:
+    st.session_state.current_question_asked = False
+
+if not st.session_state.current_question_asked:
+    first_question = get_next_question()
+    if first_question:
+        with st.chat_message("assistant"):
+            st.markdown(first_question["question"])
+        st.session_state.current_question_asked = True
+
 # Question list
 questions = [
     {"key": "car_type", "question": "What type of vehicle are you looking for? (e.g., SUV, Sedan, Truck)"},
