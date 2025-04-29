@@ -1,10 +1,11 @@
+# 1. Import packages
 import streamlit as st
 import pandas as pd
 import requests
 from io import StringIO
 import openai
 
-# Load vehicle data from GitHub
+# 2. Load vehicle data
 @st.cache_data
 def load_vehicle_data():
     url = "https://raw.githubusercontent.com/Whopkin2/Vehicle-Advisor/main/vehicle_advisor/vehicle_data.csv"
@@ -12,7 +13,7 @@ def load_vehicle_data():
     if response.status_code == 200:
         csv_data = StringIO(response.text)
         df = pd.read_csv(csv_data)
-        df['Brand'] = df['Brand'].str.lower()  # standardize brand names
+        df['Brand'] = df['Brand'].str.lower()  # standardize
         return df
     else:
         st.error("Failed to load vehicle data from GitHub.")
@@ -20,44 +21,10 @@ def load_vehicle_data():
 
 df = load_vehicle_data()
 
-# Setup page
-st.title("🚗 Vehicle Advisor Chatbot")
-
-# OpenAI setup
+# 3. OpenAI setup
 client = openai.OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
-# Initialize session state
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-if "answers" not in st.session_state:
-    st.session_state.answers = {}
-if "blocked_brands" not in st.session_state:
-    st.session_state.blocked_brands = set()
-if "profile_complete" not in st.session_state:
-    st.session_state.profile_complete = False
-
-if "current_question_asked" not in st.session_state:
-    st.session_state.current_question_asked = False
-
-if not st.session_state.current_question_asked:
-    first_question = get_next_question()
-    if first_question:
-        with st.chat_message("assistant"):
-            st.markdown(first_question["question"])
-        st.session_state.current_question_asked = True
-
-# Question list
-questions = [
-    {"key": "car_type", "question": "What type of vehicle are you looking for? (e.g., SUV, Sedan, Truck)"},
-    {"key": "budget", "question": "What's your approximate budget in USD?"},
-    {"key": "condition", "question": "Are you looking for a new or used vehicle?"},
-    {"key": "fuel_type", "question": "Do you prefer gasoline, hybrid, or electric vehicles?"},
-    {"key": "features", "question": "Are there any must-have features? (e.g., AWD, Luxury, Fuel Economy)"},
-    {"key": "region", "question": "Which region are you located in? (e.g., Northeast, South, West)"},
-    {"key": "size", "question": "Are you looking for a compact or full-size vehicle?"},
-]
-
-# Helper functions
+# 4. Helper functions
 def get_next_question():
     for q in questions:
         if q["key"] not in st.session_state.answers:
@@ -126,12 +93,51 @@ def compare_cars(car1, car2):
     else:
         st.dataframe(cars[["Brand", "Model", "Type", "MSRP Min", "Fuel", "Condition", "Size", "Region"]])
 
-# Display chat history
+# 5. Setup Streamlit Page
+st.title("🚗 Vehicle Advisor Chatbot")
+
+# 6. Define questions
+questions = [
+    {"key": "car_type", "question": "What type of vehicle are you looking for? (e.g., SUV, Sedan, Truck)"},
+    {"key": "budget", "question": "What's your approximate budget in USD?"},
+    {"key": "condition", "question": "Are you looking for a new or used vehicle?"},
+    {"key": "fuel_type", "question": "Do you prefer gasoline, hybrid, or electric vehicles?"},
+    {"key": "features", "question": "Are there any must-have features? (e.g., AWD, Luxury, Fuel Economy)"},
+    {"key": "region", "question": "Which region are you located in? (e.g., Northeast, South, West)"},
+    {"key": "size", "question": "Are you looking for a compact or full-size vehicle?"},
+]
+
+# 7. Session state initialization
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+if "answers" not in st.session_state:
+    st.session_state.answers = {}
+if "blocked_brands" not in st.session_state:
+    st.session_state.blocked_brands = set()
+if "profile_complete" not in st.session_state:
+    st.session_state.profile_complete = False
+if "current_question_asked" not in st.session_state:
+    st.session_state.current_question_asked = False
+
+# 8. Reset button
+if st.button("🔄 Reset Chat"):
+    st.session_state.clear()
+    st.experimental_rerun()
+
+# 9. Automatically ask first question
+if not st.session_state.current_question_asked:
+    first_question = get_next_question()
+    if first_question:
+        with st.chat_message("assistant"):
+            st.markdown(first_question["question"])
+        st.session_state.current_question_asked = True
+
+# 10. Display previous chat history
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Accept user input
+# 11. Accept user input
 if prompt := st.chat_input("Type here..."):
     # Check for commands
     if prompt.lower().startswith("remove"):
@@ -158,7 +164,7 @@ if prompt := st.chat_input("Type here..."):
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)
-        # If still building profile
+        # Build profile
         if not st.session_state.profile_complete:
             current_question = get_next_question()
             if current_question:
@@ -174,11 +180,11 @@ if prompt := st.chat_input("Type here..."):
                         st.markdown(next_question["question"])
             else:
                 st.session_state.profile_complete = True
-        # If profile complete
+        # Final recommendation
         if st.session_state.profile_complete:
             filtered = filter_cars()
             top_cars = filtered.head(10)
             if not top_cars.empty:
                 with st.chat_message("assistant"):
-                    st.markdown("Based on everything you've shared, here are the top 3 vehicle matches for you 🚗✨:")
+                    st.markdown("✅ Based on everything you've shared, here are the top 3 vehicle matches for you:")
                     gpt_final_recommendation(top_cars, context=st.session_state.answers)
