@@ -4,7 +4,7 @@ import openai
 import requests
 from io import StringIO
 
-# 🚗 Load vehicle data from GitHub
+# Load vehicle data
 @st.cache_data
 def load_vehicle_data():
     url = "https://raw.githubusercontent.com/Whopkin2/Vehicle-Advisor/main/vehicle_advisor/vehicle_data.csv"
@@ -25,7 +25,7 @@ df = load_vehicle_data()
 # Setup OpenAI
 client = openai.OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
-# 10 Structured Questions (split tech and safety)
+# Structured Questions
 questions = [
     {"key": "budget", "question": "What's your maximum budget for a vehicle (in USD)?"},
     {"key": "fuel_type", "question": "What fuel type do you prefer? (Gasoline, Electric, Hybrid)"},
@@ -39,10 +39,7 @@ questions = [
     {"key": "yearly_income", "question": "What is your estimated yearly income (in USD)?"}
 ]
 
-# Streamlit setup
-st.title("🚗 Vehicle Advisor Chatbot")
-
-# Initialize session state
+# Session state initialization
 if "messages" not in st.session_state:
     st.session_state.messages = []
 if "answers" not in st.session_state:
@@ -50,12 +47,15 @@ if "answers" not in st.session_state:
 if "question_index" not in st.session_state:
     st.session_state.question_index = 0
 
-# Display previous chat messages
+# Title
+st.title("🚗 Vehicle Advisor Chatbot")
+
+# Display previous messages
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Bulletproof filter_cars()
+# Filtering logic
 def filter_cars():
     filtered = df.copy()
 
@@ -88,7 +88,7 @@ def filter_cars():
 
     return filtered
 
-# Recommend cars after each answer
+# Recommend cars
 def recommend_cars(filtered_cars):
     top_cars = filtered_cars.head(2)
     if top_cars.empty:
@@ -110,16 +110,16 @@ def recommend_cars(filtered_cars):
     )
     return st.write_stream(stream)
 
-# Ask first question if needed
+# Ask first question if no messages
 if st.session_state.question_index < len(questions) and len(st.session_state.messages) == 0:
-    current_q = questions[st.session_state.question_index]["question"]
+    first_question = questions[st.session_state.question_index]["question"]
     with st.chat_message("assistant"):
-        st.markdown(current_q)
-    st.session_state.messages.append({"role": "assistant", "content": current_q})
+        st.markdown(first_question)
+    st.session_state.messages.append({"role": "assistant", "content": first_question})
 
-# Accept user input
+# Chat input
 if prompt := st.chat_input("Type your answer..."):
-    # Save user message
+    # Save user input
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
@@ -136,11 +136,12 @@ if prompt := st.chat_input("Type your answer..."):
         st.markdown("🚘 **Current Best Vehicle Matches:**")
         recommend_cars(filtered)
 
-    # Ask next question
+    # Ask next question if any
     if st.session_state.question_index < len(questions):
         next_q = questions[st.session_state.question_index]["question"]
+        with st.chat_message("assistant"):
+            st.markdown(next_q)
         st.session_state.messages.append({"role": "assistant", "content": next_q})
-        st.experimental_rerun()
     else:
         with st.chat_message("assistant"):
-            st.markdown("✅ You've answered all questions! Here’s your final recommendation summary above.")
+            st.markdown("✅ You've completed all questions. Final recommendations above!")
