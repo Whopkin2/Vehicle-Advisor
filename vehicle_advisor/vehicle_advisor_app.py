@@ -97,12 +97,15 @@ def prioritize_by_budget(filtered):
         preferred_brands = ['acura', 'lexus', 'subaru', 'volkswagen', 'ford', 'chevrolet', 'chevy']
     elif budget > 50000:
         preferred_brands = ['bmw', 'mercedes', 'audi', 'lexus', 'cadillac', 'tesla']
+
     if preferred_brands:
         filtered['preferred'] = filtered['Brand'].apply(lambda x: 0 if x.lower() in preferred_brands else 1)
         filtered = filtered.sort_values(by=['preferred', 'MSRP Min', 'Year', 'Mileage'], ascending=[True, True, False, True])
         filtered = filtered.drop(columns=['preferred'])
     else:
+        # No preferred column — only sort by known columns
         filtered = filtered.sort_values(by=['MSRP Min', 'Year', 'Mileage'], ascending=[True, False, True])
+
     return filtered
 
 for message in st.session_state.messages:
