@@ -111,10 +111,11 @@ def recommend_cars(filtered_cars):
     return st.write_stream(stream)
 
 # Ask first question if needed
-if st.session_state.question_index < len(questions) and not st.session_state.messages:
+if st.session_state.question_index < len(questions) and len(st.session_state.messages) == 0:
     current_q = questions[st.session_state.question_index]["question"]
+    with st.chat_message("assistant"):
+        st.markdown(current_q)
     st.session_state.messages.append({"role": "assistant", "content": current_q})
-    st.experimental_rerun()
 
 # Accept user input
 if prompt := st.chat_input("Type your answer..."):
