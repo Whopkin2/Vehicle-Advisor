@@ -50,7 +50,7 @@ questions = [
     {"key": "brand", "question": "Do you have a preferred vehicle brand? (e.g., Honda, Ford, Toyota)"}
 ]
 
-# Initialize session state
+# Session state
 if "messages" not in st.session_state:
     st.session_state.messages = []
 if "answers" not in st.session_state:
@@ -60,123 +60,94 @@ if "question_index" not in st.session_state:
 
 st.title("🚗 Vehicle Advisor Chatbot")
 
-# Display previous messages
+# Show full message history
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Strict filter with skip if "no", "none", "any"
+# Strict filtering with "skip if generic answer"
 def filter_cars():
     filtered = df.copy()
-
     for key, value in st.session_state.answers.items():
         value = value.strip().lower()
-
         if value in ["no", "none", "any"]:
             continue
-
         if key == "budget":
             try:
-                budget = float(value.replace('$', '').replace(',', ''))
-                filtered = filtered[filtered["Min Price"] <= budget]
+                filtered = filtered[filtered["Min Price"] <= float(value.replace('$', '').replace(',', ''))]
             except:
                 pass
-
         elif key == "fuel_type" and "Fuel Type" in filtered.columns:
             filtered = filtered[filtered["Fuel Type"].str.lower() == value]
-
         elif key == "vehicle_type" and "Vehicle Type" in filtered.columns:
             filtered = filtered[filtered["Vehicle Type"].str.lower() == value]
-
         elif key == "car_size" and "Car Size" in filtered.columns:
             filtered = filtered[filtered["Car Size"].str.lower() == value]
-
         elif key == "region" and "Region" in filtered.columns:
             filtered = filtered[filtered["Region"].str.lower() == value]
-
         elif key == "brand" and "Brand" in filtered.columns:
             filtered = filtered[filtered["Brand"].str.lower() == value]
-
         elif key == "eco_conscious" and "Eco-Conscious" in filtered.columns:
             filtered = filtered[filtered["Eco-Conscious"].str.lower() == value]
-
         elif key == "charging_access" and "Charging Access" in filtered.columns:
             filtered = filtered[filtered["Charging Access"].str.lower() == value]
-
         elif key == "neighborhood_type" and "Neighborhood Type" in filtered.columns:
             filtered = filtered[filtered["Neighborhood Type"].str.lower() == value]
-
         elif key == "towing_needs" and "Towing Needs" in filtered.columns:
             filtered = filtered[filtered["Towing Needs"].str.lower() == value]
-
         elif key == "tech_features" and "Tech Features" in filtered.columns:
             filtered = filtered[filtered["Tech Features"].str.lower().str.contains(value, na=False)]
-
         elif key == "safety_priority" and "Safety Priority" in filtered.columns:
             filtered = filtered[filtered["Safety Priority"].str.lower().str.contains(value, na=False)]
-
         elif key == "garage_access" and "Garage Access" in filtered.columns:
             filtered = filtered[filtered["Garage Access"].str.lower() == value]
-
         elif key == "employment_status" and "Employment Status" in filtered.columns:
             filtered = filtered[filtered["Employment Status"].str.lower() == value]
-
         elif key == "credit_score" and "Credit Score" in filtered.columns:
             try:
-                credit_score = int(value.replace('+','').strip())
-                filtered = filtered[pd.to_numeric(filtered["Credit Score"], errors='coerce') >= credit_score]
+                score = int(value.replace('+','').strip())
+                filtered = filtered[pd.to_numeric(filtered["Credit Score"], errors='coerce') >= score]
             except:
                 pass
-
         elif key == "travel_frequency" and "Travel Frequency" in filtered.columns:
             filtered = filtered[filtered["Travel Frequency"].str.lower() == value]
-
         elif key == "ownership_duration" and "Ownership Duration" in filtered.columns:
             filtered = filtered[filtered["Ownership Duration"].str.lower() == value]
-
         elif key == "ownership_recommendation" and "Ownership Recommendation" in filtered.columns:
             filtered = filtered[filtered["Ownership Recommendation"].str.lower() == value]
-
         elif key == "yearly_income" and "Yearly Income" in filtered.columns:
             try:
                 income = int(value.replace('$', '').replace(',', ''))
                 filtered = filtered[pd.to_numeric(filtered["Yearly Income"], errors='coerce') <= income * 2]
             except:
                 pass
-
         elif key == "use_category" and "Use Category" in filtered.columns:
             filtered = filtered[filtered["Use Category"].str.lower() == value]
-
         elif key == "mpg_range" and "MPG/Range" in filtered.columns:
             try:
                 mpg = int(value.split()[0])
                 filtered = filtered[pd.to_numeric(filtered["MPG/Range"], errors='coerce') >= mpg]
             except:
                 pass
-
     return filtered
 
-# Recommend using GPT after every answer
-def recommend_cars(filtered_cars):
-    top_cars = filtered_cars.head(2)
-    if top_cars.empty:
-        return st.markdown("_No matching vehicles yet based on current inputs._")
-    
+# GPT Recommendation
+def recommend_cars(filtered):
+    top = filtered.head(2)
+    if top.empty:
+        return st.markdown("_No matching vehicles yet based on your inputs._")
     car_list = "\n".join([
         f"- {row['Brand'].title()} {row['Model'].title()} (MSRP Range: {row['MSRP Range']})"
-        for _, row in top_cars.iterrows()
+        for _, row in top.iterrows()
     ])
-    
-    profile_context = "\n".join([
-        f"{k.replace('_', ' ').title()}: {v}" for k, v in st.session_state.answers.items()
+    profile = "\n".join([
+        f"{k.replace('_',' ').title()}: {v}" for k,v in st.session_state.answers.items()
     ])
-
     prompt = (
-        f"User profile so far:\n{profile_context}\n\n"
+        f"User profile so far:\n{profile}\n\n"
         f"Available cars:\n{car_list}\n\n"
-        f"Recommend the two best vehicles that fit the current profile. Mention MSRP Range correctly."
+        f"Recommend the two best vehicles that fit the current profile. Mention MSRP Range."
     )
-
     stream = client.chat.completions.create(
         model="gpt-4",
         messages=[{"role": "user", "content": prompt}],
@@ -184,31 +155,22 @@ def recommend_cars(filtered_cars):
     )
     return st.write_stream(stream)
 
-# First question
-if st.session_state.question_index < len(questions) and len(st.session_state.messages) == 0:
-    first_question = questions[st.session_state.question_index]["question"]
-    with st.chat_message("assistant"):
-        st.markdown(first_question)
-    st.session_state.messages.append({"role": "assistant", "content": first_question})
-
-# Chat input flow
+# ✅ User input flow (first question follows same logic now)
 if prompt := st.chat_input("Type your answer..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     if st.session_state.question_index < len(questions):
-        key = questions[st.session_state.question_index]["key"]
-        st.session_state.answers[key] = prompt
+        q_key = questions[st.session_state.question_index]["key"]
+        st.session_state.answers[q_key] = prompt
         st.session_state.question_index += 1
 
-    # Always filter cars and recommend after every answer
     filtered = filter_cars()
     with st.chat_message("assistant"):
         st.markdown("🚘 **Current Best Vehicle Matches:**")
         recommend_cars(filtered)
 
-    # Then ask next question
     if st.session_state.question_index < len(questions):
         next_q = questions[st.session_state.question_index]["question"]
         with st.chat_message("assistant"):
