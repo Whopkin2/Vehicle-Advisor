@@ -25,16 +25,17 @@ df = load_vehicle_data()
 # Setup OpenAI
 client = openai.OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
-# 8 Structured Questions
+# 9 Structured Questions
 questions = [
     {"key": "budget", "question": "What's your maximum budget for a vehicle (in USD)?"},
-    {"key": "fuel", "question": "What fuel type do you prefer? (Gasoline, Electric, Hybrid)"},
-    {"key": "condition", "question": "Do you prefer a new or used vehicle?"},
+    {"key": "fuel_type", "question": "What fuel type do you prefer? (Gasoline, Electric, Hybrid)"},
     {"key": "size", "question": "What size of vehicle are you looking for? (Compact, SUV, Full-size, etc.)"},
-    {"key": "region", "question": "Which region are you located in? (e.g., Northeast, South, Midwest, West)"},
-    {"key": "features", "question": "Any must-have features? (e.g., AWD, Luxury, Fuel Economy)"},
-    {"key": "brand_preference", "question": "Is brand loyalty important to you? (e.g., prefer Honda, Toyota, Ford)"},
-    {"key": "recent_models", "question": "Do you prefer recently released models only? (Yes/No)"}
+    {"key": "region", "question": "Which region are you located in? (Northeast, Midwest, West, South)"},
+    {"key": "brand_preference", "question": "Do you have a preferred car brand? (e.g., Honda, Ford, Toyota)"},
+    {"key": "tech_safety", "question": "Any must-have tech or safety features? (e.g., Bluetooth, Adaptive Cruise, Blind Spot Detection)"},
+    {"key": "annual_mileage", "question": "What is your expected annual mileage? (miles per year)"},
+    {"key": "ownership_type", "question": "Will you own, lease, or rent the vehicle?"},
+    {"key": "yearly_income", "question": "What is your estimated yearly income (in USD)?"}
 ]
 
 # Streamlit setup
@@ -67,38 +68,40 @@ def filter_cars():
     if "fuel_type" in st.session_state.answers and "Fuel" in filtered.columns:
         filtered = filtered[filtered["Fuel"].str.contains(st.session_state.answers["fuel_type"], case=False, na=False)]
 
-    if "condition" in st.session_state.answers:
-        filtered = filtered[filtered["Condition"].str.contains(st.session_state.answers["condition"], case=False, na=False)]
-
     if "size" in st.session_state.answers:
         filtered = filtered[filtered["Size"].str.contains(st.session_state.answers["size"], case=False, na=False)]
 
     if "region" in st.session_state.answers:
         filtered = filtered[filtered["Region"].str.contains(st.session_state.answers["region"], case=False, na=False)]
 
-    if "features" in st.session_state.answers:
-        feature = st.session_state.answers["features"]
-        filtered = filtered[filtered.apply(lambda row: feature.lower() in str(row).lower(), axis=1)]
-
     if "brand_preference" in st.session_state.answers:
         brand = st.session_state.answers["brand_preference"]
         filtered = filtered[filtered["Brand"].str.contains(brand.lower(), case=False, na=False)]
 
-    if "recent_models" in st.session_state.answers:
-        pref = st.session_state.answers["recent_models"]
-        if pref.lower() == "yes":
-            filtered = filtered[filtered["Condition"].str.contains("New", case=False, na=False)]
+    if "annual_mileage" in st.session_state.answers and "MPG/Range" in filtered.columns:
+        try:
+            mileage = float(st.session_state.answers["annual_mileage"])
+            # Prefer cars with higher range if user drives a lot
+            if mileage > 15000:
+                filtered = filtered.sort_values(by="MPG/Range", ascending=False)
+        except:
+            pass
 
     return filtered
 
 # Recommend cars with GPT
 def recommend_cars(filtered_cars):
-    top_cars = filtered_cars.sample(n=min(2, len(filtered_cars)))
+    top_cars = filtered_cars.head(2)
     car_list = "\n".join([f"- {row['Brand'].title()} {row['Model'].title()} (${row['Min Price']})" for _, row in top_cars.iterrows()])
 
+    # Build user profile context
+    profile_context = "\n".join([f"{k.replace('_', ' ').title()}: {v}" for k, v in st.session_state.answers.items()])
+
     prompt = (
-        f"Based on the user's preferences, recommend and explain why these vehicles fit:\n{car_list}\n"
-        f"Be friendly, concise, and insightful."
+        f"The user has the following profile:\n{profile_context}\n\n"
+        f"From the following cars:\n{car_list}\n"
+        f"Recommend 2 cars fitting their profile, considering budget, fuel, mileage, tech needs, ownership type, and yearly income. "
+        f"Explain why briefly and clearly. Suggest approximate monthly payments if applicable."
     )
 
     stream = client.chat.completions.create(
@@ -133,12 +136,12 @@ if prompt := st.chat_input("Type your answer..."):
         with st.chat_message("assistant"):
             st.markdown(next_q)
 
-    # If all questions are done, recommend cars
+    # If all questions answered, recommend cars
     elif st.session_state.question_index >= len(questions):
         filtered = filter_cars()
         if not filtered.empty:
             with st.chat_message("assistant"):
-                st.markdown("✅ Based on your preferences, here are two vehicle recommendations for you:")
+                st.markdown("✅ Based on your full profile, here are two recommended vehicles for you:")
                 recommend_cars(filtered)
         else:
             with st.chat_message("assistant"):
