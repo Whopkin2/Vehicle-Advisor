@@ -59,6 +59,7 @@ for message in st.session_state.messages:
 def filter_cars():
     filtered = df.copy()
 
+    # Strict: Budget
     if "budget" in st.session_state.answers:
         try:
             budget = float(st.session_state.answers["budget"])
@@ -66,18 +67,45 @@ def filter_cars():
         except:
             pass
 
+    # Strict: Fuel Type
     if "fuel_type" in st.session_state.answers and "Fuel" in filtered.columns:
-        filtered = filtered[filtered["Fuel"].str.contains(st.session_state.answers["fuel_type"], case=False, na=False)]
+        fuel_preference = st.session_state.answers["fuel_type"].strip().lower()
 
+        if fuel_preference == "electric":
+            filtered = filtered[filtered["Fuel"].str.lower() == "electric"]
+        elif fuel_preference == "hybrid":
+            filtered = filtered[filtered["Fuel"].str.lower() == "hybrid"]
+        elif fuel_preference == "gasoline":
+            filtered = filtered[filtered["Fuel"].str.lower() == "gasoline"]
+
+    # Strict: Size
     if "size" in st.session_state.answers and "Size" in filtered.columns:
-        filtered = filtered[filtered["Size"].str.contains(st.session_state.answers["size"], case=False, na=False)]
+        size_preference = st.session_state.answers["size"].strip().lower()
+        filtered = filtered[filtered["Size"].str.lower() == size_preference]
 
+    # Strict: Region
     if "region" in st.session_state.answers and "Region" in filtered.columns:
-        filtered = filtered[filtered["Region"].str.contains(st.session_state.answers["region"], case=False, na=False)]
+        region_preference = st.session_state.answers["region"].strip().lower()
+        filtered = filtered[filtered["Region"].str.lower() == region_preference]
 
+    # Strict: Brand
     if "brand_preference" in st.session_state.answers and "Brand" in filtered.columns:
-        filtered = filtered[filtered["Brand"].str.contains(st.session_state.answers["brand_preference"], case=False, na=False)]
+        brand_preference = st.session_state.answers["brand_preference"].strip().lower()
+        filtered = filtered[filtered["Brand"].str.lower() == brand_preference]
 
+    # Tech Feature Matching (optional, best effort)
+    if "tech_features" in st.session_state.answers and "Tech Features" in filtered.columns:
+        tech_pref = st.session_state.answers["tech_features"].strip().lower()
+        if tech_pref != "none":
+            filtered = filtered[filtered["Tech Features"].str.lower().str.contains(tech_pref, na=False)]
+
+    # Safety Feature Matching (optional, best effort)
+    if "safety_features" in st.session_state.answers and "Safety Features" in filtered.columns:
+        safety_pref = st.session_state.answers["safety_features"].strip().lower()
+        if safety_pref != "none":
+            filtered = filtered[filtered["Safety Features"].str.lower().str.contains(safety_pref, na=False)]
+
+    # Annual Mileage (prioritize high MPG/range if mileage > 15k)
     if "annual_mileage" in st.session_state.answers and "MPG/Range" in filtered.columns:
         try:
             mileage = float(st.session_state.answers["annual_mileage"])
@@ -87,7 +115,7 @@ def filter_cars():
             pass
 
     return filtered
-
+    
 # Recommend cars
 def recommend_cars(filtered_cars):
     top_cars = filtered_cars.head(2)
