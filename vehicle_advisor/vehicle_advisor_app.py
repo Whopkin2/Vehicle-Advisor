@@ -135,22 +135,27 @@ def filter_cars():
     return filtered
 
 # 🔮 GPT recommender
-def recommend_cars(filtered):
-    top = filtered.head(2)
+def recommend_final_cars(filtered):
+    top = filtered.head(3)
     if top.empty:
-        return st.markdown("_No matching vehicles yet based on your inputs._")
+        return st.markdown("_No matching vehicles found for full profile._")
+    
     car_list = "\n".join([
         f"- {row['Brand'].title()} {row['Model'].title()} (MSRP Range: {row['MSRP Range']})"
         for _, row in top.iterrows()
     ])
+    
     profile = "\n".join([
         f"{k.replace('_',' ').title()}: {v}" for k,v in st.session_state.answers.items()
     ])
+
     prompt = (
-        f"User profile so far:\n{profile}\n\n"
+        f"Here is the full user profile:\n{profile}\n\n"
         f"Available cars:\n{car_list}\n\n"
-        f"Recommend the two best vehicles that fit the current profile. Mention MSRP Range."
+        f"Please recommend the top 3 vehicles that best match the user's full profile. "
+        f"Explain briefly why each fits well and include the MSRP Range."
     )
+
     stream = client.chat.completions.create(
         model="gpt-4",
         messages=[{"role": "user", "content": prompt}],
