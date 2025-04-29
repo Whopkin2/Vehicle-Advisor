@@ -4,7 +4,6 @@ import openai
 import re
 import numpy as np
 
-st.set_page_config(page_title="Vehicle Advisor Chatbot", layout="centered")
 st.title("🚗 Vehicle Advisor Chatbot")
 
 client = openai.OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
@@ -32,6 +31,7 @@ def load_data():
 
 df = load_data()
 
+# Initialize Session
 if "messages" not in st.session_state:
     st.session_state.messages = []
 if "answers" not in st.session_state:
@@ -41,6 +41,7 @@ if "question_step" not in st.session_state:
 
 luxury_brands = ['bmw', 'mercedes', 'audi', 'lexus', 'cadillac', 'infiniti', 'acura', 'volvo']
 
+# Utility Functions
 def extract_number(text):
     text = text.lower().replace(',', '').strip()
     if 'k' in text:
@@ -60,91 +61,80 @@ def flexible_filter(df, answers):
     filtered = df.copy()
 
     if answers.get("type") and 'Category' in filtered.columns:
-        filtered = filtered[filtered['Category'].str.lower().str.contains(answers["type"].lower(), na=False)]
+        filtered = filtered[filtered['Category'].str.lower() == answers["type"].lower()]
 
     if answers.get("region") in ["northeast", "midwest"]:
         if 'Drive Type' in filtered.columns:
             filtered = filtered[filtered['Drive Type'].str.contains('awd|4wd', case=False, na=False)]
 
-    if answers.get("budget") and 'MSRP Min' in filtered.columns:
+    if answers.get("budget"):
         filtered = filtered[filtered['MSRP Min'] <= answers["budget"]]
 
-    if answers.get("brands") and 'Brand' in filtered.columns:
-        brand_filter = filtered['Brand'].apply(lambda x: any(brand in x for brand in answers['brands']))
-        filtered = filtered[brand_filter]
+    if answers.get("brands"):
+        if answers["brands"]:
+            brand_filter = filtered['Brand'].apply(lambda x: any(brand in x for brand in answers['brands']))
+            filtered = filtered[brand_filter]
 
     if answers.get("year") and 'Year' in filtered.columns:
         filtered = filtered[filtered['Year'] >= answers["year"]]
 
-    if answers.get("mileage") and 'Mileage' in filtered.columns:
-        filtered = filtered[filtered['Mileage'] <= answers["mileage"]]
+    if answers.get("max_mileage") and 'Mileage' in filtered.columns:
+        filtered = filtered[filtered['Mileage'] <= answers["max_mileage"]]
 
-    if answers.get("electric") and 'Fuel Type' in filtered.columns:
+    if answers.get("electric") == True:
         filtered = filtered[filtered['Fuel Type'].str.contains('electric', case=False, na=False)]
 
-    if answers.get("luxury") == True and 'Brand' in filtered.columns:
+    if answers.get("awd") == True:
+        if 'Drive Type' in filtered.columns:
+            filtered = filtered[filtered['Drive Type'].str.contains('awd|4wd', case=False, na=False)]
+
+    if answers.get("luxury") == True:
         filtered = filtered[filtered['Brand'].isin(luxury_brands)]
+
+    if answers.get("monthly_payment"):
+        estimated_max_price = answers["monthly_payment"] * 60  # Assume simple 5-year loan, no interest
+        filtered = filtered[filtered['MSRP Min'] <= estimated_max_price]
 
     return filtered
 
 def generate_reasoning_gpt(car, answers):
     brand = car['Brand'].title()
     model = car['Model']
+    car_type = answers.get("type", "vehicle")
+    region = answers.get("region", "your region")
+    budget = f"${answers.get('budget'):,}" if answers.get('budget') else "your budget"
 
-    prompt_parts = [
-        f"The user is considering the {brand} {model} as a vehicle recommendation."
-    ]
-
-    if answers.get("type"):
-        prompt_parts.append(f"They are looking for a {answers['type']}.")
-    if answers.get("region"):
-        prompt_parts.append(f"They are located in the {answers['region']} region.")
-    if answers.get("budget"):
-        prompt_parts.append(f"Their budget is around ${answers['budget']:,}.")
-    if answers.get("brands"):
-        prompt_parts.append(f"They prefer brands like {', '.join(answers['brands']).title()}.")
-    if answers.get("year"):
-        prompt_parts.append(f"They want a car newer than {answers['year']}.")
-    if answers.get("mileage"):
-        prompt_parts.append(f"They want under {answers['mileage']:,} miles.")
-    if answers.get("electric"):
-        prompt_parts.append("They are interested in electric vehicles.")
-    if answers.get("awd"):
-        prompt_parts.append("They would like AWD or 4WD capability.")
-    if answers.get("third_row"):
-        prompt_parts.append("They need a third-row seat.")
-    if answers.get("luxury"):
-        prompt_parts.append("They are looking for a luxury brand.")
-    if answers.get("monthly_payment"):
-        prompt_parts.append(f"Their max monthly payment is ${answers['monthly_payment']:,}.")
-
-    prompt_parts.append("In 2-3 sentences, explain why this vehicle is a good match for the user's needs based on the above preferences.")
-
-    prompt = " ".join(prompt_parts)
+    prompt = (
+        f"Explain in 2-3 sentences why a {brand} {model} would be a good fit for a user looking for a {car_type}, "
+        f"living in the {region}, with a budget around {budget}. "
+        f"Highlight any features that make it especially suitable, such as luxury, AWD, fuel economy, or reliability."
+    )
 
     response = client.chat.completions.create(
-        model="gpt-3.5-turbo",
+        model="gpt-4o",
         messages=[{"role": "user", "content": prompt}],
         temperature=0.7,
-        max_tokens=150
+        max_tokens=120
     )
 
     return response.choices[0].message.content.strip()
 
+# Updated Questions
 questions = [
     "🚗 What type of car are you looking for? (e.g., SUV, Sedan, Truck)",
     "🌎 Which region are you in? (e.g., Northeast, Midwest, South, West)",
     "💬 What's your maximum budget?",
     "🏷️ Any preferred brands you'd like? (e.g., Ford, Chevy, Volvo)",
     "📅 What's the minimum model year you're aiming for?",
-    "🛣️ What's your maximum mileage per year?",
+    "🛣️ What's your maximum allowable mileage on the vehicle?",
+    "🛫 About how many miles do you drive annually?",
     "🔋 Do you prefer electric vehicles? (yes/no)",
     "🚙 Need AWD or 4WD? (yes/no)",
-    "👨‍👩‍👧‍👦 Need a third-row seat? (yes/no)",
     "💎 Prefer a luxury brand? (yes/no)",
-    "💵 What's your maximum monthly payment goal?"
+    "💵 What's your approximate monthly car payment budget?"
 ]
 
+# Display Conversation
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
@@ -171,18 +161,19 @@ if user_input:
     elif idx == 4:
         st.session_state.answers["year"] = extract_number(user_input)
     elif idx == 5:
-        st.session_state.answers["mileage"] = extract_number(user_input)
+        st.session_state.answers["max_mileage"] = extract_number(user_input)
     elif idx == 6:
-        st.session_state.answers["electric"] = parse_yes_no(user_input)
+        st.session_state.answers["annual_mileage"] = extract_number(user_input)
     elif idx == 7:
-        st.session_state.answers["awd"] = parse_yes_no(user_input)
+        st.session_state.answers["electric"] = parse_yes_no(user_input)
     elif idx == 8:
-        st.session_state.answers["third_row"] = parse_yes_no(user_input)
+        st.session_state.answers["awd"] = parse_yes_no(user_input)
     elif idx == 9:
         st.session_state.answers["luxury"] = parse_yes_no(user_input)
     elif idx == 10:
         st.session_state.answers["monthly_payment"] = extract_number(user_input)
 
+    # Apply filtering
     filtered = flexible_filter(df, st.session_state.answers)
 
     if not filtered.empty:
@@ -191,11 +182,11 @@ if user_input:
         for _, car in top_cars.iterrows():
             name = f"{car['Brand'].title()} {car['Model']}"
             if pd.notnull(car['MSRP Min']):
-                min_price = f"${int(car['MSRP Min'])}K"
+                min_price = f"${int(car['MSRP Min']):,}"
             else:
                 min_price = "N/A"
             if pd.notnull(car.get('MSRP Max')):
-                max_price = f"${int(car['MSRP Max'])}K"
+                max_price = f"${int(car['MSRP Max']):,}"
             else:
                 max_price = None
             price_range = min_price if not max_price else f"{min_price} – {max_price}"
@@ -205,12 +196,14 @@ if user_input:
     else:
         st.session_state.messages.append({"role": "assistant", "content": "⚠️ No exact matches yet, but we'll keep adjusting!"})
 
+    # Move to next question
     if idx + 1 < len(questions):
         st.session_state.question_step += 1
         st.session_state.messages.append({"role": "assistant", "content": questions[st.session_state.question_step]})
     else:
         st.session_state.messages.append({"role": "assistant", "content": "✅ Finalizing your top matches now!"})
 
+# Restart Button
 if st.button("🔄 Restart Profile"):
     st.session_state.clear()
     st.rerun()
