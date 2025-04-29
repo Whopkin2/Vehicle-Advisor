@@ -174,9 +174,9 @@ if user_input:
             elif 'Mileage' in car and car['Mileage'] is not None and car['Mileage'] < 30000:
                 reason = "🛡️ Very low mileage — almost like new!"
             else:
-            reason = "✅ A perfect match for affordability and reliability."
-        response += f"**✨ {name}**\n- 💲 **Price:** {price}\n- {reason}\n\n"
-    st.session_state.messages.append({"role": "assistant", "content": response})
+                reason = "✅ A perfect match for affordability and reliability."
+            response += f"**✨ {name}**\n- 💲 **Price:** {price}\n- {reason}\n\n"
+        st.session_state.messages.append({"role": "assistant", "content": response})
 
     # Prepare next question
     if idx == 0:
