@@ -2,217 +2,104 @@ import streamlit as st
 import pandas as pd
 import openai
 import re
-import numpy as np
 
-st.title("🚗 Vehicle Advisor Chatbot")
-
+# Initialize OpenAI Client
 client = openai.OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+
+st.title("🚗 Vehicle Advisor — Smart Filter with GPT Insights")
 
 @st.cache_data
 def load_data():
-    df = pd.read_csv("https://raw.githubusercontent.com/Whopkin2/Vehicle-Advisor/main/vehicle_advisor/vehicle_data.csv")
-    if 'Brand' in df.columns:
-        df['Brand'] = df['Brand'].str.lower()
-
-    def parse_price_range(text):
-        if isinstance(text, str):
-            parts = re.findall(r'\$?\s?([\d,]+)', text)
-            if len(parts) == 1:
-                price = float(parts[0].replace(',', ''))
-                return price, price
-            elif len(parts) >= 2:
-                min_price = float(parts[0].replace(',', ''))
-                max_price = float(parts[1].replace(',', ''))
-                return min_price, max_price
-        return np.nan, np.nan
-
-    df[['MSRP Min', 'MSRP Max']] = df['MSRP Range'].apply(lambda x: pd.Series(parse_price_range(x)))
-    return df
+    return pd.read_csv("vehicle_data.csv")
 
 df = load_data()
 
-# Initialize Session
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-if "answers" not in st.session_state:
-    st.session_state.answers = {}
-if "question_step" not in st.session_state:
-    st.session_state.question_step = 0
+# Valid options exactly matching dataset
+vehicle_types = ['Crossover', 'Hatchback', 'SUV', 'Sedan', 'Sports Car', 'Truck']
+brands = ['Acura', 'Alfa Romeo', 'Audi', 'BMW', 'Cadillac', 'Chevrolet', 'Ferrari', 'Ford', 'GMC', 'Genesis',
+          'Honda', 'Hyundai', 'Infiniti', 'Jaguar', 'Jeep', 'Kia', 'Lexus', 'Lucid', 'Mazda', 'Mercedes-Benz',
+          'Mini', 'Nissan', 'Porsche', 'Ram', 'Rivian', 'Subaru', 'Tesla', 'Toyota', 'Volkswagen', 'Volvo']
+fuel_types = ['Electric', 'Gas', 'Hybrid', 'Plug-in Hybrid']
+regions = ['All Regions', 'Mid-West', 'North East', 'North West', 'South East', 'South West', 'West']
+use_categories = ['Commuting', 'Family Vehicle', 'Leisure', 'Off-Roading', 'Sport/Performance', 'Utility']
+credit_scores = ['Excellent (800+)', 'Fair (580-669)', 'Good (670-739)', 'Very Good (740-799)']
+employment_statuses = ['Full-time', 'Part-time', 'Retired', 'Student']
+garage_access_options = ['Yes', 'No']
+ownership_recommendations = ['Buy', 'Lease', 'Rent']
+income_brackets = ['<25k', '25k-50k', '50k-100k', '100k-150k', '150k+']
 
-luxury_brands = ['bmw', 'mercedes', 'audi', 'lexus', 'cadillac', 'infiniti', 'acura', 'volvo']
+# Helper for input validation
+def validated_text_input(label, options):
+    st.markdown(f"**Options:** {', '.join(options)}")
+    user_input = st.text_input(label)
+    if user_input:
+        user_input_clean = user_input.strip()
+        valid_options_clean = [o.strip() for o in options]
+        if user_input_clean not in valid_options_clean:
+            st.error(f"❌ Invalid input. Please select one of the listed options exactly.")
+            st.stop()
+        return user_input_clean
+    else:
+        st.stop()
 
-# Utility Functions
-def extract_number(text):
-    text = text.lower().replace(',', '').strip()
-    if 'k' in text:
-        number = re.findall(r'\d+', text)
-        return int(number[0]) * 1000 if number else None
-    number = re.findall(r'\d+', text)
-    return int(number[0]) if number else None
+# User Inputs
+vehicle_type = validated_text_input("🚗 Enter your desired vehicle type:", vehicle_types)
+region = validated_text_input("🌎 Enter your region:", regions)
+brand_input = st.text_input(f"🏷️ Enter preferred brand(s) (comma separated). Options: {', '.join(brands)}")
+fuel_type = validated_text_input("🔋 Enter your fuel preference:", fuel_types)
+employment_status = validated_text_input("💼 Enter your employment status:", employment_statuses)
+credit_score = validated_text_input("📊 Enter your credit score range:", credit_scores)
+garage_access = validated_text_input("🚗 Do you have garage access?", garage_access_options)
+ownership = validated_text_input("🚘 Preferred ownership method:", ownership_recommendations)
+income = validated_text_input("💵 Enter your yearly income bracket:", income_brackets)
 
-def parse_yes_no(text):
-    return text.strip().lower() in ['yes', 'y']
+if st.button("🔍 Show Matching Vehicles"):
+    filtered = df[
+        (df['Vehicle Type'] == vehicle_type) &
+        (df['Fuel Type'].str.lower() == fuel_type.lower()) &
+        (df['Employment Status'] == employment_status) &
+        (df['Credit Score'] == credit_score) &
+        (df['Garage Access'] == garage_access) &
+        (df['Ownership Recommendation'] == ownership) &
+        (df['Yearly Income'] == income)
+    ]
 
-def clean_brand_input(text):
-    brands = [b.strip().lower() for b in re.split(',|&|and', text) if b.strip()]
-    return brands
+    # Special handling for Region because multiple regions can exist in one cell
+    filtered = filtered[filtered['Region'].str.contains(region, na=False)]
 
-def flexible_filter(df, answers):
-    filtered = df.copy()
-
-    # 1. Enforce exact match for Category (e.g., Truck, SUV, Sedan)
-    if answers.get("type") and 'Category' in filtered.columns:
-        selected_type = answers["type"].strip().lower()
-        filtered = filtered[filtered['Category'].str.strip().str.lower() == selected_type]
-
-    # 2. AWD/4WD required by region (northeast, midwest)
-    if answers.get("region") and answers["region"].strip().lower() in ["northeast", "midwest"]:
-        if 'Drive Type' in filtered.columns:
-            filtered = filtered[filtered['Drive Type'].str.contains(r'\b(awd|4wd)\b', case=False, na=False)]
-
-    # 3. Budget cap on MSRP Min
-    if answers.get("budget") and 'MSRP Min' in filtered.columns:
-        filtered = filtered[filtered['MSRP Min'] <= answers["budget"]]
-
-    # 4. Filter by preferred brands
-    if answers.get("brands") and 'Brand' in filtered.columns:
-        user_brands = [b.strip().lower() for b in answers["brands"]]
-        filtered = filtered[filtered['Brand'].str.lower().isin(user_brands)]
-
-    # 5. Minimum acceptable model year
-    if answers.get("year") and 'Year' in filtered.columns:
-        filtered = filtered[filtered['Year'] >= answers["year"]]
-
-    # 6. Vehicle mileage threshold (how used the vehicle is)
-    if answers.get("max_mileage") and 'Mileage' in filtered.columns:
-        filtered = filtered[filtered['Mileage'] <= answers["max_mileage"]]
-
-    # 7. Electric vehicle only if explicitly requested
-    if answers.get("electric") == True and 'Fuel Type' in filtered.columns:
-        filtered = filtered[filtered['Fuel Type'].str.contains('electric', case=False, na=False)]
-
-    # 8. AWD/4WD if user specifically said yes
-    if answers.get("awd") == True and 'Drive Type' in filtered.columns:
-        filtered = filtered[filtered['Drive Type'].str.contains(r'\b(awd|4wd)\b', case=False, na=False)]
-
-    # 9. Luxury brand enforcement
-    if answers.get("luxury") == True and 'Brand' in filtered.columns:
-        filtered = filtered[filtered['Brand'].str.lower().isin([b.lower() for b in luxury_brands])]
-
-    # 10. Monthly payment → estimate max price
-    if answers.get("monthly_payment") and 'MSRP Min' in filtered.columns:
-        estimated_max_price = answers["monthly_payment"] * 60  # Approx 5-year loan, no interest
-        filtered = filtered[filtered['MSRP Min'] <= estimated_max_price]
-
-    return filtered
-
-def generate_reasoning_gpt(car, answers):
-    brand = car['Brand'].title()
-    model = car['Model']
-    car_type = answers.get("type", "vehicle")
-    region = answers.get("region", "your region")
-    budget = f"${answers.get('budget'):,}" if answers.get('budget') else "your budget"
-
-    prompt = (
-        f"Explain in 2-3 sentences why a {brand} {model} would be a good fit for a user looking for a {car_type}, "
-        f"living in the {region}, with a budget around {budget}. "
-        f"Highlight any features that make it especially suitable, such as luxury, AWD, fuel economy, or reliability."
-    )
-
-    response = client.chat.completions.create(
-        model="gpt-4o",
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.7,
-        max_tokens=120
-    )
-
-    return response.choices[0].message.content.strip()
-
-# Updated Questions
-questions = [
-    "🚗 What type of car are you looking for? (e.g., SUV, Sedan, Truck)",
-    "🌎 Which region are you in? (e.g., Northeast, Midwest, South, West)",
-    "💬 What's your maximum budget?",
-    "🏷️ Any preferred brands you'd like? (e.g., Ford, Chevy, Volvo)",
-    "📅 What's the minimum model year you're aiming for?",
-    "🛣️ What's your maximum allowable mileage on the vehicle?",
-    "🛫 About how many miles do you drive annually?",
-    "🔋 Do you prefer electric vehicles? (yes/no)",
-    "🚙 Need AWD or 4WD? (yes/no)",
-    "💎 Prefer a luxury brand? (yes/no)",
-    "💵 What's your approximate monthly car payment budget?"
-]
-
-# Display Conversation
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
-
-if len(st.session_state.messages) == 0:
-    with st.chat_message("assistant"):
-        st.markdown(questions[0])
-    st.session_state.messages.append({"role": "assistant", "content": questions[0]})
-
-user_input = st.chat_input("Type your answer here...")
-
-if user_input:
-    st.session_state.messages.append({"role": "user", "content": user_input})
-    idx = st.session_state.question_step
-
-    if idx == 0:
-        st.session_state.answers["type"] = user_input
-    elif idx == 1:
-        st.session_state.answers["region"] = user_input.lower()
-    elif idx == 2:
-        st.session_state.answers["budget"] = extract_number(user_input)
-    elif idx == 3:
-        st.session_state.answers["brands"] = clean_brand_input(user_input)
-    elif idx == 4:
-        st.session_state.answers["year"] = extract_number(user_input)
-    elif idx == 5:
-        st.session_state.answers["max_mileage"] = extract_number(user_input)
-    elif idx == 6:
-        st.session_state.answers["annual_mileage"] = extract_number(user_input)
-    elif idx == 7:
-        st.session_state.answers["electric"] = parse_yes_no(user_input)
-    elif idx == 8:
-        st.session_state.answers["awd"] = parse_yes_no(user_input)
-    elif idx == 9:
-        st.session_state.answers["luxury"] = parse_yes_no(user_input)
-    elif idx == 10:
-        st.session_state.answers["monthly_payment"] = extract_number(user_input)
-
-    # Apply filtering
-    filtered = flexible_filter(df, st.session_state.answers)
+    # Handle multiple brands entered
+    if brand_input:
+        selected_brands = [b.strip() for b in brand_input.split(",") if b.strip()]
+        filtered = filtered[filtered['Brand'].isin(selected_brands)]
 
     if not filtered.empty:
-        top_cars = filtered.head(2)
-        reply = "🔎 Based on your answers so far, here are two cars you might love:\n\n"
-        for _, car in top_cars.iterrows():
-            name = f"{car['Brand'].title()} {car['Model']}"
-            if pd.notnull(car['MSRP Min']):
-                min_price = f"${int(car['MSRP Min']):,}"
-            else:
-                min_price = "N/A"
-            if pd.notnull(car.get('MSRP Max')):
-                max_price = f"${int(car['MSRP Max']):,}"
-            else:
-                max_price = None
-            price_range = min_price if not max_price else f"{min_price} – {max_price}"
-            explanation = generate_reasoning_gpt(car, st.session_state.answers)
-            reply += f"✨ **{name}**\n- 💲 **Price Range:** {price_range}\n- 🧠 {explanation}\n\n"
-        st.session_state.messages.append({"role": "assistant", "content": reply})
-    else:
-        st.session_state.messages.append({"role": "assistant", "content": "⚠️ No exact matches yet, but we'll keep adjusting!"})
+        st.success(f"✅ Found {len(filtered)} matching vehicle(s):")
+        st.dataframe(filtered)
 
-    # Move to next question
-    if idx + 1 < len(questions):
-        st.session_state.question_step += 1
-        st.session_state.messages.append({"role": "assistant", "content": questions[st.session_state.question_step]})
-    else:
-        st.session_state.messages.append({"role": "assistant", "content": "✅ Finalizing your top matches now!"})
+        st.markdown("---")
+        st.header("🧠 GPT Explanations for Top Matches")
 
-# Restart Button
-if st.button("🔄 Restart Profile"):
-    st.session_state.clear()
-    st.rerun()
+        for idx, row in filtered.head(3).iterrows():
+            brand = row['Brand']
+            model = row['Model']
+            year = row['Model Year']
+            fuel = row['Fuel Type']
+
+            prompt = (
+                f"Explain in 2-3 sentences why a {year} {brand} {model} "
+                f"with a {fuel} engine would be a good fit for someone living in {region} "
+                f"who prefers {vehicle_type}s and falls into the {income} income bracket."
+            )
+
+            response = client.chat.completions.create(
+                model="gpt-4o",
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.5,
+                max_tokens=120
+            )
+
+            explanation = response.choices[0].message.content.strip()
+            st.markdown(f"**{brand} {model} ({year})**: {explanation}")
+
+    else:
+        st.warning("❌ No matching vehicles found with your selected criteria.")
