@@ -134,7 +134,6 @@ def filter_cars():
             except: pass
     return filtered
 
-# GPT final recommender (3 cars)
 def recommend_final_cars(filtered):
     top = filtered.head(3)
     if top.empty:
@@ -161,10 +160,6 @@ def recommend_final_cars(filtered):
         f"<div style='font-family: Arial; font-size: 16px; line-height: 1.6;'>{output}</div>",
         unsafe_allow_html=True
     )
-    st.markdown(
-        f"<div style='font-family: Arial; font-size: 16px; line-height: 1.6;'>{output}</div>",
-        unsafe_allow_html=True
-    )
 
 # User input
 if prompt := st.chat_input("Type your answer..."):
@@ -178,20 +173,22 @@ if prompt := st.chat_input("Type your answer..."):
         st.session_state.question_index += 1
 
     filtered = filter_cars()
+    
     if st.session_state.question_index >= len(questions):
-    recommend_final_cars(filtered)
-else:
-    with st.chat_message("assistant"):
-        st.markdown("\U0001F698 **Current Best Vehicle Matches:**"
-        top = filtered.head(2)
-        car_list = "\n".join([
-            f"- {row['Brand'].title()} {row['Model'].title()} (MSRP Range: {row['MSRP Range']})"
-            for _, row in top.iterrows()
-        ])
-        st.markdown(car_list)
-
-    if st.session_state.question_index < len(questions):
-        next_q = questions[st.session_state.question_index]["question"]
+        recommend_final_cars(filtered)
+    else:
         with st.chat_message("assistant"):
-            st.markdown(next_q)
-        st.session_state.messages.append({"role": "assistant", "content": next_q})
+            st.markdown("\U0001F698 **Current Best Vehicle Matches:**")
+            top = filtered.head(2)
+            car_list = "\n".join([
+                f"- {row['Brand'].title()} {row['Model'].title()} (MSRP Range: {row['MSRP Range']})"
+                for _, row in top.iterrows()
+            ])
+            st.markdown(car_list)
+
+        if st.session_state.question_index < len(questions):
+            next_q = questions[st.session_state.question_index]["question"]
+            with st.chat_message("assistant"):
+                st.markdown(next_q)
+            st.session_state.messages.append({"role": "assistant", "content": next_q})
+
