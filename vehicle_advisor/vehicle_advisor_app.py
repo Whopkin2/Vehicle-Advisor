@@ -28,25 +28,25 @@ client = openai.OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 # Questions
 questions = [
-    {"key": "New or Used", "question": "Do you prefer a new or used car? (New or Used)"},
+    {"key": "new_or_used", "question": "Do you prefer a new or used car? (New or Used)"},
     {"key": "vehicle_type", "question": "What type of vehicle are you looking for? (Sedan, SUV, Truck, Crossover, Sports Car, Van, Coupe)"},
     {"key": "car_size", "question": "What size of vehicle do you want? (Compact, Midsize, Fullsize)"},
     {"key": "budget", "question": "What's your maximum budget for a vehicle (in USD)?"},
-    {"key": "fuel_type", "question": "What fuel type do you prefer? (Gasoline, Electric, Hybrid)"},
+    {"key": "fuel_type", "question": "What fuel type do you prefer? (Gasoline, Electric, Hybrid, Plug-in Hybrid)"},
     {"key": "region", "question": "Which region are you located in? (North East, Mid-West, West, South)"},
-    {"key": "use_category", "question": "What will be the vehicle's primary use? (Family Vehicle, Commuting, Utility,Off-Roading)"},
+    {"key": "use_category", "question": "What will be the vehicle's primary use? (Family Vehicle, Commuting, Utility, Off-Roading)"},
     {"key": "eco_conscious", "question": "Are you eco-conscious? (Yes or No)"},
     {"key": "charging_access", "question": "Do you have access to a charging station? (Yes or No)"},
     {"key": "neighborhood_type", "question": "What type of neighborhood are you in? (City, Suburbs, Rural)"},
     {"key": "tech_features", "question": "What level of tech features do you want? (Advanced, Basic, Moderate)"},
     {"key": "safety_priority", "question": "How important are safety features to you? (High, Medium, Low)"},
     {"key": "garage_access", "question": "Do you have a garage for your vehicle? (Yes or No)"},
-    {"key": "employment_status", "question": "What is your employment status? (Full-time, Part-time, Student, Retired)"},
-    {"key": "credit_score", "question": "What is your approximate credit score? (Excellent, Very Good, Good, Fair)"},
-    {"key": "travel_frequency", "question": "How often do you travel long distances? (Often, Occasionally, Rarely)"},
-    {"key": "ownership_duration", "question": "How long do you plan to own the vehicle? (Short term, Medium Term, Long term)"},
+    {"key": "employment_status", "question": "What is your employment status? (Employed, Student, Retired)"},
+    {"key": "credit_score", "question": "What is your approximate credit range? (Excellent 800+, Very Good 799-750, Good 749-700, Fair <700)"},
+    {"key": "travel_frequency", "question": "How often do you travel long distances? (Daily, Occasionally, Rarely)"},
+    {"key": "ownership_duration", "question": "How long do you plan to own the vehicle? (Short Term, Medium Term, Long Term)"},
     {"key": "ownership_recommendation", "question": "Would you prefer to Buy, Lease, or Rent the vehicle?"},
-    {"key": "yearly_income", "question": "What is your estimated yearly income (in USD)?"},
+    {"key": "yearly_income", "question": "What is your estimated yearly income? (e.g., 50k-100k, 100k-150k)"},
     {"key": "brand", "question": "Do you have a preferred vehicle brand? (e.g., Honda, Ford, Audi, Mercedes)"},
 ]
 
@@ -72,64 +72,79 @@ if st.session_state.question_index == 0 and len(st.session_state.messages) == 0:
         st.markdown(first_q)
     st.session_state.messages.append({"role": "assistant", "content": first_q})
 
-# Filter cars (fuzzy logic)
+# Filter cars 
 def filter_cars():
     filtered = df.copy()
     for key, value in st.session_state.answers.items():
         value = value.strip().lower()
         if value in ["no", "none", "any"]:
             continue
+
         if key == "budget":
             try:
                 filtered = filtered[filtered["Min Price"] <= float(value.replace('$', '').replace(',', ''))]
             except: pass
+
+        elif key == "new_or_used":
+            if "used" in value:
+                filtered = filtered[filtered["Model Year"].str.lower().str.contains("used", na=False)]
+            elif "new" in value:
+                filtered = filtered[~filtered["Model Year"].str.lower().str.contains("used", na=False)]
+
         elif key == "fuel_type" and "Fuel Type" in filtered.columns:
             filtered = filtered[filtered["Fuel Type"].str.lower().str.contains(value, na=False)]
+
         elif key == "vehicle_type" and "Vehicle Type" in filtered.columns:
             filtered = filtered[filtered["Vehicle Type"].str.lower().str.contains(value, na=False)]
+
         elif key == "car_size" and "Car Size" in filtered.columns:
             filtered = filtered[filtered["Car Size"].str.lower().str.contains(value, na=False)]
+
         elif key == "region" and "Region" in filtered.columns:
             filtered = filtered[filtered["Region"].str.lower().str.contains(value, na=False)]
+
         elif key == "brand" and "Brand" in filtered.columns:
             filtered = filtered[filtered["Brand"].str.lower().str.contains(value, na=False)]
+
         elif key == "eco_conscious" and "Eco-Conscious" in filtered.columns:
             filtered = filtered[filtered["Eco-Conscious"].str.lower().str.contains(value, na=False)]
+
         elif key == "charging_access" and "Charging Access" in filtered.columns:
             filtered = filtered[filtered["Charging Access"].str.lower().str.contains(value, na=False)]
+
         elif key == "neighborhood_type" and "Neighborhood Type" in filtered.columns:
             filtered = filtered[filtered["Neighborhood Type"].str.lower().str.contains(value, na=False)]
+
         elif key == "tech_features" and "Tech Features" in filtered.columns:
             filtered = filtered[filtered["Tech Features"].str.lower().str.contains(value, na=False)]
+
         elif key == "safety_priority" and "Safety Priority" in filtered.columns:
             filtered = filtered[filtered["Safety Priority"].str.lower().str.contains(value, na=False)]
+
         elif key == "garage_access" and "Garage Access" in filtered.columns:
             filtered = filtered[filtered["Garage Access"].str.lower().str.contains(value, na=False)]
+
         elif key == "employment_status" and "Employment Status" in filtered.columns:
             filtered = filtered[filtered["Employment Status"].str.lower().str.contains(value, na=False)]
+
         elif key == "credit_score" and "Credit Score" in filtered.columns:
-            try:
-                score = int(value.replace('+','').strip())
-                filtered = filtered[pd.to_numeric(filtered["Credit Score"], errors='coerce') >= score]
-            except: pass
+            filtered = filtered[filtered["Credit Score"].str.lower().str.contains(value, na=False)]
+
         elif key == "travel_frequency" and "Travel Frequency" in filtered.columns:
             filtered = filtered[filtered["Travel Frequency"].str.lower().str.contains(value, na=False)]
+
         elif key == "ownership_duration" and "Ownership Duration" in filtered.columns:
             filtered = filtered[filtered["Ownership Duration"].str.lower().str.contains(value, na=False)]
+
         elif key == "ownership_recommendation" and "Ownership Recommendation" in filtered.columns:
             filtered = filtered[filtered["Ownership Recommendation"].str.lower().str.contains(value, na=False)]
+
         elif key == "yearly_income" and "Yearly Income" in filtered.columns:
-            try:
-                income = int(value.replace('$', '').replace(',', ''))
-                filtered = filtered[pd.to_numeric(filtered["Yearly Income"], errors='coerce') <= income * 2]
-            except: pass
+            filtered = filtered[filtered["Yearly Income"].str.lower().str.contains(value, na=False)]
+
         elif key == "use_category" and "Use Category" in filtered.columns:
             filtered = filtered[filtered["Use Category"].str.lower().str.contains(value, na=False)]
-        elif key == "mpg_range" and "MPG/Range" in filtered.columns:
-            try:
-                mpg = int(value.split()[0])
-                filtered = filtered[pd.to_numeric(filtered["MPG/Range"], errors='coerce') >= mpg]
-            except: pass
+
     return filtered
 
 def recommend_final_cars(filtered):
