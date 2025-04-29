@@ -146,7 +146,7 @@ if user_input:
         reply = "🔎 Based on your answers so far, here are two cars you might love:\n"
         for _, car in top_cars.iterrows():
             name = f"{car['Brand'].title()} {car['Model']}"
-            price = f"${car['MSRP Min']:,}"
+            price = f"${car['MSRP Min']:,}" if 'MSRP Min' in car and pd.notnull(car['MSRP Min']) else "N/A"
             reply += f"✨ **{name}**\n- 💲 **Price:** {price}\n\n"
         st.session_state.messages.append({"role": "assistant", "content": reply})
     else:
