@@ -240,7 +240,7 @@ if st.session_state.question_step > 9:
         if st.session_state.answers.get("luxury") == True:
             filtered = filtered[filtered['Brand'].isin(luxury_brands)]
 
-        # ✅ NOW prioritize after filtering
+        # ✅ Only now prioritize by budget
         filtered = prioritize_by_budget(filtered)
 
         if not filtered.empty:
