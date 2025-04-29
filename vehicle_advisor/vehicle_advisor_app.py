@@ -32,14 +32,14 @@ questions = [
     {"key": "car_size", "question": "What size of vehicle do you want? (Compact, Midsize, Full-size, etc.)"},
     {"key": "budget", "question": "What's your maximum budget for a vehicle (in USD)?"},
     {"key": "fuel_type", "question": "What fuel type do you prefer? (Gasoline, Electric, Hybrid)"},
-    {"key": "region", "question": "Which region are you located in? (Northeast, Midwest, West, South)"},
+    {"key": "region", "question": "Which region are you located in? (North East, Mid-West, West, South)"},
     {"key": "use_category", "question": "What will be the vehicle's primary use? (Personal, Commercial, etc.)"},
     {"key": "eco_conscious", "question": "Are you eco-conscious? (Yes or No)"},
     {"key": "charging_access", "question": "Do you have access to a charging station? (Yes or No)"},
     {"key": "neighborhood_type", "question": "What type of neighborhood are you in? (Urban, Suburban, Rural)"},
-    {"key": "towing_needs", "question": "Do you have towing needs? (Yes or No)"},
-    {"key": "tech_features", "question": "Any must-have tech features? (e.g., Bluetooth, Apple CarPlay)"},
-    {"key": "safety_priority", "question": "Any must-have safety features? (e.g., Blind Spot Detection, Adaptive Cruise)"},
+    {"key": "towing_needs", "question": "Do you have towing needs? (None, Light, Moderate, Heavy)"},
+    {"key": "tech_features", "question": "What level of tech features do you want? (Basic, Moderate)"},
+    {"key": "safety_priority", "question": "How important are safety features to you? (High)"},
     {"key": "garage_access", "question": "Do you have a garage for your vehicle? (Yes or No)"},
     {"key": "employment_status", "question": "What is your employment status? (Employed, Student, Retired)"},
     {"key": "credit_score", "question": "What is your approximate credit score? (e.g., 700+)"},
@@ -47,7 +47,7 @@ questions = [
     {"key": "ownership_duration", "question": "How long do you plan to own the vehicle? (Short term, Long term)"},
     {"key": "ownership_recommendation", "question": "Would you prefer to own, lease, or rent the vehicle?"},
     {"key": "yearly_income", "question": "What is your estimated yearly income (in USD)?"},
-    {"key": "brand", "question": "Do you have a preferred vehicle brand? (e.g., Honda, Ford, Toyota)"}
+    {"key": "brand", "question": "Do you have a preferred vehicle brand? (e.g., Honda, Ford, Audi, Mercedes)"},
 ]
 
 # Session state
