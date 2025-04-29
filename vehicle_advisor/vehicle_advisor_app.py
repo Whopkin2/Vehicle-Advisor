@@ -108,8 +108,8 @@ def recommend_cars(filtered_cars):
     )
     return st.write_stream(stream)
 
-# Ask the next question
-if st.session_state.question_index < len(questions):
+# Ask first question if needed
+if st.session_state.question_index < len(questions) and not st.session_state.messages:
     current_q = questions[st.session_state.question_index]["question"]
     with st.chat_message("assistant"):
         st.markdown(current_q)
@@ -127,8 +127,14 @@ if prompt := st.chat_input("Type your answer..."):
         st.session_state.answers[key] = prompt
         st.session_state.question_index += 1
 
-    # After all questions answered
-    if st.session_state.question_index >= len(questions):
+    # Immediately ask next question if available
+    if st.session_state.question_index < len(questions):
+        next_q = questions[st.session_state.question_index]["question"]
+        with st.chat_message("assistant"):
+            st.markdown(next_q)
+
+    # If all questions are done, recommend cars
+    elif st.session_state.question_index >= len(questions):
         filtered = filter_cars()
         if not filtered.empty:
             with st.chat_message("assistant"):
