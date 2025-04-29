@@ -1,13 +1,6 @@
 import streamlit as st
 import pandas as pd
-import time
 import re
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.application import MIMEApplication
-from email.mime.text import MIMEText
-from fpdf import FPDF
-import tempfile
 
 st.title("🚗 Vehicle Advisor Chatbot")
 
@@ -22,65 +15,97 @@ df = load_data()
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
-if "shortlist" not in st.session_state:
-    st.session_state.shortlist = []
-if "question_step" not in st.session_state:
-    st.session_state.question_step = 0
 if "answers" not in st.session_state:
     st.session_state.answers = {}
-if "current_question" not in st.session_state:
-    st.session_state.current_question = "🚗 What type of car are you looking for? (e.g., SUV, Sedan, Truck)"
+if "question_step" not in st.session_state:
+    st.session_state.question_step = 0
 
 luxury_brands = ['bmw', 'mercedes', 'audi', 'lexus', 'cadillac', 'infiniti', 'acura', 'volvo']
 
-def extract_int(text):
-    numbers = re.findall(r'\d+', text.replace(',', ''))
-    return int(numbers[0]) if numbers else None
+def extract_number(text):
+    """Extract integer from text like '65k', '10,000', '10k miles'"""
+    text = text.lower().replace(',', '').strip()
+    if 'k' in text:
+        number = re.findall(r'\d+', text)
+        return int(number[0]) * 1000 if number else None
+    number = re.findall(r'\d+', text)
+    return int(number[0]) if number else None
 
-def yes_no_to_bool(text):
-    return text.strip().lower() in ["yes", "y"]
+def parse_yes_no(text):
+    return text.strip().lower() in ['yes', 'y']
 
-def prioritize_by_budget(filtered):
-    if filtered.empty:
-        return filtered
-    if not all(col in filtered.columns for col in ['MSRP Min', 'Year', 'Mileage']):
-        return filtered
+def clean_brand_input(text):
+    """Handles input like 'Ford, Chevy, Volvo' into a clean list"""
+    brands = [b.strip().lower() for b in re.split(',|&|and', text) if b.strip()]
+    return brands
 
-    budget = st.session_state.answers.get("budget", 0)
-    preferred_brands = []
+def flexible_filter(df, answers):
+    filtered = df.copy()
 
-    if budget <= 25000:
-        preferred_brands = ['toyota', 'honda', 'nissan', 'hyundai', 'ford', 'kia', 'mazda']
-    elif 25001 <= budget <= 50000:
-        preferred_brands = ['acura', 'lexus', 'subaru', 'volkswagen', 'ford', 'chevrolet', 'chevy']
-    elif budget > 50000:
-        preferred_brands = ['bmw', 'mercedes', 'audi', 'lexus', 'cadillac', 'tesla']
+    # Vehicle type
+    if answers.get("type"):
+        car_type = answers["type"].lower()
+        if 'Body Type' in filtered.columns:
+            filtered = filtered[filtered['Body Type'].str.contains(car_type, case=False, na=False)]
+        elif 'Category' in filtered.columns:
+            filtered = filtered[filtered['Category'].str.contains(car_type, case=False, na=False)]
 
-    if preferred_brands:
-        filtered['preferred'] = filtered['Brand'].apply(lambda x: 0 if x.lower() in preferred_brands else 1)
-        sort_columns = ['preferred', 'MSRP Min', 'Year', 'Mileage']
-        ascending_order = [True, True, False, True]
-    else:
-        sort_columns = ['MSRP Min', 'Year', 'Mileage']
-        ascending_order = [True, False, True]
+    # Region based AWD boost
+    if answers.get("region") in ["northeast", "midwest"]:
+        if 'Drive Type' in filtered.columns:
+            filtered = filtered[filtered['Drive Type'].str.contains('awd|4wd', case=False, na=False)]
 
-    filtered = filtered.sort_values(by=sort_columns, ascending=ascending_order)
+    # Budget
+    if answers.get("budget"):
+        filtered = filtered[filtered['MSRP Min'] <= answers["budget"]]
 
-    if 'preferred' in filtered.columns:
-        filtered = filtered.drop(columns=['preferred'])
+    # Brand(s)
+    if answers.get("brands"):
+        brand_filter = filtered['Brand'].apply(lambda x: any(brand in x for brand in answers['brands']))
+        filtered = filtered[brand_filter]
+
+    # Minimum Year
+    if answers.get("year") and 'Year' in filtered.columns:
+        filtered = filtered[filtered['Year'] >= answers["year"]]
+
+    # Max mileage
+    if answers.get("mileage") and 'Mileage' in filtered.columns:
+        filtered = filtered[filtered['Mileage'] <= answers["mileage"]]
+
+    # Electric
+    if answers.get("electric") == True:
+        filtered = filtered[filtered['Fuel Type'].str.contains('electric', case=False, na=False)]
+
+    # Luxury preference
+    if answers.get("luxury") == True:
+        filtered = filtered[filtered['Brand'].isin(luxury_brands)]
 
     return filtered
 
-# Display chat history
+questions = [
+    "🚗 What type of car are you looking for? (e.g., SUV, Sedan, Truck)",
+    "🌎 Which region are you in? (e.g., Northeast, Midwest, South, West)",
+    "💬 What's your maximum budget?",
+    "🏷️ Any preferred brands you'd like? (e.g., Ford, Chevy, Volvo)",
+    "📅 What's the minimum model year you're aiming for?",
+    "🛣️ What's your maximum mileage per year?",
+    "🔋 Do you prefer electric vehicles? (yes/no)",
+    "🚙 Need AWD or 4WD? (yes/no)",
+    "👨‍👩‍👧‍👦 Need a third-row seat? (yes/no)",
+    "💎 Prefer a luxury brand? (yes/no)",
+    "💵 What's your maximum monthly payment goal?"
+]
+
+# Show chat history
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# First question
+# Ask initial question
 if len(st.session_state.messages) == 0:
     with st.chat_message("assistant"):
-        st.markdown(st.session_state.current_question)
-    st.session_state.messages.append({"role": "assistant", "content": st.session_state.current_question})
+        st.markdown(questions[0])
+    st.session_state.messages.append({"role": "assistant", "content": questions[0]})
 
 user_input = st.chat_input("Type your answer here...")
 
@@ -88,143 +113,74 @@ if user_input:
     st.session_state.messages.append({"role": "user", "content": user_input})
     idx = st.session_state.question_step
 
-    # Save answer
+    # Save cleaned answer
     if idx == 0:
         st.session_state.answers["type"] = user_input
     elif idx == 1:
         st.session_state.answers["region"] = user_input.lower()
     elif idx == 2:
-        st.session_state.answers["budget"] = extract_int(user_input)
+        st.session_state.answers["budget"] = extract_number(user_input)
     elif idx == 3:
-        st.session_state.answers["brand"] = user_input.lower()
+        st.session_state.answers["brands"] = clean_brand_input(user_input)
     elif idx == 4:
-        st.session_state.answers["year"] = extract_int(user_input)
+        st.session_state.answers["year"] = extract_number(user_input)
     elif idx == 5:
-        st.session_state.answers["mileage"] = extract_int(user_input)
+        st.session_state.answers["mileage"] = extract_number(user_input)
     elif idx == 6:
-        st.session_state.answers["electric"] = yes_no_to_bool(user_input)
+        st.session_state.answers["electric"] = parse_yes_no(user_input)
     elif idx == 7:
-        st.session_state.answers["awd"] = yes_no_to_bool(user_input)
+        st.session_state.answers["awd"] = parse_yes_no(user_input)
     elif idx == 8:
-        st.session_state.answers["third_row"] = yes_no_to_bool(user_input)
+        st.session_state.answers["third_row"] = parse_yes_no(user_input)
     elif idx == 9:
-        st.session_state.answers["luxury"] = yes_no_to_bool(user_input)
+        st.session_state.answers["luxury"] = parse_yes_no(user_input)
     elif idx == 10:
-        st.session_state.answers["monthly_payment"] = extract_int(user_input)
+        st.session_state.answers["monthly_payment"] = extract_number(user_input)
 
-    # Filtering immediately
-    filtered = df.copy()
+    # Flexible partial filtering
+    filtered = flexible_filter(df, st.session_state.answers)
 
-    # ✅ Correct "Type" filtering now (use Body Type)
-    if st.session_state.answers.get("type"):
-        car_type = st.session_state.answers["type"].lower()
-        if 'Body Type' in filtered.columns:
-            filtered = filtered[filtered['Body Type'].str.contains(car_type, case=False, na=False)]
-        else:
-            filtered = filtered[filtered['Model'].str.contains(car_type, case=False, na=False)]
-
-    if st.session_state.answers.get("brand"):
-        filtered = filtered[filtered['Brand'].str.contains(st.session_state.answers["brand"], case=False, na=False)]
-    if st.session_state.answers.get("budget"):
-        filtered = filtered[filtered['MSRP Min'] <= st.session_state.answers["budget"]]
-    if st.session_state.answers.get("year") and 'Year' in filtered.columns:
-        filtered = filtered[filtered['Year'] >= st.session_state.answers["year"]]
-    if st.session_state.answers.get("mileage") and 'Mileage' in filtered.columns:
-        filtered = filtered[filtered['Mileage'] <= st.session_state.answers["mileage"]]
-    if st.session_state.answers.get("electric") == True:
-        filtered = filtered[filtered['Fuel Type'].str.contains('electric', case=False, na=False)]
-    if st.session_state.answers.get("luxury") == True:
-        filtered = filtered[filtered['Brand'].isin(luxury_brands)]
-
-    # Regional AWD boosting
-    region = st.session_state.answers.get("region", "")
-    if region in ["northeast", "midwest"]:
-        filtered = filtered[filtered['Drive Type'].str.contains('awd|4wd', case=False, na=False)]
-
-    filtered = prioritize_by_budget(filtered)
-
-    # Show 2 car suggestions
+    # Always try to suggest something
     if not filtered.empty:
         top_cars = filtered.head(2)
-        response = "🔎 Based on your answers so far, here are two cars you might love:\n"
+        reply = "🔎 Based on your answers so far, here are two cars you might love:\n"
         for _, car in top_cars.iterrows():
-            price = f"${car['MSRP Min']:,}"
             name = f"{car['Brand'].title()} {car['Model']}"
-            reason = "✅ Strong match for your preferences."
-            if 'Fuel Type' in car and 'electric' in str(car['Fuel Type']).lower():
-                reason = "⚡ Eco-friendly electric drive."
-            elif 'awd' in str(car.get('Drive Type', '')).lower() or '4wd' in str(car.get('Drive Type', '')).lower():
-                reason = "🚙 Great for your region's weather."
-            elif 'Mileage' in car and car['Mileage'] is not None and car['Mileage'] < 30000:
-                reason = "🛡️ Very low mileage — almost like new!"
-            response += f"**✨ {name}**\n- 💲 **Price:** {price}\n- {reason}\n\n"
-        st.session_state.messages.append({"role": "assistant", "content": response})
+            price = f"${car['MSRP Min']:,}"
+            reply += f"✨ **{name}**\n- 💲 **Price:** {price}\n\n"
+        st.session_state.messages.append({"role": "assistant", "content": reply})
     else:
-        st.session_state.messages.append({"role": "assistant", "content": "⚠️ No close matches yet, but let's continue building your profile!"})
+        st.session_state.messages.append({"role": "assistant", "content": "⚠️ No exact matches yet, but we'll keep adjusting!"})
 
     # Next question
-    questions = [
-        "🌎 Which region are you in? (e.g., Northeast, Midwest, South, West)",
-        "💬 What's your maximum budget?",
-        "🏷️ Any preferred brand you'd like?",
-        "📅 What's the minimum model year you're aiming for?",
-        "🛣️ What's your maximum mileage?",
-        "🔋 Do you prefer electric vehicles? (yes/no)",
-        "🚙 Need AWD or 4WD? (yes/no)",
-        "👨‍👩‍👧‍👦 Need a third-row seat? (yes/no)",
-        "💎 Prefer a luxury brand? (yes/no)",
-        "💵 What's your maximum monthly payment goal?"
-    ]
-
-    if idx < len(questions):
-        bot_reply = questions[idx]
+    if idx + 1 < len(questions):
+        next_q = questions[idx + 1]
+        st.session_state.messages.append({"role": "assistant", "content": next_q})
+        st.session_state.question_step += 1
     else:
-        bot_reply = "✅ Thanks! Let’s finalize your perfect match..."
+        # Final recommendations
+        st.session_state.messages.append({"role": "assistant", "content": "✅ Finalizing your top matches now!"})
 
-    st.session_state.messages.append({"role": "assistant", "content": bot_reply})
-    st.session_state.question_step += 1
+# Final recommendations
+if st.session_state.question_step >= len(questions):
+    filtered = flexible_filter(df, st.session_state.answers)
 
-# When finished
-if st.session_state.question_step > 10:
-    with st.chat_message("assistant"):
-        st.markdown("🚗 Based on your full profile, here are your top matches:")
-        final_filtered = df.copy()
+    if not filtered.empty:
+        st.markdown("🚗 **Top Matches Based on Your Full Profile:**")
+        top_cars = filtered.head(3)
+        for _, car in top_cars.iterrows():
+            name = f"{car['Brand'].title()} {car['Model']}"
+            price = f"${car['MSRP Min']:,}"
+            st.markdown(f"✨ **{name}**\n- 💲 **Price:** {price}")
+    else:
+        st.markdown("❗ No perfect matches. Showing best available options:")
+        fallback = df.sort_values(by='MSRP Min').head(3)
+        for _, car in fallback.iterrows():
+            name = f"{car['Brand'].title()} {car['Model']}"
+            price = f"${car['MSRP Min']:,}"
+            st.markdown(f"✨ **{name}**\n- 💲 **Price:** {price}")
 
-        # Same full filtering
-        if st.session_state.answers.get("type"):
-            car_type = st.session_state.answers["type"].lower()
-            if 'Body Type' in final_filtered.columns:
-                final_filtered = final_filtered[final_filtered['Body Type'].str.contains(car_type, case=False, na=False)]
-            else:
-                final_filtered = final_filtered[final_filtered['Model'].str.contains(car_type, case=False, na=False)]
-
-        if st.session_state.answers.get("brand"):
-            final_filtered = final_filtered[final_filtered['Brand'].str.contains(st.session_state.answers["brand"], case=False, na=False)]
-        if st.session_state.answers.get("budget"):
-            final_filtered = final_filtered[final_filtered['MSRP Min'] <= st.session_state.answers["budget"]]
-        if st.session_state.answers.get("year") and 'Year' in final_filtered.columns:
-            final_filtered = final_filtered[final_filtered['Year'] >= st.session_state.answers["year"]]
-        if st.session_state.answers.get("mileage") and 'Mileage' in final_filtered.columns:
-            final_filtered = final_filtered[final_filtered['Mileage'] <= st.session_state.answers["mileage"]]
-        if st.session_state.answers.get("electric") == True:
-            final_filtered = final_filtered[final_filtered['Fuel Type'].str.contains('electric', case=False, na=False)]
-        if st.session_state.answers.get("luxury") == True:
-            final_filtered = final_filtered[final_filtered['Brand'].isin(luxury_brands)]
-        if st.session_state.answers.get("region", "") in ["northeast", "midwest"]:
-            final_filtered = final_filtered[final_filtered['Drive Type'].str.contains('awd|4wd', case=False, na=False)]
-
-        final_filtered = prioritize_by_budget(final_filtered)
-
-        if not final_filtered.empty:
-            top_final = final_filtered.head(3)
-            for _, car in top_final.iterrows():
-                price = f"${car['MSRP Min']:,}"
-                name = f"{car['Brand'].title()} {car['Model']}"
-                st.markdown(f"**✨ {name}**\n- 💲 **Price:** {price}")
-        else:
-            st.markdown("❗ No final matches found based on all preferences.")
-
-# Restart button
+# Restart
 if st.button("🔄 Restart Profile"):
     st.session_state.clear()
     st.rerun()
