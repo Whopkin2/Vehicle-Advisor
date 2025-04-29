@@ -25,14 +25,15 @@ df = load_vehicle_data()
 # Setup OpenAI
 client = openai.OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
-# 9 Structured Questions
+# 10 Structured Questions (split tech and safety)
 questions = [
     {"key": "budget", "question": "What's your maximum budget for a vehicle (in USD)?"},
     {"key": "fuel_type", "question": "What fuel type do you prefer? (Gasoline, Electric, Hybrid)"},
     {"key": "size", "question": "What size of vehicle are you looking for? (Compact, SUV, Full-size, etc.)"},
     {"key": "region", "question": "Which region are you located in? (Northeast, Midwest, West, South)"},
     {"key": "brand_preference", "question": "Do you have a preferred car brand? (e.g., Honda, Ford, Toyota)"},
-    {"key": "tech_safety", "question": "Any must-have tech or safety features? (e.g., Bluetooth, Adaptive Cruise, Blind Spot Detection)"},
+    {"key": "tech_features", "question": "Any must-have technology features? (e.g., Bluetooth, Apple CarPlay)"},
+    {"key": "safety_features", "question": "Any must-have safety features? (e.g., Blind Spot Detection, Adaptive Cruise Control)"},
     {"key": "annual_mileage", "question": "What is your expected annual mileage? (miles per year)"},
     {"key": "ownership_type", "question": "Will you own, lease, or rent the vehicle?"},
     {"key": "yearly_income", "question": "What is your estimated yearly income (in USD)?"}
@@ -54,7 +55,7 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# 🛠 Bulletproof filter_cars()
+# Bulletproof filter_cars()
 def filter_cars():
     filtered = df.copy()
 
@@ -87,18 +88,19 @@ def filter_cars():
 
     return filtered
 
-# Recommend cars with GPT
+# Recommend cars after each answer
 def recommend_cars(filtered_cars):
     top_cars = filtered_cars.head(2)
-    car_list = "\n".join([f"- {row['Brand'].title()} {row['Model'].title()} (${row['Min Price']})" for _, row in top_cars.iterrows()])
-
+    if top_cars.empty:
+        return st.markdown("_No matching vehicles yet based on current inputs._")
+    
+    car_list = "\n".join([f"- {row['Brand'].title()} {row['Model'].title()} (${row['Min Price']:.0f})" for _, row in top_cars.iterrows()])
     profile_context = "\n".join([f"{k.replace('_', ' ').title()}: {v}" for k, v in st.session_state.answers.items()])
 
     prompt = (
-        f"The user has the following profile:\n{profile_context}\n\n"
-        f"From these cars:\n{car_list}\n"
-        f"Recommend the 2 vehicles best matching the user's budget, mileage, features, and ownership preferences. "
-        f"Estimate rough monthly payment if relevant based on yearly income. Explain why each car fits nicely."
+        f"User profile:\n{profile_context}\n\n"
+        f"Available cars:\n{car_list}\n\n"
+        f"Pick the two best options matching user's preferences and explain briefly why."
     )
 
     stream = client.chat.completions.create(
@@ -111,31 +113,33 @@ def recommend_cars(filtered_cars):
 # Ask first question if needed
 if st.session_state.question_index < len(questions) and not st.session_state.messages:
     current_q = questions[st.session_state.question_index]["question"]
-    with st.chat_message("assistant"):
-        st.markdown(current_q)
+    st.session_state.messages.append({"role": "assistant", "content": current_q})
+    st.experimental_rerun()
 
 # Accept user input
 if prompt := st.chat_input("Type your answer..."):
+    # Save user message
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
+    # Save answer
     if st.session_state.question_index < len(questions):
         key = questions[st.session_state.question_index]["key"]
         st.session_state.answers[key] = prompt
         st.session_state.question_index += 1
 
+    # Recommend cars after each answer
+    filtered = filter_cars()
+    with st.chat_message("assistant"):
+        st.markdown("🚘 **Current Best Vehicle Matches:**")
+        recommend_cars(filtered)
+
+    # Ask next question
     if st.session_state.question_index < len(questions):
         next_q = questions[st.session_state.question_index]["question"]
+        st.session_state.messages.append({"role": "assistant", "content": next_q})
+        st.experimental_rerun()
+    else:
         with st.chat_message("assistant"):
-            st.markdown(next_q)
-
-    elif st.session_state.question_index >= len(questions):
-        filtered = filter_cars()
-        if not filtered.empty:
-            with st.chat_message("assistant"):
-                st.markdown("✅ Based on your full profile, here are two recommended vehicles for you:")
-                recommend_cars(filtered)
-        else:
-            with st.chat_message("assistant"):
-                st.markdown("😔 Sorry, no matching vehicles found based on your preferences.")
+            st.markdown("✅ You've answered all questions! Here’s your final recommendation summary above.")
