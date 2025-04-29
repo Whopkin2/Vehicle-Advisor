@@ -54,7 +54,7 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Helper: filter cars based on profile
+# 🛠 Bulletproof filter_cars()
 def filter_cars():
     filtered = df.copy()
 
@@ -68,20 +68,18 @@ def filter_cars():
     if "fuel_type" in st.session_state.answers and "Fuel" in filtered.columns:
         filtered = filtered[filtered["Fuel"].str.contains(st.session_state.answers["fuel_type"], case=False, na=False)]
 
-    if "size" in st.session_state.answers:
+    if "size" in st.session_state.answers and "Size" in filtered.columns:
         filtered = filtered[filtered["Size"].str.contains(st.session_state.answers["size"], case=False, na=False)]
 
-    if "region" in st.session_state.answers:
+    if "region" in st.session_state.answers and "Region" in filtered.columns:
         filtered = filtered[filtered["Region"].str.contains(st.session_state.answers["region"], case=False, na=False)]
 
-    if "brand_preference" in st.session_state.answers:
-        brand = st.session_state.answers["brand_preference"]
-        filtered = filtered[filtered["Brand"].str.contains(brand.lower(), case=False, na=False)]
+    if "brand_preference" in st.session_state.answers and "Brand" in filtered.columns:
+        filtered = filtered[filtered["Brand"].str.contains(st.session_state.answers["brand_preference"], case=False, na=False)]
 
     if "annual_mileage" in st.session_state.answers and "MPG/Range" in filtered.columns:
         try:
             mileage = float(st.session_state.answers["annual_mileage"])
-            # Prefer cars with higher range if user drives a lot
             if mileage > 15000:
                 filtered = filtered.sort_values(by="MPG/Range", ascending=False)
         except:
@@ -94,14 +92,13 @@ def recommend_cars(filtered_cars):
     top_cars = filtered_cars.head(2)
     car_list = "\n".join([f"- {row['Brand'].title()} {row['Model'].title()} (${row['Min Price']})" for _, row in top_cars.iterrows()])
 
-    # Build user profile context
     profile_context = "\n".join([f"{k.replace('_', ' ').title()}: {v}" for k, v in st.session_state.answers.items()])
 
     prompt = (
         f"The user has the following profile:\n{profile_context}\n\n"
-        f"From the following cars:\n{car_list}\n"
-        f"Recommend 2 cars fitting their profile, considering budget, fuel, mileage, tech needs, ownership type, and yearly income. "
-        f"Explain why briefly and clearly. Suggest approximate monthly payments if applicable."
+        f"From these cars:\n{car_list}\n"
+        f"Recommend the 2 vehicles best matching the user's budget, mileage, features, and ownership preferences. "
+        f"Estimate rough monthly payment if relevant based on yearly income. Explain why each car fits nicely."
     )
 
     stream = client.chat.completions.create(
@@ -119,24 +116,20 @@ if st.session_state.question_index < len(questions) and not st.session_state.mes
 
 # Accept user input
 if prompt := st.chat_input("Type your answer..."):
-    # Save user input
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # Save answer under correct field
     if st.session_state.question_index < len(questions):
         key = questions[st.session_state.question_index]["key"]
         st.session_state.answers[key] = prompt
         st.session_state.question_index += 1
 
-    # Immediately ask next question if available
     if st.session_state.question_index < len(questions):
         next_q = questions[st.session_state.question_index]["question"]
         with st.chat_message("assistant"):
             st.markdown(next_q)
 
-    # If all questions answered, recommend cars
     elif st.session_state.question_index >= len(questions):
         filtered = filter_cars()
         if not filtered.empty:
