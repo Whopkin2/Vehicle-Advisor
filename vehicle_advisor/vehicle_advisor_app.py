@@ -168,11 +168,11 @@ if user_input:
         for _, car in top_cars.iterrows():
             name = f"{car['Brand'].title()} {car['Model']}"
             if pd.notnull(car['MSRP Min']):
-                min_price = f"${int(car['MSRP Min'] / 1000)}K"
+                min_price = f"${int(car['MSRP Min'])}K"
             else:
                 min_price = "N/A"
             if pd.notnull(car.get('MSRP Max')):
-                max_price = f"${int(car['MSRP Max'] / 1000)}K"
+                max_price = f"${int(car['MSRP Max'])}K"
             else:
                 max_price = None
             price_range = min_price if not max_price else f"{min_price} – {max_price}"
