@@ -29,7 +29,6 @@ client = openai.OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 # Structured Questions
 questions = [
     {"key": "brand", "question": "Do you have a preferred vehicle brand? (e.g., Honda, Ford, Toyota)"},
-    {"key": "model_year", "question": "What model year range are you interested in? (e.g., after 2018, before 2022)"},
     {"key": "vehicle_type", "question": "What type of vehicle are you looking for? (Sedan, SUV, Truck, Coupe, etc.)"},
     {"key": "car_size", "question": "What size of vehicle do you want? (Compact, Midsize, Full-size, etc.)"},
     {"key": "budget", "question": "What's your maximum budget for a vehicle (in USD)?"},
@@ -148,13 +147,6 @@ def filter_cars():
         elif key == "use_category" and "Use Category" in filtered.columns:
             filtered = filtered[filtered["Use Category"].str.lower() == value]
 
-        elif key == "model_year" and "Model Year" in filtered.columns:
-            if 'after' in value:
-                try:
-                    year = int(value.split('after')[-1].strip())
-                    filtered = filtered[pd.to_numeric(filtered["Model Year"], errors='coerce') >= year]
-                except:
-                    pass
             elif 'before' in value:
                 try:
                     year = int(value.split('before')[-1].strip())
