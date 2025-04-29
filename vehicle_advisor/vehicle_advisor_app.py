@@ -115,8 +115,14 @@ if user_input:
     # Filtering immediately
     filtered = df.copy()
 
+    # ✅ Correct "Type" filtering now (use Body Type)
     if st.session_state.answers.get("type"):
-        filtered = filtered[filtered['Model'].str.contains(st.session_state.answers["type"], case=False, na=False)]
+        car_type = st.session_state.answers["type"].lower()
+        if 'Body Type' in filtered.columns:
+            filtered = filtered[filtered['Body Type'].str.contains(car_type, case=False, na=False)]
+        else:
+            filtered = filtered[filtered['Model'].str.contains(car_type, case=False, na=False)]
+
     if st.session_state.answers.get("brand"):
         filtered = filtered[filtered['Brand'].str.contains(st.session_state.answers["brand"], case=False, na=False)]
     if st.session_state.answers.get("budget"):
@@ -149,7 +155,7 @@ if user_input:
                 reason = "⚡ Eco-friendly electric drive."
             elif 'awd' in str(car.get('Drive Type', '')).lower() or '4wd' in str(car.get('Drive Type', '')).lower():
                 reason = "🚙 Great for your region's weather."
-            elif 'Mileage' in car and car['Mileage'] < 30000:
+            elif 'Mileage' in car and car['Mileage'] is not None and car['Mileage'] < 30000:
                 reason = "🛡️ Very low mileage — almost like new!"
             response += f"**✨ {name}**\n- 💲 **Price:** {price}\n- {reason}\n\n"
         st.session_state.messages.append({"role": "assistant", "content": response})
@@ -184,8 +190,14 @@ if st.session_state.question_step > 10:
         st.markdown("🚗 Based on your full profile, here are your top matches:")
         final_filtered = df.copy()
 
+        # Same full filtering
         if st.session_state.answers.get("type"):
-            final_filtered = final_filtered[final_filtered['Model'].str.contains(st.session_state.answers["type"], case=False, na=False)]
+            car_type = st.session_state.answers["type"].lower()
+            if 'Body Type' in final_filtered.columns:
+                final_filtered = final_filtered[final_filtered['Body Type'].str.contains(car_type, case=False, na=False)]
+            else:
+                final_filtered = final_filtered[final_filtered['Model'].str.contains(car_type, case=False, na=False)]
+
         if st.session_state.answers.get("brand"):
             final_filtered = final_filtered[final_filtered['Brand'].str.contains(st.session_state.answers["brand"], case=False, na=False)]
         if st.session_state.answers.get("budget"):
