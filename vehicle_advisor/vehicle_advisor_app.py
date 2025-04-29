@@ -37,7 +37,6 @@ questions = [
     {"key": "eco_conscious", "question": "Are you eco-conscious? (Yes or No)"},
     {"key": "charging_access", "question": "Do you have access to a charging station? (Yes or No)"},
     {"key": "neighborhood_type", "question": "What type of neighborhood are you in? (Urban, Suburban, Rural)"},
-    {"key": "towing_needs", "question": "Do you have towing needs? (None, Light, Moderate, Heavy)"},
     {"key": "tech_features", "question": "What level of tech features do you want? (Basic, Moderate)"},
     {"key": "safety_priority", "question": "How important are safety features to you? (High)"},
     {"key": "garage_access", "question": "Do you have a garage for your vehicle? (Yes or No)"},
@@ -99,8 +98,6 @@ def filter_cars():
             filtered = filtered[filtered["Charging Access"].str.lower().str.contains(value, na=False)]
         elif key == "neighborhood_type" and "Neighborhood Type" in filtered.columns:
             filtered = filtered[filtered["Neighborhood Type"].str.lower().str.contains(value, na=False)]
-        elif key == "towing_needs" and "Towing Needs" in filtered.columns:
-            filtered = filtered[filtered["Towing Needs"].str.lower().str.contains(value, na=False)]
         elif key == "tech_features" and "Tech Features" in filtered.columns:
             filtered = filtered[filtered["Tech Features"].str.lower().str.contains(value, na=False)]
         elif key == "safety_priority" and "Safety Priority" in filtered.columns:
