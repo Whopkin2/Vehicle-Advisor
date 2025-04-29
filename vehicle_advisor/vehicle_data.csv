@@ -1,79 +1,279 @@
-Brand,Model,Model Year,Vehicle Type,Car Size,MSRP Range,Fuel Type,MPG/Range,Use Category,Region,Eco-Conscious,Charging Access,Neighborhood Type,Towing Needs,Tech Features,Safety Priority,Garage Access,Employment Status,Credit Score,Travel Frequency,Ownership Duration,Ownership Recommendation,Yearly Income
-Mercedes-Benz,GLC,2024,Crossover,Fullsize,$48k-$61k,Gas,27 city / 45 hwy,"Family Vehicle, Commuting","North East, North West, Mid-West",Yes,Yes,"City, Suburbs",Heavy,Basic,High,Yes,Full-time,Very Good (740-799),Daily,3+ years,Buy,100k-150k
-Honda,Civic,2024,Sedan,Compact,$24k-$30k,Electric,221 miles,"Family Vehicle, Commuting","West, North East, North West",Yes,Yes,"City, Suburbs",Moderate,Basic,High,No,Full-time,Very Good (740-799),Daily,3+ years,Buy,100k-150k
-Ford,F-150,2024,Truck,Fullsize,$38k-$84k,Plug-in Hybrid,40 city / 33 hwy,"Family Vehicle, Off-Roading, Utility","North East, North West, Mid-West",Yes,No,"Suburbs, Rural",Light,Moderate,High,Yes,Full-time,Good (670-739),Occasionally,6-12 months,Lease,50k-100k
-Audi,A6,2024,Crossover,Midsize,$58k-$73k,Plug-in Hybrid,36 city / 28 hwy,"Family Vehicle, Commuting",All Regions,No,No,"City, Suburbs",Light,Basic,High,Yes,Full-time,Very Good (740-799),Daily,3+ years,Buy,100k-150k
-Audi,Q5,2024,Crossover,Compact,$45k-$59k,Plug-in Hybrid,40 city / 40 hwy,"Family Vehicle, Commuting","North East, North West, Mid-West",Yes,No,"City, Suburbs",None,Basic,High,No,Full-time,Very Good (740-799),Daily,3+ years,Buy,100k-150k
-Audi,e-tron,2024,Crossover,Fullsize,$74k-$89k,Plug-in Hybrid,36 city / 32 hwy,"Family Vehicle, Commuting",All Regions,Yes,Yes,"City, Suburbs",Moderate,Basic,High,Yes,Part-time,Fair (580-669),Daily,<6 months,Rent,25k-50k
-Mercedes-Benz,E-Class,2024,Crossover,Midsize,$62k-$77k,Electric,303 miles,"Family Vehicle, Commuting","West, North East, North West",Yes,Yes,"City, Suburbs",Moderate,Basic,High,Yes,Full-time,Very Good (740-799),Daily,3+ years,Buy,100k-150k
-Hyundai,Tucson,2024,Crossover,Fullsize,$28k-$38k,Electric,262 miles,"Family Vehicle, Commuting","West, North East, North West",Yes,Yes,"City, Suburbs",Light,Basic,High,Yes,Full-time,Good (670-739),Daily,6-12 months,Buy,50k-150k
-Ford,Escape,2024,Crossover,Midsize,$29k-$40k,Electric,244 miles,"Family Vehicle, Commuting","West, North East, North West",No,No,"City, Suburbs",Heavy,Basic,High,Yes,Full-time,Good (670-739),Daily,6-12 months,Lease,50k-100k
-Toyota,Camry,2024,Sedan,Fullsize,$28k-$35k,Plug-in Hybrid,32 city / 27 hwy,"Family Vehicle, Commuting","North East, West",Yes,No,"City, Suburbs",None,Basic,High,Yes,Full-time,Good (670-739),Daily,6-12 months,Lease,50k-100k
-Hyundai,Ioniq 5,2024,Crossover,Midsize,$41k-$53k,Electric,238 miles,"Family Vehicle, Commuting","West, North East, North West",Yes,Yes,"City, Suburbs",None,Basic,High,Yes,Full-time,Good (670-739),Daily,6-12 months,Lease,50k-100k
-Tesla,Model X,2024,SUV,Midsize,$79k-$94k,Gas,47 city / 49 hwy,"Family Vehicle, Off-Roading, Utility",All Regions,No,No,"Suburbs, Rural",Moderate,Advanced,High,Yes,Part-time,Fair (580-669),Occasionally,<6 months,Rent,25k-50k
-Honda,Pilot,2024,Crossover,Fullsize,$39k-$52k,Electric,327 miles,"Family Vehicle, Commuting","West, North East, North West",Yes,Yes,"City, Suburbs",Heavy,Basic,High,Yes,Full-time,Good (670-739),Daily,6-12 months,Buy,50k-100k
-Tesla,Model 3,2024,Crossover,Compact,$40k-$55k,Hybrid,47 city / 57 hwy,"Family Vehicle, Commuting",All Regions,No,Yes,"City, Suburbs",Moderate,Advanced,High,No,Full-time,Very Good (740-799),Daily,3+ years,Buy,100k-150k
-Ford,Mustang,2024,Crossover,Fullsize,$32k-$63k,Hybrid,51 city / 46 hwy,"Family Vehicle, Commuting","North East, North West, Mid-West",Yes,No,"City, Suburbs",Light,Basic,High,Yes,Full-time,Good (670-739),Daily,6-12 months,Lease,50k-100k
-BMW,X5,2024,SUV,Compact,$66k-$90k,Gas,41 city / 46 hwy,"Family Vehicle, Off-Roading, Utility","South East, Mid-West, West",No,Yes,"Suburbs, Rural",Moderate,Moderate,High,No,Full-time,Good (670-739),Occasionally,6-12 months,Lease,50k-100k
-Chevrolet,Equinox,2024,Crossover,Fullsize,$27k-$33k,Gas,49 city / 59 hwy,"Family Vehicle, Commuting",All Regions,No,Yes,"City, Suburbs",Heavy,Basic,High,Yes,Full-time,Good (670-739),Daily,6-12 months,Lease,50k-100k
-Honda,Accord,2024,Crossover,Compact,$28k-$39k,Gas,42 city / 33 hwy,"Family Vehicle, Commuting",All Regions,No,Yes,"City, Suburbs",Light,Basic,High,No,Part-time,Fair (580-669),Daily,<6 months,Rent,25k-50k
-Chevrolet,Malibu,2024,Crossover,Fullsize,$26k-$32k,Electric,284 miles,"Family Vehicle, Commuting","West, North East, North West",Yes,Yes,"City, Suburbs",Moderate,Basic,High,Yes,Full-time,Good (670-739),Daily,6-12 months,Buy,50k-150k
-Hyundai,Santa Fe,2024,Crossover,Compact,$35k-$45k,Hybrid,20 city / 29 hwy,"Family Vehicle, Commuting",All Regions,Yes,Yes,"City, Suburbs",Heavy,Basic,High,No,Part-time,Fair (580-669),Daily,<6 months,Rent,25k-50k
-Toyota,RAV4,2024,Crossover,Fullsize,$42k-$47k,Electric,295 miles,"Family Vehicle, Commuting","West, North East, North West",No,Yes,"City, Suburbs",None,Basic,High,Yes,Part-time,Fair (580-669),Daily,<6 months,Rent,25k-50k
-BMW,3 Series,2024,Crossover,Compact,$64k-$69k,Plug-in Hybrid,31 city / 43 hwy,"Family Vehicle, Commuting",All Regions,No,Yes,"City, Suburbs",Heavy,Basic,High,No,Full-time,Good (670-739),Daily,6-12 months,Lease,50k-100k
-Kia,Telluride,2024,Crossover,Midsize,$64k-$69k,Gas,32 city / 52 hwy,"Family Vehicle, Commuting",All Regions,No,Yes,"City, Suburbs",Heavy,Basic,High,Yes,Full-time,Good (670-739),Daily,6-12 months,Lease,50k-100k
-Tesla,Model S,2024,Crossover,Midsize,$62k-$67k,Gas,52 city / 25 hwy,"Family Vehicle, Commuting",All Regions,Yes,Yes,"City, Suburbs",Light,Advanced,High,Yes,Full-time,Good (670-739),Daily,6-12 months,Lease,50k-100k
-Kia,Sportage,2024,Crossover,Midsize,$70k-$75k,Gas,32 city / 28 hwy,"Family Vehicle, Commuting",All Regions,No,No,"City, Suburbs",Heavy,Basic,High,Yes,Full-time,Good (670-739),Daily,6-12 months,Lease,50k-100k
-BMW,i4,2024,Crossover,Fullsize,$49k-$54k,Gas,36 city / 47 hwy,"Family Vehicle, Commuting",All Regions,No,No,"City, Suburbs",Moderate,Basic,High,Yes,Part-time,Fair (580-669),Daily,<6 months,Rent,25k-50k
-Ford,Explorer,2024,Crossover,Fullsize,$37k-$55k,Hybrid,52 city / 48 hwy,"Family Vehicle, Commuting",All Regions,Yes,No,"City, Suburbs",None,Basic,High,Yes,Full-time,Very Good (740-799),Daily,3+ years,Buy,100k-150k
-Tesla,Model Y,2024,Crossover,Fullsize,$30k-$35k,Gas,32 city / 35 hwy,"Family Vehicle, Commuting",All Regions,Yes,Yes,"City, Suburbs",Moderate,Advanced,High,Yes,Part-time,Fair (580-669),Daily,<6 months,Rent,25k-50k
-Hyundai,Elantra,2024,Crossover,Fullsize,$48k-$53k,Plug-in Hybrid,45 city / 46 hwy,"Family Vehicle, Commuting",All Regions,Yes,Yes,"City, Suburbs",None,Basic,High,Yes,Part-time,Fair (580-669),Daily,<6 months,Rent,25k-50k
-Kia,Soul,2024,Crossover,Fullsize,$51k-$56k,Hybrid,41 city / 58 hwy,"Family Vehicle, Commuting",All Regions,No,Yes,"City, Suburbs",None,Basic,High,Yes,Full-time,Good (670-739),Daily,6-12 months,Lease,50k-100k
-Chevrolet,Silverado,2024,Crossover,Fullsize,$41k-$46k,Plug-in Hybrid,21 city / 44 hwy,"Family Vehicle, Commuting",All Regions,No,No,"City, Suburbs",Light,Basic,High,Yes,Part-time,Fair (580-669),Daily,<6 months,Rent,25k-50k
-Toyota,Corolla,2024,Sedan,Fullsize,$84k-$89k,Hybrid,29 city / 29 hwy,"Family Vehicle, Commuting","North East, North West, Mid-West",No,Yes,"City, Suburbs",Light,Basic,High,Yes,Full-time,Good (670-739),Daily,6-12 months,Lease,50k-100k
-Mercedes-Benz,S 580e,2024,Crossover,Compact,$67k-$72k,Hybrid,24 city / 38 hwy,"Family Vehicle, Commuting",All Regions,Yes,No,"City, Suburbs",Moderate,Basic,High,No,Full-time,Good (670-739),Daily,6-12 months,Lease,50k-100k
-Audi,A4,2024,Sedan,Compact,$95k-$100k,Plug-in Hybrid,25 city / 48 hwy,"Family Vehicle, Commuting",All Regions,Yes,Yes,"City, Suburbs",Light,Basic,High,No,Full-time,Good (670-739),Daily,6-12 months,Lease,50k-100k
-BMW,5 Series,2024,Crossover,Compact,$48k-$53k,Plug-in Hybrid,43 city / 46 hwy,"Family Vehicle, Commuting",All Regions,No,No,"City, Suburbs",Heavy,Basic,High,No,Part-time,Fair (580-669),Daily,<6 months,Rent,25k-50k
-Toyota,Prius,2024,Crossover,Compact,$53k-$58k,Plug-in Hybrid,54 city / 37 hwy,"Family Vehicle, Commuting",All Regions,Yes,No,"City, Suburbs",None,Basic,High,No,Full-time,Good (670-739),Daily,6-12 months,Lease,50k-100k
-Kia,Sorento PHEV,2024,Crossover,Fullsize,$30k-$35k,Plug-in Hybrid,21 city / 48 hwy,"Family Vehicle, Commuting",All Regions,Yes,No,"City, Suburbs",Light,Basic,High,Yes,Part-time,Fair (580-669),Daily,<6 months,Rent,25k-50k
-Mercedes-Benz,C-Class,2024,Crossover,Midsize,$117k-$122k,Plug-in Hybrid,37 city / 30 hwy,"Family Vehicle, Commuting",All Regions,Yes,No,"City, Suburbs",None,Basic,High,Yes,Full-time,Very Good (740-799),Daily,3+ years,Buy,100k-150k
-Honda,CR-V,2024,SUV,Midsize,$40k-$45k,Gas,47 city / 39 hwy,"Family Vehicle, Off-Roading, Utility","South East, Mid-West, West",Yes,No,"Suburbs, Rural",Light,Moderate,High,Yes,Part-time,Fair (580-669),Occasionally,<6 months,Rent,25k-50k
-Chevrolet,Bolt EV,2024,Crossover,Fullsize,$128k-$133k,Electric,334 miles,"Family Vehicle, Commuting","West, North East, North West",Yes,No,"City, Suburbs",None,Basic,High,Yes,Full-time,Very Good (740-799),Daily,3+ years,Buy,100k-150k
-Ferrari,SF90,2024,Sports Car,Compact,$524k-$540k,Plug-in Hybrid,18 city / 26 hwy,"Sport/Performance, Leisure","North East, West, South West, South East",No,Yes,City,None,Advanced,Medium,No,Full-time,Excellent (800+),Occasionally,3+ years,Buy,150k+
-Ferrari,Roma,2024,Sports Car,Midsize,$243k-$256k,Gas,17 city / 22 hwy,"Sport/Performance, Leisure","North East, West, South West, South East",No,No,City,None,Advanced,Medium,Yes,Full-time,Excellent (800+),Occasionally,3+ years,Buy,150k+
-Porsche,911,2024,Sports Car,Compact,$115k-$130k,Gas,18 city / 25 hwy,"Sport/Performance, Leisure","North East, West, South West, South East",No,No,City,None,Advanced,Medium,No,Full-time,Very Good (740-799),Occasionally,3+ years,Buy,100k-150k
-Porsche,Cayenne,2024,SUV,Fullsize,$80k-$115k,Gas,17 city / 23 hwy,"Family Vehicle, Off-Roading, Utility, Leisure","North East, West, South West, South East",No,No,"Suburbs, Rural",Moderate,Advanced,High,Yes,Full-time,Good (670-739),Occasionally,6-12 months,Lease,50k-100k
-Jeep,Wrangler,2024,SUV,Midsize,$35k-$50k,Gas,17 city / 25 hwy,"Family Vehicle, Off-Roading, Utility","South East, Mid-West, West",No,No,"Suburbs, Rural",Moderate,Moderate,High,Yes,Part-time,Fair (580-669),Occasionally,<6 months,Rent,25k-50k
-Jeep,Grand Cherokee,2024,SUV,Fullsize,$40k-$65k,Gas,19 city / 26 hwy,"Family Vehicle, Off-Roading, Utility","North East, North West, Mid-West",No,No,"Suburbs, Rural",Moderate,Moderate,High,Yes,Part-time,Fair (580-669),Occasionally,<6 months,Rent,25k-50k
-Tesla,Model S,2024,Sedan,Fullsize,$90k-$110k,Electric,396 miles,"Family Vehicle, Commuting","North East, North West, Mid-West",Yes,Yes,"City, Suburbs",None,Advanced,High,Yes,Full-time,Good (670-739),Daily,6-12 months,Lease,50k-100k
-Tesla,Cybertruck,2024,Truck,Fullsize,$60k-$85k,Electric,340 miles,"Family Vehicle, Off-Roading, Utility","South East, Mid-West, West",Yes,Yes,"Suburbs, Rural",Heavy,Advanced,High,Yes,Full-time,Good (670-739),Occasionally,6-12 months,Lease,50k-100k
-Toyota,RAV4,2024,SUV,Compact,$30k-$38k,Gas,22 city / 29 hwy,Sport/Performance,"North East, Mid-West",No,Yes,"City, Suburbs",Moderate,Moderate,High,No,Full-time,Good (670-739),Occasionally,6-12 months,Lease,<25k
-Toyota,Camry,2024,Sedan,Midsize,$28k-$35k,Electric,300 miles,Off-Roading,All Regions,No,Yes,City,Light,Moderate,Medium,Yes,Retired,Good (670-739),Daily,3+ years,Buy,150k+
-Chevrolet,Tahoe,2024,SUV,Fullsize,$54k-$74k,Plug-in Hybrid,300 miles,Family Vehicle,"West, South East",No,Yes,"Suburbs, Rural",Heavy,Basic,High,Yes,Full-time,Very Good (740-799),Occasionally,6-12 months,Lease,100k-150k
-BMW,X5,2024,SUV,Midsize,$66k-$90k,Plug-in Hybrid,22 city / 29 hwy,Sport/Performance,All Regions,Yes,No,Suburbs,Moderate,Moderate,High,No,Student,Very Good (740-799),Frequently,3+ years,Buy,50k-100k
-Hyundai,Elantra,2024,Sedan,Compact,$21k-$28k,Gas,300 miles,Sport/Performance,"West, South East",Yes,No,City,None,Moderate,High,Yes,Part-time,Very Good (740-799),Occasionally,<6 months,Rent,50k-100k
-Nissan,Altima,2024,Sedan,Midsize,$26k-$35k,Gas,300 miles,Family Vehicle,"West, South East",No,No,"Suburbs, Rural",Moderate,Basic,Low,Yes,Full-time,Fair (580-669),Daily,<6 months,Rent,150k+
-Volkswagen,Atlas,2024,SUV,Fullsize,$36k-$52k,Gas,22 city / 29 hwy,Off-Roading,"North East, Mid-West",Yes,No,Rural,Moderate,Advanced,Medium,No,Part-time,Fair (580-669),Occasionally,6-12 months,Lease,25k-50k
-Mazda,CX-5,2024,Crossover,Compact,$28k-$38k,Gas,22 city / 29 hwy,Family Vehicle,"North East, Mid-West",Yes,No,Rural,Heavy,Advanced,Medium,No,Retired,Excellent (800+),Occasionally,6-12 months,Lease,150k+
-Kia,Telluride,2024,SUV,Fullsize,$37k-$53k,Gas,300 miles,Family Vehicle,"West, South East",Yes,Yes,Rural,Light,Basic,High,No,Full-time,Good (670-739),Frequently,<6 months,Rent,25k-50k
-Subaru,Forester,2024,Crossover,Compact,$28k-$38k,Gas,40 city / 40 hwy,Sport/Performance,All Regions,No,Yes,"City, Suburbs",None,Moderate,Medium,No,Retired,Very Good (740-799),Occasionally,<6 months,Rent,150k+
-Ford,Explorer,2024,SUV,Midsize,$37k-$55k,Plug-in Hybrid,40 city / 40 hwy,Family Vehicle,"North East, Mid-West",Yes,Yes,City,Moderate,Basic,Medium,Yes,Part-time,Very Good (740-799),Daily,<6 months,Rent,50k-100k
-Jeep,Compass,2024,SUV,Compact,$27k-$35k,Gas,300 miles,Off-Roading,"North East, Mid-West",Yes,Yes,"City, Suburbs",None,Advanced,Low,Yes,Part-time,Very Good (740-799),Daily,<6 months,Rent,150k+
-Honda,Pilot,2024,SUV,Fullsize,$39k-$52k,Gas,300 miles,Sport/Performance,All Regions,Yes,Yes,Suburbs,Moderate,Moderate,Medium,Yes,Part-time,Good (670-739),Daily,<6 months,Rent,150k+
-Tesla,Model 3,2024,Sedan,Midsize,$40k-$55k,Gas,300 miles,Off-Roading,"North East, Mid-West",Yes,Yes,"Suburbs, Rural",Heavy,Basic,Low,Yes,Retired,Fair (580-669),Daily,<6 months,Rent,100k-150k
-Tesla,Model X,2024,SUV,Fullsize,$79k-$94k,Plug-in Hybrid,22 city / 29 hwy,Sport/Performance,All Regions,No,Yes,Rural,Heavy,Moderate,Low,No,Part-time,Good (670-739),Daily,6-12 months,Lease,<25k
-Porsche,Macan,2024,SUV,Compact,$60k-$80k,Electric,40 city / 40 hwy,Family Vehicle,"North East, West, South West, South East",Yes,Yes,Suburbs,Moderate,Basic,Low,Yes,Student,Very Good (740-799),Occasionally,<6 months,Rent,100k-150k
-Acura,MDX,2024,SUV,Midsize,$50k-$66k,Gas,22 city / 29 hwy,Sport/Performance,"North East, Mid-West",Yes,No,City,Moderate,Moderate,Low,No,Student,Good (670-739),Daily,<6 months,Rent,25k-50k
-GMC,Sierra 1500,2024,Truck,Fullsize,$46k-$72k,Electric,22 city / 29 hwy,Family Vehicle,All Regions,Yes,Yes,Suburbs,Heavy,Moderate,High,Yes,Part-time,Fair (580-669),Occasionally,<6 months,Rent,25k-50k
-Ram,1500,2024,Truck,Fullsize,$42k-$70k,Gas,22 city / 29 hwy,Off-Roading,"North East, Mid-West",Yes,No,City,Heavy,Advanced,Low,Yes,Full-time,Very Good (740-799),Daily,6-12 months,Lease,50k-100k
-Lucid,Air,2024,Sedan,Fullsize,$82k-$130k,Electric,40 city / 40 hwy,Off-Roading,"North East, Mid-West",Yes,No,City,Moderate,Basic,Low,Yes,Student,Very Good (740-799),Frequently,3+ years,Buy,50k-100k
-Genesis,GV70,2024,SUV,Midsize,$46k-$65k,Electric,40 city / 40 hwy,Off-Roading,"West, South East",No,No,"City, Suburbs",None,Basic,Medium,No,Retired,Good (670-739),Frequently,3+ years,Buy,100k-150k
-Rivian,R1T,2024,Truck,Fullsize,$70k-$85k,Plug-in Hybrid,40 city / 40 hwy,Family Vehicle,"West, South East",No,No,City,Light,Basic,Low,No,Full-time,Very Good (740-799),Frequently,6-12 months,Lease,100k-150k
-Mini,Cooper,2024,Hatchback,Compact,$25k-$34k,Plug-in Hybrid,300 miles,Family Vehicle,"West, South East",Yes,Yes,"City, Suburbs",None,Moderate,High,No,Student,Fair (580-669),Daily,6-12 months,Lease,50k-100k
-Volvo,XC90,2024,SUV,Fullsize,$56k-$74k,Gas,22 city / 29 hwy,Family Vehicle,All Regions,No,Yes,"City, Suburbs",Moderate,Moderate,High,Yes,Student,Very Good (740-799),Frequently,3+ years,Buy,25k-50k
-Audi,Q7,2024,SUV,Fullsize,$60k-$85k,Electric,300 miles,Sport/Performance,All Regions,No,Yes,Rural,None,Basic,Medium,Yes,Part-time,Excellent (800+),Occasionally,6-12 months,Lease,50k-100k
-Cadillac,Escalade,2024,SUV,Fullsize,$81k-$110k,Gas,40 city / 40 hwy,Off-Roading,All Regions,No,No,Suburbs,Heavy,Basic,Low,No,Retired,Very Good (740-799),Occasionally,6-12 months,Lease,150k+
-Infiniti,QX60,2024,SUV,Midsize,$49k-$65k,Plug-in Hybrid,300 miles,Off-Roading,All Regions,Yes,Yes,"Suburbs, Rural",Moderate,Advanced,Low,No,Student,Very Good (740-799),Occasionally,3+ years,Buy,<25k
-Alfa Romeo,Stelvio,2024,SUV,Compact,$46k-$58k,Plug-in Hybrid,40 city / 40 hwy,Off-Roading,"North East, Mid-West",No,Yes,Suburbs,Moderate,Moderate,High,No,Retired,Fair (580-669),Occasionally,3+ years,Buy,150k+
-Lexus,RX,2024,SUV,Midsize,$48k-$66k,Plug-in Hybrid,40 city / 40 hwy,Off-Roading,"North East, Mid-West",No,Yes,Suburbs,Heavy,Moderate,High,Yes,Student,Good (670-739),Daily,<6 months,Rent,<25k
-Jaguar,F-Pace,2024,SUV,Midsize,$55k-$73k,Gas,22 city / 29 hwy,Sport/Performance,All Regions,No,No,Rural,Light,Advanced,High,No,Full-time,Excellent (800+),Occasionally,3+ years,Buy,<25k
+Brand,Model,Model Year,Vehicle Type,Car Size,MSRP Range,Fuel Type,MPG/Range,Use Category,Region,Eco-Conscious,Charging Access,Neighborhood Type,Tech Features,Safety Priority,Garage Access,Employment Status,Credit Score,Travel Frequency,Ownership Duration,Ownership Recommendation,Yearly Income
+Mercedes-Benz,GLC,Used,Crossover,Fullsize,$48k-$61k,Gas,27 city / 45 hwy,"Family Vehicle, Commuting","North East, North West, Mid-West",Yes,Yes,"City, Suburbs",Basic,High,Yes,Employed,Very Good,Daily,Long Term,Buy,100k-150k
+Honda,Civic,Used,Sedan,Compact,$24k-$30k,Electric,221 miles,"Family Vehicle, Commuting","West, North East, North West",Yes,Yes,"City, Suburbs",Basic,High,No,Employed,Very Good,Daily,Long Term,Buy,100k-150k
+Ford,F-150,Used,Truck,Fullsize,$38k-$84k,Plug-in Hybrid,40 city / 33 hwy,"Family Vehicle, Off-Roading, Utility","North East, North West, Mid-West",Yes,No,"Suburbs, Rural",Moderate,High,Yes,Employed,Good,Occasionally,Medium Term,Lease,50k-100k
+Audi,A6,Used,Crossover,Midsize,$58k-$73k,Plug-in Hybrid,36 city / 28 hwy,"Family Vehicle, Commuting",All Regions,No,No,"City, Suburbs",Basic,High,Yes,Employed,Very Good,Daily,Long Term,Buy,100k-150k
+Audi,Q5,Used,Crossover,Compact,$45k-$59k,Plug-in Hybrid,40 city / 40 hwy,"Family Vehicle, Commuting","North East, North West, Mid-West",Yes,No,"City, Suburbs",Basic,High,No,Employed,Very Good,Daily,Long Term,Buy,100k-150k
+Audi,e-tron,Used,Crossover,Fullsize,$74k-$89k,Plug-in Hybrid,36 city / 32 hwy,"Family Vehicle, Commuting",All Regions,Yes,Yes,"City, Suburbs",Basic,High,Yes,Employed,Fair,Daily,Short Term,Rent,25k-50k
+Mercedes-Benz,E-Class,Used,Crossover,Midsize,$62k-$77k,Electric,303 miles,"Family Vehicle, Commuting","West, North East, North West",Yes,Yes,"City, Suburbs",Basic,High,Yes,Employed,Very Good,Daily,Long Term,Buy,100k-150k
+Hyundai,Tucson,Used,Crossover,Fullsize,$28k-$38k,Electric,262 miles,"Family Vehicle, Commuting","West, North East, North West",Yes,No,"City, Suburbs",Basic,High,Yes,Employed,Good,Daily,Medium Term,Lease,50k-100k
+Ford,Escape,Used,Crossover,Midsize,$29k-$40k,Electric,244 miles,"Family Vehicle, Commuting","West, North East, North West",No,No,"City, Suburbs",Basic,High,Yes,Employed,Good,Daily,Medium Term,Lease,50k-100k
+Toyota,Camry,Used,Sedan,Fullsize,$28k-$35k,Plug-in Hybrid,32 city / 27 hwy,"Family Vehicle, Commuting","North East, West",Yes,No,"City, Suburbs",Basic,High,Yes,Employed,Good,Daily,Medium Term,Lease,50k-100k
+Hyundai,Ioniq 5,Used,Crossover,Midsize,$41k-$53k,Electric,238 miles,"Family Vehicle, Commuting","West, North East, North West",Yes,Yes,"City, Suburbs",Basic,High,Yes,Employed,Good,Daily,Medium Term,Lease,50k-100k
+Tesla,Model X,Used,SUV,Midsize,$79k-$94k,Gas,47 city / 49 hwy,"Family Vehicle, Off-Roading, Utility",All Regions,No,No,"Suburbs, Rural",Advanced,High,Yes,Employed,Fair,Occasionally,Short Term,Rent,25k-50k
+Honda,Pilot,Used,Crossover,Fullsize,$39k-$52k,Electric,327 miles,"Family Vehicle, Commuting","West, North East, North West",No,Yes,"City, Suburbs",Basic,High,Yes,Employed,Good,Daily,Medium Term,Lease,50k-100k
+Tesla,Model 3,Used,Crossover,Compact,$40k-$55k,Hybrid,47 city / 57 hwy,"Family Vehicle, Commuting",All Regions,No,Yes,"City, Suburbs",Advanced,High,No,Employed,Very Good,Daily,Long Term,Buy,100k-150k
+Ford,Mustang,Used,Crossover,Fullsize,$32k-$63k,Hybrid,51 city / 46 hwy,"Family Vehicle, Commuting","North East, North West, Mid-West",Yes,No,"City, Suburbs",Basic,High,Yes,Employed,Good,Daily,Medium Term,Lease,50k-100k
+BMW,X5,Used,SUV,Compact,$66k-$90k,Gas,41 city / 46 hwy,"Family Vehicle, Off-Roading, Utility","South East, Mid-West, West",No,Yes,"Suburbs, Rural",Moderate,High,No,Employed,Good,Occasionally,Medium Term,Lease,50k-100k
+Chevrolet,Equinox,Used,Crossover,Fullsize,$27k-$33k,Gas,49 city / 59 hwy,"Family Vehicle, Commuting",All Regions,No,Yes,"City, Suburbs",Basic,High,Yes,Employed,Good,Daily,Medium Term,Lease,50k-100k
+Honda,Accord,Used,Crossover,Compact,$28k-$39k,Gas,42 city / 33 hwy,"Family Vehicle, Commuting",All Regions,No,Yes,"City, Suburbs",Basic,High,No,Employed,Fair,Daily,Short Term,Rent,25k-50k
+Chevrolet,Malibu,Used,Crossover,Fullsize,$26k-$32k,Electric,284 miles,"Family Vehicle, Commuting","West, North East, North West",No,No,"City, Suburbs",Basic,High,Yes,Employed,Good,Daily,Medium Term,Lease,50k-100k
+Hyundai,Santa Fe,Used,Crossover,Compact,$35k-$45k,Hybrid,20 city / 29 hwy,"Family Vehicle, Commuting",All Regions,No,Yes,"City, Suburbs",Basic,High,No,Employed,Fair,Daily,Short Term,Rent,25k-50k
+Toyota,RAV4,Used,Crossover,Fullsize,$42k-$47k,Electric,295 miles,"Family Vehicle, Commuting","West, North East, North West",No,Yes,"City, Suburbs",Basic,High,Yes,Employed,Fair,Daily,Short Term,Rent,25k-50k
+BMW,3 Series,Used,Crossover,Compact,$64k-$69k,Plug-in Hybrid,31 city / 43 hwy,"Family Vehicle, Commuting",All Regions,No,Yes,"City, Suburbs",Basic,High,No,Employed,Good,Daily,Medium Term,Lease,50k-100k
+Kia,Telluride,Used,Crossover,Midsize,$64k-$69k,Gas,32 city / 52 hwy,"Family Vehicle, Commuting",All Regions,No,Yes,"City, Suburbs",Basic,High,Yes,Employed,Good,Daily,Medium Term,Lease,50k-100k
+Tesla,Model S,Used,Crossover,Midsize,$62k-$67k,Gas,52 city / 25 hwy,"Family Vehicle, Commuting",All Regions,Yes,Yes,"City, Suburbs",Advanced,High,Yes,Employed,Good,Daily,Medium Term,Lease,50k-100k
+Kia,Sportage,Used,Crossover,Midsize,$70k-$75k,Gas,32 city / 28 hwy,"Family Vehicle, Commuting",All Regions,No,No,"City, Suburbs",Basic,High,Yes,Employed,Good,Daily,Medium Term,Lease,50k-100k
+BMW,i4,Used,Crossover,Fullsize,$49k-$54k,Gas,36 city / 47 hwy,"Family Vehicle, Commuting",All Regions,No,No,"City, Suburbs",Basic,High,Yes,Employed,Fair,Daily,Short Term,Rent,25k-50k
+Ford,Explorer,Used,Crossover,Fullsize,$37k-$55k,Hybrid,52 city / 48 hwy,"Family Vehicle, Commuting",All Regions,Yes,No,"City, Suburbs",Basic,High,Yes,Employed,Very Good,Daily,Long Term,Buy,100k-150k
+Tesla,Model Y,Used,Crossover,Fullsize,$30k-$35k,Gas,32 city / 35 hwy,"Family Vehicle, Commuting",All Regions,Yes,Yes,"City, Suburbs",Advanced,High,Yes,Employed,Fair,Daily,Short Term,Rent,25k-50k
+Hyundai,Elantra,Used,Crossover,Fullsize,$48k-$53k,Plug-in Hybrid,45 city / 46 hwy,"Family Vehicle, Commuting",All Regions,Yes,Yes,"City, Suburbs",Basic,High,Yes,Employed,Fair,Daily,Short Term,Rent,25k-50k
+Kia,Soul,Used,Crossover,Fullsize,$51k-$56k,Hybrid,41 city / 58 hwy,"Family Vehicle, Commuting",All Regions,No,Yes,"City, Suburbs",Basic,High,Yes,Employed,Good,Daily,Medium Term,Lease,50k-100k
+Chevrolet,Silverado,Used,Crossover,Fullsize,$41k-$46k,Plug-in Hybrid,21 city / 44 hwy,"Family Vehicle, Commuting",All Regions,No,No,"City, Suburbs",Basic,High,Yes,Employed,Fair,Daily,Short Term,Rent,25k-50k
+Toyota,Corolla,Used,Sedan,Fullsize,$84k-$89k,Hybrid,29 city / 29 hwy,"Family Vehicle, Commuting","North East, North West, Mid-West",No,Yes,"City, Suburbs",Basic,High,Yes,Employed,Good,Daily,Medium Term,Lease,50k-100k
+Mercedes-Benz,S 580e,Used,Crossover,Compact,$67k-$72k,Hybrid,24 city / 38 hwy,"Family Vehicle, Commuting",All Regions,Yes,No,"City, Suburbs",Basic,High,No,Employed,Good,Daily,Medium Term,Lease,50k-100k
+Audi,A4,Used,Sedan,Compact,$95k-$100k,Plug-in Hybrid,25 city / 48 hwy,"Family Vehicle, Commuting",All Regions,Yes,Yes,"City, Suburbs",Basic,High,No,Employed,Good,Daily,Medium Term,Lease,50k-100k
+BMW,5 Series,Used,Crossover,Compact,$48k-$53k,Plug-in Hybrid,43 city / 46 hwy,"Family Vehicle, Commuting",All Regions,No,No,"City, Suburbs",Basic,High,No,Employed,Fair,Daily,Short Term,Rent,25k-50k
+Toyota,Prius,Used,Crossover,Compact,$53k-$58k,Plug-in Hybrid,54 city / 37 hwy,"Family Vehicle, Commuting",All Regions,Yes,No,"City, Suburbs",Basic,High,No,Employed,Good,Daily,Medium Term,Lease,50k-100k
+Kia,Sorento PHEV,Used,Crossover,Fullsize,$30k-$35k,Plug-in Hybrid,21 city / 48 hwy,"Family Vehicle, Commuting",All Regions,Yes,No,"City, Suburbs",Basic,High,Yes,Employed,Fair,Daily,Short Term,Rent,25k-50k
+Mercedes-Benz,C-Class,Used,Crossover,Midsize,$117k-$122k,Plug-in Hybrid,37 city / 30 hwy,"Family Vehicle, Commuting",All Regions,Yes,No,"City, Suburbs",Basic,High,Yes,Employed,Very Good,Daily,Long Term,Buy,100k-150k
+Honda,CR-V,Used,SUV,Midsize,$40k-$45k,Gas,47 city / 39 hwy,"Family Vehicle, Off-Roading, Utility","South East, Mid-West, West",Yes,No,"Suburbs, Rural",Moderate,High,Yes,Employed,Fair,Occasionally,Short Term,Rent,25k-50k
+Chevrolet,Bolt EV,Used,Crossover,Fullsize,$128k-$133k,Electric,334 miles,"Family Vehicle, Commuting","West, North East, North West",Yes,No,"City, Suburbs",Basic,High,Yes,Employed,Very Good,Daily,Long Term,Buy,100k-150k
+Ferrari,SF90,Used,Sports Car,Compact,$524k-$540k,Plug-in Hybrid,18 city / 26 hwy,"Sport/Performance, Leisure","North East, West, South West, South East",No,Yes,City,Advanced,Medium,No,Employed,Excellent ,Occasionally,Long Term,Buy,150k+
+Ferrari,Roma,Used,Sports Car,Midsize,$243k-$256k,Gas,17 city / 22 hwy,"Sport/Performance, Leisure","North East, West, South West, South East",No,No,City,Advanced,Medium,Yes,Employed,Excellent ,Occasionally,Long Term,Buy,150k+
+Porsche,911,Used,Sports Car,Compact,$115k-$130k,Gas,18 city / 25 hwy,"Sport/Performance, Leisure","North East, West, South West, South East",No,No,City,Advanced,Medium,No,Employed,Very Good,Occasionally,Long Term,Buy,100k-150k
+Porsche,Cayenne,Used,SUV,Fullsize,$80k-$115k,Gas,17 city / 23 hwy,"Family Vehicle, Off-Roading, Utility, Leisure","North East, West, South West, South East",No,No,"Suburbs, Rural",Advanced,High,Yes,Employed,Good,Occasionally,Medium Term,Lease,50k-100k
+Jeep,Wrangler,Used,SUV,Midsize,$35k-$50k,Gas,17 city / 25 hwy,"Family Vehicle, Off-Roading, Utility","South East, Mid-West, West",No,No,"Suburbs, Rural",Moderate,High,Yes,Employed,Fair,Occasionally,Short Term,Rent,25k-50k
+Jeep,Grand Cherokee,Used,SUV,Fullsize,$40k-$65k,Gas,19 city / 26 hwy,"Family Vehicle, Off-Roading, Utility","North East, North West, Mid-West",No,No,"Suburbs, Rural",Moderate,High,Yes,Employed,Fair,Occasionally,Short Term,Rent,25k-50k
+Tesla,Model S,Used,Sedan,Fullsize,$90k-$110k,Electric,396 miles,"Family Vehicle, Commuting","North East, North West, Mid-West",Yes,Yes,"City, Suburbs",Advanced,High,Yes,Employed,Good,Daily,Medium Term,Lease,50k-100k
+Tesla,Cybertruck,Used,Truck,Fullsize,$60k-$85k,Electric,340 miles,"Family Vehicle, Off-Roading, Utility","South East, Mid-West, West",Yes,Yes,"Suburbs, Rural",Advanced,High,Yes,Employed,Good,Occasionally,Medium Term,Lease,50k-100k
+Toyota,RAV4,Used,SUV,Compact,$30k-$38k,Gas,22 city / 29 hwy,Sport/Performance,"North East, Mid-West",No,Yes,"City, Suburbs",Moderate,High,No,Employed,Good,Occasionally,Medium Term,Lease,<25k
+Toyota,Camry,Used,Sedan,Midsize,$28k-$35k,Electric,300 miles,Off-Roading,All Regions,No,Yes,City,Moderate,Medium,Yes,Retired,Good,Daily,Long Term,Buy,150k+
+Chevrolet,Tahoe,Used,SUV,Fullsize,$54k-$74k,Plug-in Hybrid,300 miles,Family Vehicle,"West, South East",No,Yes,"Suburbs, Rural",Basic,High,Yes,Employed,Very Good,Occasionally,Medium Term,Lease,100k-150k
+BMW,X5,Used,SUV,Midsize,$66k-$90k,Plug-in Hybrid,22 city / 29 hwy,Sport/Performance,All Regions,Yes,No,Suburbs,Moderate,High,No,Student,Very Good,Daily,Long Term,Buy,50k-100k
+Hyundai,Elantra,Used,Sedan,Compact,$21k-$28k,Gas,300 miles,Sport/Performance,"West, South East",Yes,No,City,Moderate,High,Yes,Employed,Very Good,Occasionally,Short Term,Rent,50k-100k
+Nissan,Altima,Used,Sedan,Midsize,$26k-$35k,Gas,300 miles,Family Vehicle,"West, South East",No,No,"Suburbs, Rural",Basic,Low,Yes,Employed,Fair,Daily,Short Term,Rent,150k+
+Volkswagen,Atlas,Used,SUV,Fullsize,$36k-$52k,Gas,22 city / 29 hwy,Off-Roading,"North East, Mid-West",Yes,No,Rural,Advanced,Medium,No,Employed,Fair,Occasionally,Medium Term,Lease,25k-50k
+Mazda,CX-5,Used,Crossover,Compact,$28k-$38k,Gas,22 city / 29 hwy,Family Vehicle,"North East, Mid-West",Yes,No,Rural,Advanced,Medium,No,Retired,Excellent ,Occasionally,Medium Term,Lease,150k+
+Kia,Telluride,Used,SUV,Fullsize,$37k-$53k,Gas,300 miles,Family Vehicle,"West, South East",Yes,Yes,Rural,Basic,High,No,Employed,Good,Daily,Short Term,Rent,25k-50k
+Subaru,Forester,Used,Crossover,Compact,$28k-$38k,Gas,40 city / 40 hwy,Sport/Performance,All Regions,No,Yes,"City, Suburbs",Moderate,Medium,No,Retired,Very Good,Occasionally,Short Term,Rent,150k+
+Ford,Explorer,Used,SUV,Midsize,$37k-$55k,Plug-in Hybrid,40 city / 40 hwy,Family Vehicle,"North East, Mid-West",Yes,Yes,City,Basic,Medium,Yes,Employed,Very Good,Daily,Short Term,Rent,50k-100k
+Jeep,Compass,Used,SUV,Compact,$27k-$35k,Gas,300 miles,Off-Roading,"North East, Mid-West",Yes,Yes,"City, Suburbs",Advanced,Low,Yes,Employed,Very Good,Daily,Short Term,Rent,150k+
+Honda,Pilot,Used,SUV,Fullsize,$39k-$52k,Gas,300 miles,Sport/Performance,All Regions,Yes,Yes,Suburbs,Moderate,Medium,Yes,Employed,Good,Daily,Short Term,Rent,150k+
+Tesla,Model 3,Used,Sedan,Midsize,$40k-$55k,Gas,300 miles,Off-Roading,"North East, Mid-West",Yes,Yes,"Suburbs, Rural",Basic,Low,Yes,Retired,Fair,Daily,Short Term,Rent,100k-150k
+Tesla,Model X,Used,SUV,Fullsize,$79k-$94k,Plug-in Hybrid,22 city / 29 hwy,Sport/Performance,All Regions,No,Yes,Rural,Moderate,Low,No,Employed,Good,Daily,Medium Term,Lease,<25k
+Porsche,Macan,Used,SUV,Compact,$60k-$80k,Electric,40 city / 40 hwy,Family Vehicle,"North East, West, South West, South East",Yes,Yes,Suburbs,Basic,Low,Yes,Student,Very Good,Occasionally,Short Term,Rent,100k-150k
+Acura,MDX,Used,SUV,Midsize,$50k-$66k,Gas,22 city / 29 hwy,Sport/Performance,"North East, Mid-West",Yes,No,City,Moderate,Low,No,Student,Good,Daily,Short Term,Rent,25k-50k
+GMC,Sierra 1500,Used,Truck,Fullsize,$46k-$72k,Electric,22 city / 29 hwy,Family Vehicle,All Regions,Yes,Yes,Suburbs,Moderate,High,Yes,Employed,Fair,Occasionally,Short Term,Rent,25k-50k
+Ram,1500,Used,Truck,Fullsize,$42k-$70k,Gas,22 city / 29 hwy,Off-Roading,"North East, Mid-West",Yes,No,City,Advanced,Low,Yes,Employed,Very Good,Daily,Medium Term,Lease,50k-100k
+Lucid,Air,Used,Sedan,Fullsize,$82k-$130k,Electric,40 city / 40 hwy,Off-Roading,"North East, Mid-West",Yes,No,City,Basic,Low,Yes,Student,Very Good,Daily,Long Term,Buy,50k-100k
+Genesis,GV70,Used,SUV,Midsize,$46k-$65k,Electric,40 city / 40 hwy,Off-Roading,"West, South East",No,No,"City, Suburbs",Basic,Medium,No,Retired,Good,Daily,Long Term,Buy,100k-150k
+Rivian,R1T,Used,Truck,Fullsize,$70k-$85k,Plug-in Hybrid,40 city / 40 hwy,Family Vehicle,"West, South East",No,No,City,Basic,Low,No,Employed,Very Good,Daily,Medium Term,Lease,100k-150k
+Mini,Cooper,Used,Hatchback,Compact,$25k-$34k,Plug-in Hybrid,300 miles,Family Vehicle,"West, South East",Yes,Yes,"City, Suburbs",Moderate,High,No,Student,Fair,Daily,Medium Term,Lease,50k-100k
+Volvo,XC90,Used,SUV,Fullsize,$56k-$74k,Gas,22 city / 29 hwy,Family Vehicle,All Regions,No,Yes,"City, Suburbs",Moderate,High,Yes,Student,Very Good,Daily,Long Term,Buy,25k-50k
+Audi,Q7,Used,SUV,Fullsize,$60k-$85k,Electric,300 miles,Sport/Performance,All Regions,No,Yes,Rural,Basic,Medium,Yes,Employed,Excellent ,Occasionally,Medium Term,Lease,50k-100k
+Cadillac,Escalade,Used,SUV,Fullsize,$81k-$110k,Gas,40 city / 40 hwy,Off-Roading,All Regions,No,No,Suburbs,Basic,Low,No,Retired,Very Good,Occasionally,Medium Term,Lease,150k+
+Infiniti,QX60,Used,SUV,Midsize,$49k-$65k,Plug-in Hybrid,300 miles,Off-Roading,All Regions,Yes,Yes,"Suburbs, Rural",Advanced,Low,No,Student,Very Good,Occasionally,Long Term,Buy,<25k
+Alfa Romeo,Stelvio,Used,SUV,Compact,$46k-$58k,Plug-in Hybrid,40 city / 40 hwy,Off-Roading,"North East, Mid-West",No,Yes,Suburbs,Moderate,High,No,Retired,Fair,Occasionally,Long Term,Buy,150k+
+Lexus,RX,Used,SUV,Midsize,$48k-$66k,Plug-in Hybrid,40 city / 40 hwy,Off-Roading,"North East, Mid-West",No,Yes,Suburbs,Moderate,High,Yes,Student,Good,Daily,Short Term,Rent,<25k
+Jaguar,F-Pace,Used,SUV,Midsize,$55k-$73k,Gas,22 city / 29 hwy,Sport/Performance,All Regions,No,No,Rural,Advanced,High,No,Employed,Excellent ,Occasionally,Long Term,Buy,<25k
+Audi,Q4 e-tron,Used,Coupe,Midsize,"$32,000 - $100,000",Electric,359 mi,Commercial,West,Yes,No,Suburban,Advanced,Medium,Yes,Unemployed,Excellent,Frequently,Short-term,Lease,46568
+Audi,Q4 e-tron,Used,Sedan,Fullsize,"$25,000 - $101,000",Electric,339 mi,Personal,Northeast,No,Yes,Rural,Moderate,Low,No,Student,Good,Daily,Long-term,Buy,72331
+Honda,Civic,New,Sedan,Compact,"$60,000 - $99,000",Electric,211 mi,Personal,Northeast,No,No,Rural,Advanced,Low,No,Employed,Very Good,Frequently,Short-term,Rent,42546
+Volkswagen,ID.4,Used,Van,Fullsize,"$31,000 - $83,000",Gas,367 mi,Personal,West,No,Yes,Urban,Basic,High,Yes,Unemployed,Very Good,Frequently,Short-term,Buy,84320
+Hyundai,Ioniq 6,New,Van,Midsize,"$65,000 - $92,000",Electric,354 mi,Personal,Northeast,Yes,Yes,Urban,Basic,High,No,Employed,Excellent,Frequently,Short-term,Lease,146611
+BMW,i4,Used,Truck,Fullsize,"$76,000 - $107,000",Gas,292 mi,Personal,South,No,No,Urban,Moderate,Medium,Yes,Student,Fair,Daily,Short-term,Lease,31264
+Ford,F-150,Used,Coupe,Compact,"$64,000 - $89,000",Gas,328 mi,Commercial,Midwest,Yes,Yes,Rural,Moderate,Medium,Yes,Employed,Excellent,Frequently,Long-term,Lease,44524
+Nissan,Ariya,Used,SUV,Midsize,"$79,000 - $95,000",Gas,213 mi,Commercial,West,No,Yes,Suburban,Basic,Medium,Yes,Employed,Good,Frequently,Long-term,Rent,139735
+Audi,Q4 e-tron,Used,Truck,Fullsize,"$43,000 - $104,000",Electric,222 mi,Commercial,Northeast,Yes,Yes,Suburban,Basic,Low,Yes,Employed,Very Good,Frequently,Long-term,Rent,147025
+Hyundai,Ioniq 6,New,Sedan,Compact,"$45,000 - $93,000",Electric,240 mi,Personal,Midwest,Yes,Yes,Urban,Advanced,Low,Yes,Unemployed,Excellent,Daily,Short-term,Buy,43113
+Tesla,Model Y,Used,Sedan,Compact,"$34,000 - $103,000",Electric,221 mi,Commercial,Northeast,No,Yes,Urban,Advanced,High,No,Employed,Fair,Frequently,Short-term,Lease,72727
+Subaru,Outback,Used,Van,Midsize,"$67,000 - $98,000",Gas,350 mi,Personal,Midwest,Yes,Yes,Suburban,Moderate,High,Yes,Unemployed,Excellent,Daily,Short-term,Buy,117178
+Tesla,Model Y,Used,Coupe,Midsize,"$66,000 - $103,000",Hybrid,203 mi,Commercial,Midwest,No,Yes,Rural,Basic,Low,No,Employed,Fair,Daily,Short-term,Buy,110522
+Honda,Civic,New,SUV,Compact,"$60,000 - $93,000",Hybrid,388 mi,Commercial,Midwest,No,No,Suburban,Advanced,Low,No,Unemployed,Good,Frequently,Short-term,Rent,98567
+Mazda,CX-50,Used,Truck,Compact,"$37,000 - $103,000",Hybrid,293 mi,Commercial,Northeast,Yes,No,Urban,Basic,High,No,Employed,Excellent,Frequently,Long-term,Rent,82012
+Ram,1500,Used,SUV,Compact,"$30,000 - $105,000",Hybrid,384 mi,Commercial,West,Yes,Yes,Suburban,Advanced,High,Yes,Employed,Poor,Daily,Short-term,Rent,98096
+Honda,Civic,New,Coupe,Compact,"$70,000 - $108,000",Electric,226 mi,Personal,Midwest,Yes,No,Urban,Advanced,Medium,No,Employed,Very Good,Frequently,Short-term,Buy,135996
+Subaru,Outback,Used,Coupe,Midsize,"$54,000 - $92,000",Electric,213 mi,Commercial,South,Yes,Yes,Rural,Basic,High,Yes,Student,Fair,Frequently,Long-term,Buy,32594
+Ford,F-150,New,Coupe,Compact,"$39,000 - $85,000",Gas,388 mi,Commercial,South,No,Yes,Rural,Basic,Low,Yes,Employed,Fair,Frequently,Long-term,Buy,115166
+Subaru,Outback,New,Truck,Fullsize,"$63,000 - $81,000",Hybrid,345 mi,Commercial,West,No,No,Rural,Moderate,Low,No,Unemployed,Poor,Frequently,Short-term,Buy,59726
+Audi,Q4 e-tron,New,Coupe,Compact,"$56,000 - $108,000",Electric,319 mi,Personal,Midwest,Yes,Yes,Suburban,Moderate,Medium,No,Student,Poor,Frequently,Long-term,Lease,40574
+Toyota,RAV4,Used,Van,Compact,"$71,000 - $106,000",Gas,237 mi,Personal,West,Yes,Yes,Rural,Moderate,High,Yes,Unemployed,Good,Daily,Short-term,Rent,102410
+Subaru,Outback,Used,SUV,Fullsize,"$68,000 - $101,000",Hybrid,332 mi,Personal,Northeast,Yes,No,Suburban,Advanced,Low,Yes,Student,Very Good,Daily,Long-term,Buy,73912
+Volkswagen,ID.4,Used,Truck,Compact,"$40,000 - $82,000",Hybrid,247 mi,Personal,Northeast,Yes,Yes,Rural,Basic,High,Yes,Employed,Very Good,Daily,Long-term,Lease,130491
+Kia,EV9,Used,Sedan,Fullsize,"$34,000 - $94,000",Electric,358 mi,Personal,South,No,Yes,Rural,Basic,Medium,No,Employed,Poor,Daily,Short-term,Rent,138830
+Subaru,Outback,Used,Truck,Compact,"$74,000 - $87,000",Electric,291 mi,Personal,Northeast,Yes,No,Urban,Basic,Medium,No,Student,Poor,Daily,Short-term,Buy,79175
+Audi,Q4 e-tron,Used,Van,Compact,"$50,000 - $92,000",Electric,298 mi,Personal,Northeast,No,No,Rural,Advanced,Low,No,Employed,Good,Frequently,Short-term,Buy,107498
+Audi,Q4 e-tron,Used,Truck,Fullsize,"$36,000 - $107,000",Hybrid,351 mi,Commercial,South,Yes,No,Suburban,Advanced,High,No,Student,Excellent,Frequently,Short-term,Rent,114276
+Chevrolet,Equinox EV,New,Truck,Fullsize,"$60,000 - $99,000",Electric,326 mi,Commercial,West,Yes,Yes,Suburban,Advanced,High,No,Employed,Very Good,Frequently,Short-term,Rent,64388
+Kia,EV9,Used,SUV,Midsize,"$27,000 - $102,000",Gas,217 mi,Personal,Northeast,No,No,Rural,Advanced,High,Yes,Unemployed,Very Good,Frequently,Short-term,Rent,68793
+Chevrolet,Equinox EV,Used,Sedan,Compact,"$25,000 - $86,000",Gas,290 mi,Commercial,South,Yes,Yes,Suburban,Basic,High,Yes,Student,Good,Frequently,Long-term,Buy,66754
+Audi,Q4 e-tron,Used,Truck,Compact,"$52,000 - $110,000",Gas,311 mi,Commercial,West,No,No,Urban,Advanced,Low,Yes,Unemployed,Excellent,Daily,Long-term,Buy,95838
+Nissan,Ariya,Used,Van,Compact,"$72,000 - $85,000",Hybrid,258 mi,Commercial,West,Yes,No,Rural,Advanced,Low,Yes,Student,Very Good,Frequently,Long-term,Rent,57370
+Ram,1500,New,Truck,Compact,"$45,000 - $92,000",Hybrid,275 mi,Personal,Northeast,Yes,Yes,Suburban,Moderate,Low,Yes,Unemployed,Very Good,Frequently,Short-term,Buy,57125
+Nissan,Ariya,Used,Sedan,Compact,"$45,000 - $105,000",Electric,327 mi,Personal,Northeast,Yes,No,Suburban,Basic,Medium,Yes,Employed,Good,Daily,Short-term,Lease,36921
+Ford,F-150,Used,Truck,Midsize,"$43,000 - $95,000",Hybrid,270 mi,Commercial,West,Yes,No,Rural,Advanced,Medium,Yes,Unemployed,Very Good,Frequently,Long-term,Lease,115080
+Chevrolet,Equinox EV,New,Truck,Fullsize,"$25,000 - $96,000",Hybrid,240 mi,Commercial,South,Yes,Yes,Rural,Advanced,High,No,Employed,Very Good,Daily,Long-term,Buy,82185
+Lexus,RX 500h,Used,Sedan,Compact,"$45,000 - $103,000",Electric,339 mi,Commercial,West,No,No,Urban,Basic,Medium,Yes,Student,Fair,Frequently,Short-term,Lease,31931
+Hyundai,Ioniq 6,Used,Truck,Fullsize,"$80,000 - $94,000",Gas,210 mi,Commercial,South,No,Yes,Suburban,Moderate,High,Yes,Employed,Fair,Daily,Long-term,Buy,94295
+Mazda,CX-50,Used,Truck,Midsize,"$45,000 - $82,000",Gas,368 mi,Commercial,South,Yes,Yes,Urban,Basic,Medium,No,Unemployed,Very Good,Frequently,Long-term,Buy,74416
+BMW,i4,Used,Coupe,Fullsize,"$69,000 - $92,000",Electric,244 mi,Commercial,South,No,Yes,Urban,Basic,High,Yes,Employed,Excellent,Daily,Short-term,Lease,127940
+Hyundai,Ioniq 6,New,Coupe,Fullsize,"$50,000 - $106,000",Hybrid,252 mi,Personal,Midwest,No,No,Rural,Moderate,High,No,Student,Excellent,Frequently,Short-term,Lease,34682
+Hyundai,Ioniq 6,New,Coupe,Fullsize,"$74,000 - $91,000",Electric,308 mi,Commercial,South,No,No,Suburban,Basic,Low,No,Employed,Fair,Frequently,Long-term,Rent,30085
+Subaru,Outback,Used,SUV,Fullsize,"$44,000 - $107,000",Hybrid,264 mi,Commercial,Northeast,No,Yes,Suburban,Moderate,Medium,No,Employed,Good,Frequently,Long-term,Rent,32752
+Mazda,CX-50,New,Coupe,Fullsize,"$29,000 - $98,000",Electric,249 mi,Personal,Midwest,Yes,No,Suburban,Basic,Low,No,Unemployed,Good,Frequently,Long-term,Lease,82920
+Subaru,Outback,Used,Coupe,Compact,"$78,000 - $103,000",Electric,330 mi,Commercial,West,Yes,No,Urban,Moderate,High,Yes,Employed,Good,Frequently,Long-term,Lease,90103
+Kia,EV9,Used,Van,Compact,"$44,000 - $104,000",Gas,371 mi,Personal,West,Yes,No,Urban,Moderate,Medium,No,Employed,Excellent,Daily,Long-term,Lease,97661
+Hyundai,Ioniq 6,Used,Van,Midsize,"$27,000 - $90,000",Gas,364 mi,Commercial,West,No,Yes,Rural,Basic,Low,No,Employed,Good,Daily,Long-term,Lease,111394
+Ram,1500,Used,Coupe,Midsize,"$41,000 - $100,000",Gas,321 mi,Personal,Midwest,Yes,Yes,Rural,Basic,High,No,Employed,Poor,Frequently,Short-term,Buy,123201
+Kia,EV9,Used,SUV,Midsize,"$79,000 - $91,000",Gas,333 mi,Personal,Midwest,No,No,Suburban,Advanced,Medium,Yes,Employed,Fair,Daily,Long-term,Rent,44916
+Ford,F-150,Used,Van,Fullsize,"$38,000 - $89,000",Hybrid,342 mi,Personal,Midwest,No,No,Rural,Advanced,Low,No,Employed,Good,Daily,Long-term,Rent,103972
+Lexus,RX 500h,Used,Van,Midsize,"$58,000 - $89,000",Gas,203 mi,Personal,Northeast,Yes,Yes,Urban,Advanced,High,Yes,Employed,Poor,Frequently,Short-term,Rent,149966
+Honda,Civic,Used,Van,Fullsize,"$62,000 - $83,000",Hybrid,275 mi,Personal,South,No,Yes,Urban,Advanced,Low,No,Student,Fair,Frequently,Short-term,Rent,81046
+Lexus,RX 500h,New,Truck,Fullsize,"$27,000 - $82,000",Gas,218 mi,Personal,Midwest,Yes,Yes,Urban,Advanced,High,Yes,Employed,Fair,Frequently,Long-term,Lease,37565
+BMW,i4,Used,Coupe,Fullsize,"$60,000 - $87,000",Hybrid,269 mi,Commercial,Northeast,Yes,Yes,Suburban,Basic,Low,Yes,Employed,Poor,Daily,Short-term,Lease,102363
+Honda,Civic,Used,Sedan,Compact,"$73,000 - $109,000",Gas,280 mi,Personal,West,No,No,Urban,Advanced,Low,Yes,Unemployed,Excellent,Daily,Long-term,Lease,38123
+Mazda,CX-50,Used,Coupe,Midsize,"$49,000 - $107,000",Gas,233 mi,Commercial,South,No,Yes,Rural,Basic,High,Yes,Employed,Fair,Frequently,Short-term,Buy,142421
+BMW,i4,Used,Coupe,Compact,"$25,000 - $88,000",Electric,243 mi,Commercial,West,No,No,Suburban,Moderate,Low,Yes,Employed,Very Good,Frequently,Short-term,Buy,143112
+Tesla,Model Y,New,Sedan,Compact,"$55,000 - $97,000",Hybrid,321 mi,Commercial,South,Yes,Yes,Suburban,Basic,Low,No,Student,Poor,Frequently,Short-term,Buy,117265
+Subaru,Outback,Used,Van,Midsize,"$76,000 - $89,000",Hybrid,320 mi,Commercial,Midwest,Yes,Yes,Rural,Moderate,Medium,No,Employed,Fair,Daily,Short-term,Lease,39956
+Honda,Civic,Used,Coupe,Midsize,"$47,000 - $108,000",Hybrid,292 mi,Commercial,Northeast,No,Yes,Urban,Moderate,Low,No,Unemployed,Excellent,Daily,Short-term,Lease,53711
+Ram,1500,New,Van,Fullsize,"$53,000 - $84,000",Gas,295 mi,Commercial,Midwest,Yes,No,Suburban,Basic,Medium,No,Student,Poor,Frequently,Short-term,Buy,32011
+Subaru,Outback,Used,Coupe,Compact,"$80,000 - $99,000",Electric,364 mi,Personal,West,No,Yes,Suburban,Basic,Medium,No,Employed,Very Good,Daily,Long-term,Buy,47936
+Subaru,Outback,Used,Truck,Fullsize,"$47,000 - $100,000",Gas,258 mi,Commercial,West,Yes,Yes,Urban,Moderate,High,Yes,Employed,Very Good,Frequently,Short-term,Lease,97338
+Tesla,Model Y,New,SUV,Compact,"$60,000 - $105,000",Electric,374 mi,Commercial,West,No,No,Urban,Moderate,Medium,Yes,Employed,Very Good,Frequently,Short-term,Rent,106391
+Audi,Q4 e-tron,Used,Truck,Fullsize,"$25,000 - $82,000",Hybrid,372 mi,Commercial,West,No,No,Urban,Moderate,Medium,No,Employed,Very Good,Daily,Long-term,Buy,61116
+Toyota,RAV4,Used,Van,Fullsize,"$55,000 - $97,000",Electric,384 mi,Commercial,West,Yes,No,Rural,Advanced,High,Yes,Employed,Excellent,Daily,Long-term,Buy,44236
+Toyota,RAV4,New,Van,Midsize,"$36,000 - $94,000",Hybrid,252 mi,Personal,Northeast,No,Yes,Urban,Moderate,Medium,No,Unemployed,Good,Daily,Long-term,Buy,139724
+Honda,Civic,Used,SUV,Fullsize,"$58,000 - $82,000",Gas,259 mi,Personal,Midwest,Yes,No,Rural,Basic,Low,Yes,Unemployed,Very Good,Frequently,Short-term,Buy,86701
+Honda,Civic,Used,Truck,Fullsize,"$54,000 - $85,000",Gas,267 mi,Commercial,South,No,No,Urban,Advanced,High,No,Student,Good,Frequently,Short-term,Rent,52292
+Volkswagen,ID.4,Used,Coupe,Midsize,"$29,000 - $82,000",Gas,203 mi,Personal,Midwest,Yes,Yes,Rural,Basic,High,No,Employed,Good,Frequently,Long-term,Lease,123790
+Kia,EV9,New,Van,Compact,"$44,000 - $101,000",Gas,209 mi,Personal,West,No,No,Suburban,Moderate,Low,No,Unemployed,Very Good,Daily,Short-term,Rent,98182
+BMW,i4,New,Truck,Fullsize,"$41,000 - $101,000",Gas,236 mi,Commercial,West,Yes,No,Urban,Moderate,High,Yes,Unemployed,Very Good,Frequently,Long-term,Lease,137521
+Chevrolet,Equinox EV,Used,Truck,Midsize,"$78,000 - $85,000",Electric,359 mi,Commercial,South,No,No,Rural,Advanced,Low,Yes,Employed,Excellent,Frequently,Short-term,Buy,50785
+Lexus,RX 500h,New,Van,Midsize,"$25,000 - $94,000",Gas,304 mi,Commercial,West,No,Yes,Suburban,Basic,Medium,No,Unemployed,Fair,Frequently,Short-term,Buy,142833
+Ram,1500,New,Van,Midsize,"$60,000 - $103,000",Hybrid,246 mi,Commercial,Northeast,Yes,No,Urban,Basic,Medium,Yes,Unemployed,Good,Daily,Short-term,Lease,40236
+Tesla,Model Y,Used,Sedan,Compact,"$38,000 - $90,000",Gas,223 mi,Commercial,Northeast,No,No,Urban,Basic,Low,Yes,Employed,Poor,Daily,Long-term,Lease,57958
+Honda,Civic,Used,Truck,Fullsize,"$69,000 - $89,000",Electric,341 mi,Personal,South,No,Yes,Urban,Basic,Medium,No,Employed,Excellent,Frequently,Long-term,Buy,92970
+Toyota,RAV4,New,Coupe,Fullsize,"$59,000 - $103,000",Electric,222 mi,Personal,South,Yes,Yes,Urban,Basic,Low,Yes,Student,Good,Frequently,Short-term,Buy,37842
+Tesla,Model Y,Used,Van,Midsize,"$29,000 - $105,000",Gas,237 mi,Personal,South,Yes,Yes,Urban,Advanced,High,Yes,Unemployed,Fair,Daily,Short-term,Rent,124243
+Chevrolet,Equinox EV,New,Truck,Fullsize,"$74,000 - $81,000",Hybrid,340 mi,Commercial,Northeast,No,No,Urban,Moderate,Medium,No,Unemployed,Very Good,Daily,Short-term,Buy,120101
+Honda,Civic,Used,SUV,Compact,"$62,000 - $83,000",Electric,359 mi,Personal,South,No,Yes,Rural,Advanced,High,No,Unemployed,Good,Frequently,Long-term,Buy,101952
+Mazda,CX-50,New,Van,Fullsize,"$27,000 - $89,000",Gas,228 mi,Commercial,Northeast,No,Yes,Suburban,Advanced,Low,No,Employed,Good,Frequently,Long-term,Lease,114207
+Ram,1500,Used,Coupe,Compact,"$42,000 - $86,000",Electric,386 mi,Commercial,Midwest,No,Yes,Rural,Basic,Medium,No,Unemployed,Good,Daily,Long-term,Buy,52853
+Ram,1500,Used,SUV,Fullsize,"$35,000 - $97,000",Gas,294 mi,Personal,West,Yes,Yes,Suburban,Basic,Medium,Yes,Employed,Fair,Daily,Short-term,Rent,105202
+Lexus,RX 500h,Used,Coupe,Compact,"$80,000 - $100,000",Electric,381 mi,Personal,South,No,No,Suburban,Advanced,High,No,Unemployed,Fair,Frequently,Short-term,Buy,121760
+Nissan,Ariya,Used,SUV,Fullsize,"$42,000 - $105,000",Hybrid,288 mi,Personal,South,No,No,Urban,Moderate,Low,No,Employed,Good,Frequently,Short-term,Lease,43793
+Chevrolet,Equinox EV,New,SUV,Midsize,"$49,000 - $106,000",Hybrid,329 mi,Commercial,South,No,Yes,Suburban,Advanced,Low,No,Employed,Fair,Daily,Short-term,Lease,109756
+Nissan,Ariya,New,Truck,Fullsize,"$70,000 - $101,000",Electric,371 mi,Commercial,West,Yes,No,Urban,Basic,High,No,Employed,Very Good,Frequently,Long-term,Buy,116436
+Tesla,Model Y,Used,Truck,Compact,"$72,000 - $96,000",Gas,324 mi,Commercial,Midwest,Yes,No,Suburban,Advanced,High,No,Employed,Good,Frequently,Long-term,Rent,46626
+Audi,Q4 e-tron,New,Coupe,Compact,"$45,000 - $100,000",Hybrid,210 mi,Commercial,West,Yes,No,Rural,Basic,High,No,Unemployed,Very Good,Frequently,Short-term,Buy,127341
+Volkswagen,ID.4,New,Coupe,Fullsize,"$80,000 - $104,000",Electric,390 mi,Commercial,West,No,No,Rural,Advanced,Medium,Yes,Unemployed,Fair,Frequently,Long-term,Buy,135158
+Chevrolet,Equinox EV,Used,Coupe,Midsize,"$80,000 - $98,000",Electric,289 mi,Commercial,Midwest,No,Yes,Suburban,Moderate,Low,Yes,Student,Very Good,Frequently,Long-term,Rent,76574
+BMW,i4,New,Truck,Fullsize,"$54,000 - $97,000",Electric,309 mi,Commercial,West,No,Yes,Suburban,Advanced,Low,No,Employed,Excellent,Daily,Long-term,Buy,113542
+Toyota,RAV4,New,SUV,Fullsize,"$39,000 - $84,000",Hybrid,350 mi,Commercial,West,Yes,Yes,Urban,Advanced,Low,No,Employed,Poor,Frequently,Short-term,Buy,149020
+Lexus,RX 500h,Used,Van,Midsize,"$42,000 - $107,000",Hybrid,301 mi,Commercial,Midwest,Yes,Yes,Rural,Advanced,Low,No,Student,Fair,Frequently,Long-term,Rent,105233
+Kia,EV9,Used,Sedan,Midsize,"$38,000 - $92,000",Hybrid,264 mi,Commercial,Midwest,Yes,No,Rural,Moderate,High,No,Student,Fair,Frequently,Short-term,Rent,39837
+Kia,EV9,Used,SUV,Fullsize,"$47,000 - $90,000",Electric,224 mi,Personal,West,Yes,No,Urban,Moderate,Low,Yes,Unemployed,Fair,Daily,Long-term,Lease,135393
+Ford,F-150,New,Sedan,Compact,"$65,000 - $98,000",Hybrid,393 mi,Commercial,South,Yes,Yes,Suburban,Moderate,Low,No,Employed,Excellent,Frequently,Long-term,Rent,35549
+Kia,EV9,New,Van,Fullsize,"$49,000 - $85,000",Electric,258 mi,Commercial,Midwest,No,Yes,Urban,Advanced,Low,Yes,Unemployed,Good,Daily,Long-term,Buy,76950
+Nissan,Ariya,Used,Truck,Fullsize,"$73,000 - $99,000",Gas,387 mi,Personal,South,Yes,Yes,Urban,Basic,Medium,Yes,Student,Excellent,Frequently,Long-term,Buy,93893
+Subaru,Outback,New,Sedan,Fullsize,"$76,000 - $98,000",Electric,379 mi,Personal,West,Yes,Yes,Urban,Basic,Medium,Yes,Unemployed,Poor,Frequently,Short-term,Rent,54627
+Nissan,Ariya,New,Sedan,Compact,"$53,000 - $82,000",Gas,360 mi,Commercial,Midwest,Yes,No,Suburban,Advanced,High,Yes,Student,Good,Frequently,Short-term,Buy,74329
+Tesla,Model Y,Used,Van,Fullsize,"$76,000 - $83,000",Gas,307 mi,Commercial,Midwest,Yes,No,Urban,Moderate,Medium,No,Employed,Excellent,Frequently,Long-term,Rent,84827
+Lexus,RX 500h,New,Truck,Midsize,"$32,000 - $88,000",Electric,360 mi,Commercial,South,Yes,Yes,Rural,Moderate,Medium,No,Unemployed,Good,Frequently,Short-term,Rent,34660
+Chevrolet,Equinox EV,Used,Coupe,Compact,"$70,000 - $105,000",Hybrid,234 mi,Personal,Midwest,No,No,Suburban,Advanced,Medium,No,Unemployed,Poor,Frequently,Short-term,Buy,55259
+Ram,1500,Used,Sedan,Compact,"$60,000 - $95,000",Electric,265 mi,Personal,Midwest,No,Yes,Urban,Moderate,Low,No,Employed,Excellent,Daily,Long-term,Rent,62723
+Honda,Civic,Used,Truck,Midsize,"$46,000 - $107,000",Gas,301 mi,Personal,South,Yes,No,Urban,Basic,Medium,No,Student,Poor,Frequently,Long-term,Rent,114495
+Honda,Civic,Used,Truck,Fullsize,"$28,000 - $108,000",Electric,352 mi,Commercial,Northeast,No,Yes,Rural,Advanced,Low,Yes,Employed,Fair,Frequently,Short-term,Rent,113236
+Audi,Q4 e-tron,New,Van,Midsize,"$55,000 - $94,000",Hybrid,234 mi,Personal,Northeast,Yes,No,Suburban,Basic,Low,No,Unemployed,Fair,Frequently,Long-term,Buy,78256
+Chevrolet,Equinox EV,New,Sedan,Midsize,"$25,000 - $107,000",Gas,224 mi,Personal,South,Yes,No,Suburban,Advanced,High,Yes,Unemployed,Excellent,Daily,Long-term,Lease,129763
+Hyundai,Ioniq 6,New,Truck,Midsize,"$27,000 - $93,000",Gas,377 mi,Personal,West,No,No,Suburban,Basic,High,Yes,Unemployed,Fair,Frequently,Short-term,Lease,72049
+Ram,1500,Used,Sedan,Fullsize,"$68,000 - $107,000",Electric,316 mi,Commercial,Midwest,Yes,No,Urban,Advanced,Medium,Yes,Unemployed,Poor,Daily,Short-term,Rent,119032
+Toyota,RAV4,New,Van,Midsize,"$41,000 - $98,000",Electric,208 mi,Commercial,Northeast,Yes,Yes,Urban,Advanced,Medium,No,Employed,Good,Frequently,Short-term,Lease,127635
+BMW,i4,Used,Coupe,Midsize,"$42,000 - $100,000",Gas,322 mi,Commercial,South,Yes,No,Suburban,Moderate,Low,Yes,Unemployed,Poor,Frequently,Long-term,Lease,141207
+Volkswagen,ID.4,New,Van,Compact,"$57,000 - $101,000",Gas,334 mi,Personal,South,Yes,Yes,Rural,Advanced,High,No,Unemployed,Excellent,Frequently,Short-term,Buy,56849
+Chevrolet,Equinox EV,Used,Van,Midsize,"$72,000 - $101,000",Electric,371 mi,Commercial,South,Yes,No,Suburban,Basic,Low,No,Unemployed,Excellent,Frequently,Long-term,Lease,110966
+Volkswagen,ID.4,New,Sedan,Fullsize,"$43,000 - $98,000",Hybrid,363 mi,Personal,West,Yes,No,Urban,Basic,High,Yes,Employed,Very Good,Frequently,Long-term,Rent,50857
+Honda,Civic,Used,Coupe,Fullsize,"$31,000 - $106,000",Hybrid,236 mi,Personal,Northeast,Yes,Yes,Rural,Advanced,Medium,No,Unemployed,Fair,Frequently,Long-term,Rent,54373
+Lexus,RX 500h,Used,SUV,Midsize,"$55,000 - $106,000",Electric,325 mi,Commercial,Northeast,Yes,Yes,Suburban,Advanced,High,Yes,Student,Fair,Frequently,Short-term,Rent,123111
+Chevrolet,Equinox EV,New,Truck,Midsize,"$75,000 - $82,000",Gas,276 mi,Commercial,West,No,No,Urban,Moderate,High,Yes,Employed,Very Good,Frequently,Long-term,Lease,114464
+Subaru,Outback,New,SUV,Fullsize,"$62,000 - $107,000",Electric,308 mi,Commercial,Midwest,Yes,Yes,Suburban,Basic,Medium,Yes,Employed,Good,Frequently,Short-term,Rent,90039
+Honda,Civic,New,SUV,Compact,"$75,000 - $96,000",Hybrid,236 mi,Personal,West,Yes,Yes,Rural,Basic,Medium,No,Unemployed,Very Good,Frequently,Short-term,Buy,124160
+Ford,F-150,Used,Van,Compact,"$55,000 - $95,000",Gas,350 mi,Personal,South,Yes,Yes,Rural,Basic,Medium,No,Unemployed,Excellent,Frequently,Long-term,Rent,131496
+BMW,i4,Used,Van,Midsize,"$57,000 - $85,000",Gas,281 mi,Commercial,South,Yes,No,Suburban,Advanced,Low,Yes,Student,Fair,Frequently,Short-term,Lease,131463
+Toyota,RAV4,Used,Truck,Midsize,"$28,000 - $103,000",Electric,265 mi,Commercial,South,No,Yes,Rural,Moderate,High,Yes,Student,Fair,Frequently,Short-term,Rent,68401
+Mazda,CX-50,Used,Van,Fullsize,"$44,000 - $95,000",Electric,380 mi,Personal,South,No,No,Rural,Moderate,High,No,Unemployed,Very Good,Frequently,Long-term,Lease,48350
+Subaru,Outback,New,SUV,Midsize,"$71,000 - $99,000",Hybrid,312 mi,Personal,Midwest,Yes,No,Urban,Basic,High,No,Unemployed,Very Good,Frequently,Short-term,Lease,42879
+Ram,1500,New,Van,Midsize,"$75,000 - $85,000",Gas,254 mi,Personal,West,Yes,No,Rural,Moderate,High,Yes,Employed,Fair,Frequently,Long-term,Buy,132568
+Audi,Q4 e-tron,New,Truck,Midsize,"$26,000 - $110,000",Electric,314 mi,Personal,West,Yes,Yes,Suburban,Advanced,Medium,Yes,Employed,Very Good,Frequently,Short-term,Buy,78768
+Toyota,RAV4,New,Coupe,Compact,"$48,000 - $93,000",Gas,391 mi,Commercial,Northeast,Yes,No,Urban,Advanced,Medium,No,Student,Good,Daily,Long-term,Rent,91397
+Subaru,Outback,Used,Truck,Midsize,"$35,000 - $92,000",Electric,385 mi,Personal,South,No,No,Suburban,Advanced,Medium,Yes,Student,Good,Frequently,Short-term,Buy,133796
+BMW,i4,New,Coupe,Midsize,"$60,000 - $84,000",Gas,333 mi,Personal,Northeast,Yes,No,Urban,Advanced,Low,No,Employed,Very Good,Frequently,Long-term,Buy,82518
+Lexus,RX 500h,Used,SUV,Compact,"$41,000 - $97,000",Gas,281 mi,Personal,Midwest,No,No,Suburban,Moderate,Medium,No,Employed,Good,Frequently,Long-term,Buy,141761
+Ford,F-150,New,Sedan,Midsize,"$40,000 - $99,000",Gas,254 mi,Personal,Northeast,Yes,Yes,Urban,Basic,Medium,Yes,Student,Excellent,Frequently,Short-term,Buy,76751
+Kia,EV9,Used,SUV,Compact,"$51,000 - $107,000",Electric,289 mi,Personal,West,No,No,Rural,Moderate,Medium,Yes,Employed,Very Good,Frequently,Long-term,Buy,146896
+BMW,i4,Used,SUV,Fullsize,"$74,000 - $89,000",Gas,384 mi,Personal,South,No,No,Urban,Moderate,High,Yes,Employed,Excellent,Frequently,Long-term,Lease,31109
+Audi,Q4 e-tron,Used,Coupe,Midsize,"$43,000 - $95,000",Hybrid,301 mi,Personal,Midwest,Yes,No,Rural,Moderate,Low,No,Student,Fair,Daily,Short-term,Buy,46967
+Ford,F-150,New,Van,Fullsize,"$55,000 - $96,000",Gas,400 mi,Commercial,West,No,No,Suburban,Advanced,Low,No,Unemployed,Poor,Daily,Long-term,Rent,44663
+Hyundai,Ioniq 6,Used,Truck,Fullsize,"$62,000 - $96,000",Electric,269 mi,Personal,South,Yes,No,Urban,Moderate,Medium,Yes,Student,Good,Frequently,Long-term,Rent,123729
+Hyundai,Ioniq 6,Used,Sedan,Compact,"$42,000 - $110,000",Hybrid,272 mi,Commercial,Northeast,Yes,No,Suburban,Advanced,High,Yes,Unemployed,Very Good,Frequently,Short-term,Rent,128627
+Volkswagen,ID.4,New,Truck,Compact,"$34,000 - $82,000",Gas,283 mi,Commercial,West,No,Yes,Suburban,Advanced,High,Yes,Unemployed,Poor,Daily,Short-term,Buy,54024
+Toyota,RAV4,Used,Coupe,Fullsize,"$70,000 - $104,000",Hybrid,248 mi,Commercial,Northeast,Yes,No,Suburban,Basic,Low,Yes,Employed,Poor,Frequently,Short-term,Rent,111460
+Tesla,Model Y,Used,SUV,Midsize,"$55,000 - $109,000",Gas,299 mi,Commercial,Midwest,Yes,No,Urban,Moderate,Low,No,Employed,Excellent,Frequently,Long-term,Rent,114132
+Toyota,RAV4,New,SUV,Midsize,"$80,000 - $94,000",Gas,264 mi,Commercial,Midwest,No,No,Urban,Moderate,High,No,Employed,Poor,Frequently,Long-term,Buy,84639
+Mazda,CX-50,New,Sedan,Compact,"$56,000 - $86,000",Electric,310 mi,Personal,South,Yes,No,Rural,Basic,High,Yes,Employed,Good,Frequently,Long-term,Rent,45593
+Mazda,CX-50,New,Sedan,Fullsize,"$73,000 - $103,000",Hybrid,253 mi,Personal,South,No,Yes,Suburban,Basic,High,Yes,Unemployed,Very Good,Frequently,Short-term,Lease,87408
+Mazda,CX-50,Used,Coupe,Compact,"$52,000 - $85,000",Gas,381 mi,Personal,Midwest,Yes,Yes,Rural,Advanced,High,No,Unemployed,Poor,Frequently,Short-term,Rent,70226
+Volkswagen,ID.4,New,Truck,Fullsize,"$26,000 - $84,000",Electric,365 mi,Personal,South,Yes,Yes,Suburban,Moderate,Low,No,Employed,Fair,Daily,Short-term,Rent,145775
+Mazda,CX-50,New,Sedan,Midsize,"$70,000 - $106,000",Gas,216 mi,Commercial,South,No,No,Urban,Advanced,Medium,Yes,Employed,Very Good,Frequently,Short-term,Rent,107715
+Chevrolet,Equinox EV,Used,Coupe,Fullsize,"$37,000 - $105,000",Gas,260 mi,Commercial,Midwest,No,No,Urban,Advanced,Medium,No,Student,Excellent,Daily,Short-term,Rent,84670
+Hyundai,Ioniq 6,Used,SUV,Midsize,"$36,000 - $91,000",Electric,207 mi,Personal,Midwest,Yes,No,Rural,Basic,Low,No,Unemployed,Very Good,Frequently,Long-term,Lease,54566
+Mazda,CX-50,Used,SUV,Midsize,"$35,000 - $94,000",Gas,252 mi,Personal,Midwest,No,Yes,Urban,Moderate,Low,No,Employed,Poor,Frequently,Short-term,Buy,132298
+Audi,Q4 e-tron,Used,Truck,Fullsize,"$40,000 - $98,000",Gas,274 mi,Commercial,West,Yes,No,Urban,Moderate,Low,No,Employed,Poor,Frequently,Long-term,Buy,55637
+Chevrolet,Equinox EV,New,Sedan,Fullsize,"$46,000 - $95,000",Electric,359 mi,Commercial,West,No,No,Rural,Basic,Low,No,Employed,Good,Daily,Short-term,Buy,139127
+Chevrolet,Equinox EV,New,Truck,Midsize,"$37,000 - $104,000",Gas,355 mi,Commercial,Midwest,Yes,Yes,Urban,Advanced,High,Yes,Unemployed,Excellent,Daily,Long-term,Buy,34605
+Hyundai,Ioniq 6,Used,SUV,Compact,"$37,000 - $105,000",Hybrid,276 mi,Commercial,West,No,No,Suburban,Basic,Low,Yes,Student,Poor,Frequently,Long-term,Buy,126836
+Hyundai,Ioniq 6,New,Truck,Fullsize,"$42,000 - $89,000",Gas,248 mi,Personal,West,Yes,Yes,Urban,Basic,Low,No,Employed,Excellent,Frequently,Long-term,Lease,98116
+Honda,Civic,Used,SUV,Compact,"$76,000 - $83,000",Electric,223 mi,Commercial,Northeast,Yes,Yes,Rural,Basic,Medium,Yes,Unemployed,Excellent,Frequently,Short-term,Buy,55406
+Honda,Civic,Used,Sedan,Compact,"$51,000 - $100,000",Electric,334 mi,Personal,Midwest,No,No,Urban,Basic,Medium,Yes,Unemployed,Poor,Frequently,Long-term,Buy,128560
+Nissan,Ariya,Used,Sedan,Fullsize,"$38,000 - $81,000",Gas,385 mi,Commercial,West,Yes,Yes,Suburban,Advanced,Medium,No,Employed,Poor,Frequently,Long-term,Buy,96015
+Honda,Civic,Used,Truck,Midsize,"$80,000 - $92,000",Electric,336 mi,Commercial,Midwest,No,Yes,Rural,Moderate,Medium,Yes,Student,Very Good,Frequently,Long-term,Rent,110526
+Chevrolet,Equinox EV,Used,Coupe,Compact,"$79,000 - $97,000",Hybrid,381 mi,Personal,Northeast,No,Yes,Rural,Advanced,Low,No,Student,Fair,Frequently,Long-term,Buy,140485
+Ford,F-150,New,Van,Fullsize,"$54,000 - $84,000",Gas,252 mi,Personal,Midwest,Yes,Yes,Urban,Advanced,Medium,No,Unemployed,Good,Frequently,Long-term,Buy,52267
+BMW,i4,New,Truck,Fullsize,"$52,000 - $110,000",Gas,370 mi,Personal,Northeast,No,No,Suburban,Moderate,Medium,No,Employed,Fair,Frequently,Long-term,Buy,62157
+BMW,i4,Used,SUV,Fullsize,"$44,000 - $108,000",Gas,294 mi,Commercial,Northeast,No,No,Urban,Basic,High,No,Employed,Poor,Daily,Short-term,Buy,76160
+Chevrolet,Equinox EV,New,Coupe,Fullsize,"$42,000 - $107,000",Gas,271 mi,Commercial,West,No,No,Urban,Moderate,High,Yes,Employed,Excellent,Frequently,Long-term,Buy,110863
+Volkswagen,ID.4,New,Coupe,Compact,"$57,000 - $102,000",Gas,231 mi,Commercial,South,No,Yes,Rural,Advanced,Medium,Yes,Unemployed,Excellent,Frequently,Long-term,Lease,136298
+Tesla,Model Y,Used,SUV,Midsize,"$55,000 - $89,000",Electric,335 mi,Commercial,Northeast,No,Yes,Suburban,Moderate,High,Yes,Student,Fair,Frequently,Long-term,Buy,33052
+Lexus,RX 500h,New,Coupe,Compact,"$25,000 - $104,000",Hybrid,301 mi,Personal,South,No,No,Urban,Basic,Medium,No,Unemployed,Fair,Daily,Long-term,Rent,123692
+Chevrolet,Equinox EV,Used,Van,Compact,"$79,000 - $101,000",Hybrid,313 mi,Personal,Midwest,Yes,Yes,Suburban,Advanced,Medium,No,Student,Poor,Frequently,Short-term,Buy,138563
+Honda,Civic,New,Sedan,Compact,"$36,000 - $94,000",Gas,216 mi,Commercial,South,No,Yes,Rural,Moderate,High,Yes,Employed,Good,Daily,Long-term,Rent,53566
+Subaru,Outback,Used,SUV,Midsize,"$34,000 - $82,000",Electric,341 mi,Personal,West,Yes,No,Rural,Advanced,High,Yes,Unemployed,Excellent,Frequently,Short-term,Rent,99219
+Subaru,Outback,Used,Van,Compact,"$51,000 - $107,000",Electric,335 mi,Commercial,Midwest,Yes,No,Urban,Moderate,High,Yes,Unemployed,Poor,Frequently,Long-term,Lease,111526
+Hyundai,Ioniq 6,Used,Coupe,Fullsize,"$38,000 - $85,000",Hybrid,244 mi,Commercial,Midwest,Yes,No,Rural,Moderate,Low,No,Unemployed,Fair,Daily,Long-term,Rent,72925
+Subaru,Outback,New,Truck,Fullsize,"$47,000 - $93,000",Hybrid,207 mi,Commercial,South,Yes,No,Suburban,Basic,Low,Yes,Student,Poor,Daily,Long-term,Buy,128811
+Lexus,RX 500h,New,Truck,Midsize,"$79,000 - $97,000",Hybrid,331 mi,Commercial,West,No,Yes,Urban,Advanced,Medium,No,Employed,Poor,Daily,Long-term,Lease,144383
+Ram,1500,Used,Sedan,Fullsize,"$43,000 - $109,000",Hybrid,213 mi,Personal,South,Yes,Yes,Rural,Advanced,High,Yes,Student,Fair,Frequently,Long-term,Rent,105366
+Tesla,Model Y,Used,Truck,Fullsize,"$28,000 - $103,000",Hybrid,260 mi,Personal,Midwest,No,Yes,Rural,Advanced,High,No,Unemployed,Poor,Frequently,Long-term,Lease,48902
+Audi,Q4 e-tron,Used,Sedan,Compact,"$40,000 - $92,000",Hybrid,343 mi,Personal,Northeast,No,No,Rural,Basic,Medium,Yes,Employed,Very Good,Frequently,Short-term,Lease,31164
+Tesla,Model Y,Used,SUV,Fullsize,"$39,000 - $101,000",Gas,334 mi,Personal,Midwest,No,No,Suburban,Advanced,Medium,Yes,Unemployed,Excellent,Frequently,Short-term,Buy,132728
+Ford,F-150,New,Sedan,Midsize,"$53,000 - $105,000",Hybrid,371 mi,Personal,Midwest,No,Yes,Suburban,Moderate,Medium,Yes,Student,Fair,Daily,Short-term,Rent,126522
+Honda,Civic,Used,SUV,Midsize,"$38,000 - $107,000",Electric,326 mi,Commercial,Northeast,No,No,Rural,Moderate,Low,Yes,Student,Poor,Daily,Long-term,Buy,138729
+Tesla,Model Y,Used,Van,Midsize,"$41,000 - $90,000",Electric,274 mi,Commercial,Midwest,Yes,Yes,Suburban,Moderate,Medium,Yes,Student,Fair,Daily,Short-term,Rent,97461
+Ram,1500,Used,Coupe,Midsize,"$67,000 - $106,000",Hybrid,381 mi,Personal,Northeast,Yes,No,Urban,Basic,High,Yes,Employed,Fair,Frequently,Long-term,Buy,31589
+Ford,F-150,Used,Sedan,Midsize,"$55,000 - $107,000",Hybrid,255 mi,Personal,South,Yes,Yes,Urban,Basic,Medium,Yes,Unemployed,Very Good,Frequently,Short-term,Lease,134456
+Chevrolet,Equinox EV,Used,Coupe,Compact,"$55,000 - $83,000",Gas,245 mi,Personal,Northeast,Yes,Yes,Urban,Moderate,Medium,Yes,Unemployed,Poor,Frequently,Long-term,Buy,147773
+Hyundai,Ioniq 6,Used,Sedan,Fullsize,"$72,000 - $109,000",Electric,301 mi,Personal,West,No,No,Suburban,Basic,Medium,No,Employed,Fair,Frequently,Short-term,Rent,60685
+Hyundai,Ioniq 6,Used,Van,Fullsize,"$68,000 - $90,000",Gas,383 mi,Personal,Midwest,Yes,No,Rural,Moderate,Low,No,Unemployed,Fair,Frequently,Long-term,Lease,124646
+Ford,F-150,New,Truck,Compact,"$68,000 - $101,000",Gas,243 mi,Commercial,Midwest,Yes,No,Suburban,Moderate,Medium,Yes,Unemployed,Excellent,Frequently,Short-term,Rent,84075
+Ford,F-150,New,Truck,Fullsize,"$38,000 - $110,000",Electric,251 mi,Commercial,West,Yes,Yes,Suburban,Moderate,Medium,No,Student,Excellent,Frequently,Short-term,Buy,70169
+Nissan,Ariya,Used,Sedan,Compact,"$80,000 - $98,000",Electric,374 mi,Commercial,West,Yes,No,Suburban,Moderate,Low,Yes,Employed,Good,Frequently,Short-term,Buy,123340
+Mazda,CX-50,New,Van,Compact,"$73,000 - $89,000",Gas,384 mi,Commercial,South,Yes,No,Rural,Advanced,High,No,Employed,Fair,Frequently,Short-term,Buy,71764
+BMW,i4,Used,Coupe,Fullsize,"$67,000 - $97,000",Gas,390 mi,Commercial,Northeast,Yes,Yes,Suburban,Advanced,High,Yes,Employed,Good,Frequently,Long-term,Rent,95314
+Kia,EV9,New,Van,Compact,"$78,000 - $93,000",Electric,298 mi,Commercial,South,Yes,Yes,Urban,Moderate,Low,No,Employed,Fair,Frequently,Short-term,Lease,149480
+Audi,Q4 e-tron,Used,Van,Compact,"$38,000 - $97,000",Hybrid,227 mi,Commercial,South,No,Yes,Urban,Moderate,Low,No,Employed,Poor,Daily,Short-term,Buy,71457
+Audi,Q4 e-tron,Used,Sedan,Midsize,"$79,000 - $100,000",Hybrid,221 mi,Commercial,Northeast,Yes,No,Suburban,Advanced,High,No,Unemployed,Very Good,Daily,Long-term,Buy,113899
+Kia,EV9,Used,Coupe,Compact,"$62,000 - $81,000",Hybrid,258 mi,Personal,West,No,Yes,Suburban,Advanced,Medium,Yes,Employed,Very Good,Frequently,Long-term,Buy,87913
+Kia,EV9,Used,Van,Midsize,"$66,000 - $95,000",Electric,378 mi,Commercial,West,Yes,Yes,Suburban,Advanced,Medium,No,Student,Fair,Frequently,Short-term,Lease,109689
+BMW,i4,New,Coupe,Midsize,"$36,000 - $81,000",Hybrid,221 mi,Personal,Northeast,No,No,Rural,Advanced,High,Yes,Student,Very Good,Frequently,Short-term,Buy,37078
