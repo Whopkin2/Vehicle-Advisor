@@ -9,7 +9,7 @@ from email.mime.text import MIMEText
 from fpdf import FPDF
 import tempfile
 
-st.title("\ud83d\ude97 Vehicle Advisor Chatbot")
+st.title("🚗 Vehicle Advisor Chatbot")
 
 @st.cache_data
 def load_data():
@@ -29,7 +29,7 @@ if "question_step" not in st.session_state:
 if "answers" not in st.session_state:
     st.session_state.answers = {}
 if "current_question" not in st.session_state:
-    st.session_state.current_question = "\ud83d\ude97 What type of car are you looking for? (e.g., SUV, Sedan, Truck)"
+    st.session_state.current_question = "🚗 What type of car are you looking for? (e.g., SUV, Sedan, Truck)"
 
 def extract_int(text):
     numbers = re.findall(r'\d+', text)
@@ -86,7 +86,7 @@ def send_pdf_via_email(email_address):
     server.login("your-email@gmail.com", "your-app-password")
     server.send_message(message)
     server.quit()
-    st.success(f"\ud83d\udce7 Email sent successfully to {email_address}!")
+    st.success(f"📧 Email sent successfully to {email_address}!")
 
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
