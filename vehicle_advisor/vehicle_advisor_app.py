@@ -1,135 +1,174 @@
 import streamlit as st
 import pandas as pd
+import requests
+from io import StringIO
 import openai
 
-# Initialize OpenAI Client
+# Load vehicle data from GitHub
+@st.cache_data
+def load_vehicle_data():
+    url = "https://raw.githubusercontent.com/Whopkin2/Vehicle-Advisor/main/vehicle_advisor/vehicle_data.csv"
+    response = requests.get(url)
+    if response.status_code == 200:
+        csv_data = StringIO(response.text)
+        df = pd.read_csv(csv_data)
+        df['Brand'] = df['Brand'].str.lower()  # standardize brand names
+        return df
+    else:
+        st.error("Failed to load vehicle data from GitHub.")
+        return pd.DataFrame()
+
+df = load_vehicle_data()
+
+# Setup page
+st.title("🚗 Vehicle Advisor Chatbot")
+
+# OpenAI setup
 client = openai.OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
-st.title("🚗 Vehicle Advisor — Real-Time Smart Filtering with GPT")
-
-@st.cache_data
-def load_data():
-    return pd.read_csv("https://raw.githubusercontent.com/Whopkin2/Vehicle-Advisor/main/vehicle_advisor/vehicle_data.csv")
-
-df = load_data()
-
-# Valid values (UPDATED: Remove "All Regions")
-vehicle_types = ['Crossover', 'Hatchback', 'SUV', 'Sedan', 'Sports Car', 'Truck']
-brands = ['Acura', 'Alfa Romeo', 'Audi', 'BMW', 'Cadillac', 'Chevrolet', 'Ferrari', 'Ford', 'GMC', 'Genesis',
-          'Honda', 'Hyundai', 'Infiniti', 'Jaguar', 'Jeep', 'Kia', 'Lexus', 'Lucid', 'Mazda', 'Mercedes-Benz',
-          'Mini', 'Nissan', 'Porsche', 'Ram', 'Rivian', 'Subaru', 'Tesla', 'Toyota', 'Volkswagen', 'Volvo']
-fuel_types = ['Electric', 'Gas', 'Hybrid', 'Plug-in Hybrid']
-regions = ['Mid-West', 'North East', 'North West', 'South East', 'South West', 'West']  # Removed "All Regions"
-credit_scores = ['Excellent (800+)', 'Fair (580-669)', 'Good (670-739)', 'Very Good (740-799)']
-employment_statuses = ['Full-time', 'Part-time', 'Retired', 'Student']
-garage_access_options = ['Yes', 'No']
-ownership_recommendations = ['Buy', 'Lease', 'Rent']
-income_brackets = ['<25k', '25k-50k', '50k-100k', '100k-150k', '150k+']
-
-# Question flow
-questions = [
-    ("Vehicle Type", vehicle_types),
-    ("Region", regions),
-    ("Preferred Brand", brands),
-    ("Fuel Type", fuel_types),
-    ("Employment Status", employment_statuses),
-    ("Credit Score", credit_scores),
-    ("Garage Access", garage_access_options),
-    ("Ownership Recommendation", ownership_recommendations),
-    ("Yearly Income", income_brackets)
-]
-
-field_mapping = {
-    "Vehicle Type": "Vehicle Type",
-    "Region": "Region",
-    "Preferred Brand": "Brand",
-    "Fuel Type": "Fuel Type",
-    "Employment Status": "Employment Status",
-    "Credit Score": "Credit Score",
-    "Garage Access": "Garage Access",
-    "Ownership Recommendation": "Ownership Recommendation",
-    "Yearly Income": "Yearly Income"
-}
-
-# Session State
-if "step" not in st.session_state:
-    st.session_state.step = 0
+# Initialize session state
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 if "answers" not in st.session_state:
     st.session_state.answers = {}
-if "filtered" not in st.session_state:
-    st.session_state.filtered = df.copy()
+if "blocked_brands" not in st.session_state:
+    st.session_state.blocked_brands = set()
+if "profile_complete" not in st.session_state:
+    st.session_state.profile_complete = False
 
-# Functions
-def validated_text_input(label, options):
-    st.markdown(f"**Options:** {', '.join(options)}")
-    value = st.text_input(label, key=f"input_{st.session_state.step}")
-    if value:
-        value_clean = value.strip()
-        if value_clean not in options:
-            st.error("❌ Invalid input. Please pick from the options exactly.")
-            st.stop()
-        return value_clean
-    else:
-        st.stop()
+# Question list
+questions = [
+    {"key": "car_type", "question": "What type of vehicle are you looking for? (e.g., SUV, Sedan, Truck)"},
+    {"key": "budget", "question": "What's your approximate budget in USD?"},
+    {"key": "condition", "question": "Are you looking for a new or used vehicle?"},
+    {"key": "fuel_type", "question": "Do you prefer gasoline, hybrid, or electric vehicles?"},
+    {"key": "features", "question": "Are there any must-have features? (e.g., AWD, Luxury, Fuel Economy)"},
+    {"key": "region", "question": "Which region are you located in? (e.g., Northeast, South, West)"},
+    {"key": "size", "question": "Are you looking for a compact or full-size vehicle?"},
+]
 
-def ask_gpt_about(field, value):
-    prompt = f"Explain briefly in 2-3 sentences why selecting '{value}' for {field} could be important when choosing a vehicle."
-    response = client.chat.completions.create(
-        model="gpt-4o",
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.5,
-        max_tokens=120
+# Helper functions
+def get_next_question():
+    for q in questions:
+        if q["key"] not in st.session_state.answers:
+            return q
+    st.session_state.profile_complete = True
+    return None
+
+def filter_cars():
+    filtered = df.copy()
+    for key, value in st.session_state.answers.items():
+        if key == "budget":
+            try:
+                budget = float(value)
+                filtered = filtered[filtered["MSRP Min"] <= budget]
+            except:
+                pass
+        elif key == "car_type":
+            filtered = filtered[filtered["Type"].str.contains(value, case=False, na=False)]
+        elif key == "fuel_type":
+            filtered = filtered[filtered["Fuel"].str.contains(value, case=False, na=False)]
+        elif key == "condition":
+            if value.lower() == "new":
+                filtered = filtered[filtered["Condition"].str.contains("New", case=False, na=False)]
+            else:
+                filtered = filtered[filtered["Condition"].str.contains("Used", case=False, na=False)]
+        elif key == "region":
+            filtered = filtered[filtered["Region"].str.contains(value, case=False, na=False)]
+        elif key == "size":
+            filtered = filtered[filtered["Size"].str.contains(value, case=False, na=False)]
+    if st.session_state.blocked_brands:
+        filtered = filtered[~filtered["Brand"].str.lower().isin(st.session_state.blocked_brands)]
+    return filtered
+
+def gpt_recommend_cars(cars, context=""):
+    car_list = "\n".join([f"{row['Brand'].title()} {row['Model']}" for idx, row in cars.iterrows()])
+    prompt = (
+        f"Given the user's profile: {context}\n\n"
+        f"Recommend and explain why these two cars would be a good fit:\n{car_list}\n"
+        f"Keep it short, friendly, and specific to their needs."
     )
-    return response.choices[0].message.content.strip()
+    stream = client.chat.completions.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": prompt}],
+        stream=True,
+    )
+    return st.write_stream(stream)
 
-# Main Flow
-if st.session_state.step < len(questions):
-    field_name, options = questions[st.session_state.step]
-    user_answer = validated_text_input(f"✍ Enter your {field_name}:", options)
-    st.session_state.answers[field_name] = user_answer
+def gpt_final_recommendation(cars, context=""):
+    car_list = "\n".join([f"{row['Brand'].title()} {row['Model']}" for idx, row in cars.iterrows()])
+    prompt = (
+        f"Based on the user's full profile: {context}\n\n"
+        f"Pick the top 3 vehicles from this list:\n{car_list}\n"
+        f"Explain clearly in 2–3 sentences for each why it matches their profile."
+    )
+    stream = client.chat.completions.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": prompt}],
+        stream=True,
+    )
+    return st.write_stream(stream)
 
-    # GPT Explanation
-    gpt_explanation = ask_gpt_about(field_name, user_answer)
-    st.markdown(f"🧠 **GPT Insight:** {gpt_explanation}")
-
-    # Filter vehicles so far
-    data_field = field_mapping[field_name]
-
-    if data_field == "Region":
-        st.session_state.filtered = st.session_state.filtered[
-            st.session_state.filtered['Region'].str.contains(user_answer, na=False)
-        ]
-    elif data_field == "Brand":
-        st.session_state.filtered = st.session_state.filtered[
-            st.session_state.filtered['Brand'] == user_answer
-        ]
+def compare_cars(car1, car2):
+    cars = df[df["Model"].str.contains(car1, case=False, na=False) | df["Model"].str.contains(car2, case=False, na=False)]
+    if cars.empty:
+        st.error("Couldn't find one or both cars.")
     else:
-        st.session_state.filtered = st.session_state.filtered[
-            st.session_state.filtered[data_field].str.strip().str.lower() == user_answer.strip().lower()
-        ]
+        st.dataframe(cars[["Brand", "Model", "Type", "MSRP Min", "Fuel", "Condition", "Size", "Region"]])
 
-    # Show partial matches
-    if not st.session_state.filtered.empty:
-        st.markdown("---")
-        st.subheader(f"🚘 Matching Vehicles After {field_name}:")
-        st.dataframe(st.session_state.filtered[['Brand', 'Model', 'Vehicle Type', 'Fuel Type', 'MSRP Range']])
+# Display chat history
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+
+# Accept user input
+if prompt := st.chat_input("Type here..."):
+    # Check for commands
+    if prompt.lower().startswith("remove"):
+        brand_to_remove = prompt.split("remove",1)[1].strip().lower()
+        st.session_state.blocked_brands.add(brand_to_remove)
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.markdown(prompt)
+        with st.chat_message("assistant"):
+            st.markdown(f"✅ Brand '{brand_to_remove.title()}' has been removed from future suggestions.")
+    elif prompt.lower().startswith("compare"):
+        try:
+            parts = prompt.lower().split("compare",1)[1]
+            car1, car2 = parts.split(" and ")
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            with st.chat_message("user"):
+                st.markdown(prompt)
+            with st.chat_message("assistant"):
+                compare_cars(car1.strip(), car2.strip())
+        except:
+            with st.chat_message("assistant"):
+                st.error("Please format your compare request as: 'compare [Car1] and [Car2]'")
     else:
-        st.warning("❌ No matches found so far. You may need to restart.")
-
-    # 🚀 Immediately move to next question
-    st.session_state.step += 1
-    st.experimental_rerun()
-
-# After all questions done
-else:
-    st.success("✅ All questions answered! Final matches below:")
-
-    if not st.session_state.filtered.empty:
-        st.dataframe(st.session_state.filtered[['Brand', 'Model', 'Vehicle Type', 'Fuel Type', 'MSRP Range']])
-    else:
-        st.warning("❌ No vehicles match your full profile.")
-
-# Restart option
-if st.button("🔄 Restart"):
-    st.session_state.clear()
-    st.rerun()
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.markdown(prompt)
+        # If still building profile
+        if not st.session_state.profile_complete:
+            current_question = get_next_question()
+            if current_question:
+                st.session_state.answers[current_question["key"]] = prompt
+                filtered = filter_cars()
+                top_cars = filtered.head(2)
+                if not top_cars.empty:
+                    with st.chat_message("assistant"):
+                        gpt_recommend_cars(top_cars, context=st.session_state.answers)
+                next_question = get_next_question()
+                if next_question:
+                    with st.chat_message("assistant"):
+                        st.markdown(next_question["question"])
+            else:
+                st.session_state.profile_complete = True
+        # If profile complete
+        if st.session_state.profile_complete:
+            filtered = filter_cars()
+            top_cars = filtered.head(10)
+            if not top_cars.empty:
+                with st.chat_message("assistant"):
+                    st.markdown("Based on everything you've shared, here are the top 3 vehicle matches for you 🚗✨:")
+                    gpt_final_recommendation(top_cars, context=st.session_state.answers)
