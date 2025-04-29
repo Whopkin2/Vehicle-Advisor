@@ -26,7 +26,7 @@ df = load_vehicle_data()
 # Setup OpenAI
 client = openai.OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
-# Structured Questions
+# 22 Structured Questions (model year removed)
 questions = [
     {"key": "brand", "question": "Do you have a preferred vehicle brand? (e.g., Honda, Ford, Toyota)"},
     {"key": "vehicle_type", "question": "What type of vehicle are you looking for? (Sedan, SUV, Truck, Coupe, etc.)"},
@@ -51,7 +51,7 @@ questions = [
     {"key": "yearly_income", "question": "What is your estimated yearly income (in USD)?"}
 ]
 
-# Session state initialization
+# Initialize session state
 if "messages" not in st.session_state:
     st.session_state.messages = []
 if "answers" not in st.session_state:
@@ -71,7 +71,6 @@ for message in st.session_state.messages:
 def filter_cars():
     filtered = df.copy()
 
-    # Filter by each strict answer
     for key, value in st.session_state.answers.items():
         value = value.strip().lower()
 
@@ -147,13 +146,6 @@ def filter_cars():
         elif key == "use_category" and "Use Category" in filtered.columns:
             filtered = filtered[filtered["Use Category"].str.lower() == value]
 
-        elif 'before' in value:
-            try:
-                year = int(value.split('before')[-1].strip())
-                filtered = filtered[pd.to_numeric(filtered["Model Year"], errors='coerce') <= year]
-            except:
-                pass
-
         elif key == "mpg_range" and "MPG/Range" in filtered.columns:
             try:
                 mpg = int(value.split()[0])
@@ -179,10 +171,9 @@ def recommend_cars(filtered_cars):
     ])
 
     prompt = (
-        f"User profile:\n{profile_context}\n\n"
+        f"User profile so far:\n{profile_context}\n\n"
         f"Available cars:\n{car_list}\n\n"
-        f"Pick the two best options matching user's preferences and explain briefly why."
-        f" Mention the correct MSRP Range when describing each car."
+        f"Recommend the two best vehicles that fit the current profile. Mention MSRP Range correctly."
     )
 
     stream = client.chat.completions.create(
