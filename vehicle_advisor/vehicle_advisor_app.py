@@ -91,6 +91,7 @@ def send_pdf_via_email(email_address):
 def prioritize_by_budget(filtered):
     budget = st.session_state.answers.get("budget", 0)
     preferred_brands = []
+    
     if budget <= 25000:
         preferred_brands = ['toyota', 'honda', 'nissan', 'hyundai', 'ford', 'kia', 'mazda']
     elif 25001 <= budget <= 50000:
@@ -100,11 +101,18 @@ def prioritize_by_budget(filtered):
 
     if preferred_brands:
         filtered['preferred'] = filtered['Brand'].apply(lambda x: 0 if x.lower() in preferred_brands else 1)
-        filtered = filtered.sort_values(by=['preferred', 'MSRP Min', 'Year', 'Mileage'], ascending=[True, True, False, True])
-        filtered = filtered.drop(columns=['preferred'])
+        sort_columns = ['preferred', 'MSRP Min', 'Year', 'Mileage']
+        ascending_order = [True, True, False, True]
     else:
-        # No preferred column — only sort by known columns
-        filtered = filtered.sort_values(by=['MSRP Min', 'Year', 'Mileage'], ascending=[True, False, True])
+        sort_columns = ['MSRP Min', 'Year', 'Mileage']
+        ascending_order = [True, False, True]
+
+    # ✅ Now safe — sorts only columns that exist
+    filtered = filtered.sort_values(by=sort_columns, ascending=ascending_order)
+
+    # Clean up the temporary column
+    if 'preferred' in filtered.columns:
+        filtered = filtered.drop(columns=['preferred'])
 
     return filtered
 
