@@ -26,7 +26,7 @@ df = load_vehicle_data()
 # Setup OpenAI
 client = openai.OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
-# Structured Questions (brand moved toward end)
+# Questions list
 questions = [
     {"key": "vehicle_type", "question": "What type of vehicle are you looking for? (Sedan, SUV, Truck, Coupe, etc.)"},
     {"key": "car_size", "question": "What size of vehicle do you want? (Compact, Midsize, Full-size, etc.)"},
@@ -60,12 +60,19 @@ if "question_index" not in st.session_state:
 
 st.title("🚗 Vehicle Advisor Chatbot")
 
-# Show full message history
+# Show previous messages
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Strict filtering with "skip if generic answer"
+# ✅ Force-show first question if blank
+if st.session_state.question_index == 0 and len(st.session_state.messages) == 0:
+    first_q = questions[0]["question"]
+    with st.chat_message("assistant"):
+        st.markdown(first_q)
+    st.session_state.messages.append({"role": "assistant", "content": first_q})
+
+# 🔍 Filtering logic
 def filter_cars():
     filtered = df.copy()
     for key, value in st.session_state.answers.items():
@@ -75,8 +82,7 @@ def filter_cars():
         if key == "budget":
             try:
                 filtered = filtered[filtered["Min Price"] <= float(value.replace('$', '').replace(',', ''))]
-            except:
-                pass
+            except: pass
         elif key == "fuel_type" and "Fuel Type" in filtered.columns:
             filtered = filtered[filtered["Fuel Type"].str.lower() == value]
         elif key == "vehicle_type" and "Vehicle Type" in filtered.columns:
@@ -107,8 +113,7 @@ def filter_cars():
             try:
                 score = int(value.replace('+','').strip())
                 filtered = filtered[pd.to_numeric(filtered["Credit Score"], errors='coerce') >= score]
-            except:
-                pass
+            except: pass
         elif key == "travel_frequency" and "Travel Frequency" in filtered.columns:
             filtered = filtered[filtered["Travel Frequency"].str.lower() == value]
         elif key == "ownership_duration" and "Ownership Duration" in filtered.columns:
@@ -119,19 +124,17 @@ def filter_cars():
             try:
                 income = int(value.replace('$', '').replace(',', ''))
                 filtered = filtered[pd.to_numeric(filtered["Yearly Income"], errors='coerce') <= income * 2]
-            except:
-                pass
+            except: pass
         elif key == "use_category" and "Use Category" in filtered.columns:
             filtered = filtered[filtered["Use Category"].str.lower() == value]
         elif key == "mpg_range" and "MPG/Range" in filtered.columns:
             try:
                 mpg = int(value.split()[0])
                 filtered = filtered[pd.to_numeric(filtered["MPG/Range"], errors='coerce') >= mpg]
-            except:
-                pass
+            except: pass
     return filtered
 
-# GPT Recommendation
+# 🔮 GPT car recommender
 def recommend_cars(filtered):
     top = filtered.head(2)
     if top.empty:
@@ -155,7 +158,7 @@ def recommend_cars(filtered):
     )
     return st.write_stream(stream)
 
-# ✅ User input flow (first question follows same logic now)
+# 💬 Chat input
 if prompt := st.chat_input("Type your answer..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
