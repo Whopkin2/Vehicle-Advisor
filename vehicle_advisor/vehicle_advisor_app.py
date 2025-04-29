@@ -42,7 +42,7 @@ def filter_cars():
             except:
                 pass
         elif key == "car_type":
-            filtered = filtered[filtered["Type"].str.contains(value, case=False, na=False)]
+            filtered = filtered[filtered["Size"].str.contains(value, case=False, na=False)]
         elif key == "fuel_type":
             filtered = filtered[filtered["Fuel"].str.contains(value, case=False, na=False)]
         elif key == "condition":
