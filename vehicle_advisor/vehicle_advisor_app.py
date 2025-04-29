@@ -2,10 +2,10 @@ import streamlit as st
 import pandas as pd
 import openai
 import re
+import numpy as np
 
 st.title("🚗 Vehicle Advisor Chatbot")
 
-# ✅ Secure OpenAI client
 client = openai.OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 @st.cache_data
@@ -14,13 +14,19 @@ def load_data():
     if 'Brand' in df.columns:
         df['Brand'] = df['Brand'].str.lower()
 
-    if 'MSRP Range' in df.columns:
-        df['MSRP Min'] = df['MSRP Range'].str.extract(r'\$([\d,]+)')[0]
-        df['MSRP Min'] = df['MSRP Min'].str.replace(',', '').astype(float)
+    def parse_price_range(text):
+        if isinstance(text, str):
+            parts = re.findall(r'\$?\s?([\d,]+)', text)
+            if len(parts) == 1:
+                price = float(parts[0].replace(',', ''))
+                return price, price
+            elif len(parts) >= 2:
+                min_price = float(parts[0].replace(',', ''))
+                max_price = float(parts[1].replace(',', ''))
+                return min_price, max_price
+        return np.nan, np.nan
 
-        df['MSRP Max'] = df['MSRP Range'].str.extract(r'-\s*\$([\d,]+)')[0]
-        df['MSRP Max'] = df['MSRP Max'].str.replace(',', '').astype(float)
-
+    df[['MSRP Min', 'MSRP Max']] = df['MSRP Range'].apply(lambda x: pd.Series(parse_price_range(x)))
     return df
 
 df = load_data()
@@ -100,8 +106,7 @@ def generate_reasoning_gpt(car, answers):
         max_tokens=120
     )
 
-    explanation = response.choices[0].message.content.strip()
-    return explanation
+    return response.choices[0].message.content.strip()
 
 questions = [
     "🚗 What type of car are you looking for? (e.g., SUV, Sedan, Truck)",
@@ -162,21 +167,24 @@ if user_input:
         reply = "🔎 Based on your answers so far, here are two cars you might love:\n\n"
         for _, car in top_cars.iterrows():
             name = f"{car['Brand'].title()} {car['Model']}"
-            min_price = f"${int(car['MSRP Min'] / 1000)}K" if 'MSRP Min' in car and pd.notnull(car['MSRP Min']) else "N/A"
-            max_price = f"${int(car['MSRP Max'] / 1000)}K" if 'MSRP Max' in car and pd.notnull(car.get('MSRP Max')) else None
+            if pd.notnull(car['MSRP Min']):
+                min_price = f"${int(car['MSRP Min'] / 1000)}K"
+            else:
+                min_price = "N/A"
+            if pd.notnull(car.get('MSRP Max')):
+                max_price = f"${int(car['MSRP Max'] / 1000)}K"
+            else:
+                max_price = None
             price_range = min_price if not max_price else f"{min_price} – {max_price}"
-
             explanation = generate_reasoning_gpt(car, st.session_state.answers)
-
             reply += f"✨ **{name}**\n- 💲 **Price Range:** {price_range}\n- 🧠 {explanation}\n\n"
         st.session_state.messages.append({"role": "assistant", "content": reply})
     else:
         st.session_state.messages.append({"role": "assistant", "content": "⚠️ No exact matches yet, but we'll keep adjusting!"})
 
     if idx + 1 < len(questions):
-        next_q = questions[idx + 1]
-        st.session_state.messages.append({"role": "assistant", "content": next_q})
         st.session_state.question_step += 1
+        st.session_state.messages.append({"role": "assistant", "content": questions[st.session_state.question_step]})
     else:
         st.session_state.messages.append({"role": "assistant", "content": "✅ Finalizing your top matches now!"})
 
