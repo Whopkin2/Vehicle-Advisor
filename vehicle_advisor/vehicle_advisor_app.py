@@ -158,6 +158,24 @@ if user_input:
     if st.session_state.answers.get("luxury") == True:
         filtered = filtered[filtered['Brand'].isin(luxury_brands)]
 
+    luxury_brands = ['bmw', 'mercedes', 'audi', 'lexus', 'cadillac', 'infiniti', 'acura', 'volvo']
+    filtered = df.copy()
+
+    if st.session_state.answers.get("type"):
+        filtered = filtered[filtered['Model'].str.contains(st.session_state.answers["type"], case=False, na=False)]
+    if st.session_state.answers.get("brand"):
+        filtered = filtered[filtered['Brand'].str.contains(st.session_state.answers["brand"], case=False, na=False)]
+    if st.session_state.answers.get("budget"):
+        filtered = filtered[filtered['MSRP Min'] <= st.session_state.answers["budget"]]
+    if st.session_state.answers.get("year") and 'Year' in filtered.columns:
+        filtered = filtered[filtered['Year'] >= st.session_state.answers["year"]]
+    if st.session_state.answers.get("mileage") and 'Mileage' in filtered.columns:
+        filtered = filtered[filtered['Mileage'] <= st.session_state.answers["mileage"]]
+    if st.session_state.answers.get("electric") == True:
+        filtered = filtered[filtered['Fuel Type'].str.contains('electric', case=False, na=False)]
+    if st.session_state.answers.get("luxury") == True:
+        filtered = filtered[filtered['Brand'].isin(luxury_brands)]
+
     filtered = prioritize_by_budget(filtered)
 
     if not filtered.empty:
