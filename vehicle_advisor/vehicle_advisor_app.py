@@ -34,34 +34,11 @@ if "current_question" not in st.session_state:
 luxury_brands = ['bmw', 'mercedes', 'audi', 'lexus', 'cadillac', 'infiniti', 'acura', 'volvo']
 
 def extract_int(text):
-    numbers = re.findall(r'\d+', text)
+    numbers = re.findall(r'\d+', text.replace(',', ''))
     return int(numbers[0]) if numbers else None
 
 def yes_no_to_bool(text):
     return text.strip().lower() in ["yes", "y"]
-
-def create_shortlist_pdf():
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Helvetica", size=16)
-    pdf.cell(0, 10, "Your Shortlisted Vehicles", ln=True, align="C")
-    pdf.ln(5)
-    pdf.set_draw_color(0, 0, 0)
-    pdf.set_line_width(0.5)
-    pdf.line(10, 30, 200, 30)
-    pdf.ln(10)
-    pdf.set_font("Helvetica", size=12)
-    pdf.set_fill_color(230, 230, 230)
-    pdf.cell(60, 10, "Brand", border=1, fill=True)
-    pdf.cell(80, 10, "Model", border=1, fill=True)
-    pdf.cell(40, 10, "Price", border=1, ln=True, fill=True)
-    for vehicle in st.session_state.shortlist:
-        pdf.cell(60, 10, vehicle['Brand'].title(), border=1)
-        pdf.cell(80, 10, str(vehicle['Model']), border=1)
-        pdf.cell(40, 10, f"${int(vehicle['MSRP Min']):,}", border=1, ln=True)
-    temp_pdf = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
-    pdf.output(temp_pdf.name)
-    return temp_pdf.name
 
 def prioritize_by_budget(filtered):
     if filtered.empty:
@@ -94,7 +71,7 @@ def prioritize_by_budget(filtered):
 
     return filtered
 
-# ----------- Display chat history ------------
+# Display chat history
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
@@ -115,25 +92,27 @@ if user_input:
     if idx == 0:
         st.session_state.answers["type"] = user_input
     elif idx == 1:
-        st.session_state.answers["budget"] = extract_int(user_input)
+        st.session_state.answers["region"] = user_input.lower()
     elif idx == 2:
-        st.session_state.answers["brand"] = user_input.lower()
+        st.session_state.answers["budget"] = extract_int(user_input)
     elif idx == 3:
-        st.session_state.answers["year"] = extract_int(user_input)
+        st.session_state.answers["brand"] = user_input.lower()
     elif idx == 4:
-        st.session_state.answers["mileage"] = extract_int(user_input)
+        st.session_state.answers["year"] = extract_int(user_input)
     elif idx == 5:
-        st.session_state.answers["electric"] = yes_no_to_bool(user_input)
+        st.session_state.answers["mileage"] = extract_int(user_input)
     elif idx == 6:
-        st.session_state.answers["awd"] = yes_no_to_bool(user_input)
+        st.session_state.answers["electric"] = yes_no_to_bool(user_input)
     elif idx == 7:
-        st.session_state.answers["third_row"] = yes_no_to_bool(user_input)
+        st.session_state.answers["awd"] = yes_no_to_bool(user_input)
     elif idx == 8:
-        st.session_state.answers["luxury"] = yes_no_to_bool(user_input)
+        st.session_state.answers["third_row"] = yes_no_to_bool(user_input)
     elif idx == 9:
+        st.session_state.answers["luxury"] = yes_no_to_bool(user_input)
+    elif idx == 10:
         st.session_state.answers["monthly_payment"] = extract_int(user_input)
 
-    # Filter immediately based on available answers
+    # Filtering immediately
     filtered = df.copy()
 
     if st.session_state.answers.get("type"):
@@ -151,30 +130,36 @@ if user_input:
     if st.session_state.answers.get("luxury") == True:
         filtered = filtered[filtered['Brand'].isin(luxury_brands)]
 
+    # Regional AWD boosting
+    region = st.session_state.answers.get("region", "")
+    if region in ["northeast", "midwest"]:
+        filtered = filtered[filtered['Drive Type'].str.contains('awd|4wd', case=False, na=False)]
+
     filtered = prioritize_by_budget(filtered)
 
-    # Recommend 2 cars after every answer
+    # Show 2 car suggestions
     if not filtered.empty:
         top_cars = filtered.head(2)
         response = "🔎 Based on your answers so far, here are two cars you might love:\n"
         for _, car in top_cars.iterrows():
             price = f"${car['MSRP Min']:,}"
             name = f"{car['Brand'].title()} {car['Model']}"
-            reason = "✅ A great match for your preferences."
+            reason = "✅ Strong match for your preferences."
             if 'Fuel Type' in car and 'electric' in str(car['Fuel Type']).lower():
-                reason = "⚡ Eco-friendly electric drive and modern features."
-            elif car['Brand'].lower() in luxury_brands:
-                reason = "💎 Premium luxury and brand prestige."
-            elif 'Mileage' in car and car['Mileage'] is not None and car['Mileage'] < 30000:
+                reason = "⚡ Eco-friendly electric drive."
+            elif 'awd' in str(car.get('Drive Type', '')).lower() or '4wd' in str(car.get('Drive Type', '')).lower():
+                reason = "🚙 Great for your region's weather."
+            elif 'Mileage' in car and car['Mileage'] < 30000:
                 reason = "🛡️ Very low mileage — almost like new!"
             response += f"**✨ {name}**\n- 💲 **Price:** {price}\n- {reason}\n\n"
         st.session_state.messages.append({"role": "assistant", "content": response})
     else:
-        st.session_state.messages.append({"role": "assistant", "content": "⚠️ No cars matched so far, but let's continue profiling you!"})
+        st.session_state.messages.append({"role": "assistant", "content": "⚠️ No close matches yet, but let's continue building your profile!"})
 
-    # Ask the next question
+    # Next question
     questions = [
-        "💬 Great choice! Now, what's your maximum budget?",
+        "🌎 Which region are you in? (e.g., Northeast, Midwest, South, West)",
+        "💬 What's your maximum budget?",
         "🏷️ Any preferred brand you'd like?",
         "📅 What's the minimum model year you're aiming for?",
         "🛣️ What's your maximum mileage?",
@@ -194,7 +179,7 @@ if user_input:
     st.session_state.question_step += 1
 
 # When finished
-if st.session_state.question_step > 9:
+if st.session_state.question_step > 10:
     with st.chat_message("assistant"):
         st.markdown("🚗 Based on your full profile, here are your top matches:")
         final_filtered = df.copy()
@@ -213,6 +198,8 @@ if st.session_state.question_step > 9:
             final_filtered = final_filtered[final_filtered['Fuel Type'].str.contains('electric', case=False, na=False)]
         if st.session_state.answers.get("luxury") == True:
             final_filtered = final_filtered[final_filtered['Brand'].isin(luxury_brands)]
+        if st.session_state.answers.get("region", "") in ["northeast", "midwest"]:
+            final_filtered = final_filtered[final_filtered['Drive Type'].str.contains('awd|4wd', case=False, na=False)]
 
         final_filtered = prioritize_by_budget(final_filtered)
 
