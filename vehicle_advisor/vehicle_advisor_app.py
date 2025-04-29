@@ -151,14 +151,16 @@ def recommend_final_cars(filtered):
         f"Available cars:\n{car_list}\n\n"
         f"Please recommend the top 3 vehicles that best match the user's full profile. Explain briefly why each fits well and include the MSRP Range."
     )
-    stream = client.chat.completions.create(
+
+    response = client.chat.completions.create(
         model="gpt-4",
         messages=[{"role": "user", "content": prompt}],
-        stream=True,
     )
-    output = ""
-    for chunk in stream:
-        output += chunk.choices[0].delta.get("content", "")
+    output = response.choices[0].message.content
+    st.markdown(
+        f"<div style='font-family: Arial; font-size: 16px; line-height: 1.6;'>{output}</div>",
+        unsafe_allow_html=True
+    )
     st.markdown(
         f"<div style='font-family: Arial; font-size: 16px; line-height: 1.6;'>{output}</div>",
         unsafe_allow_html=True
