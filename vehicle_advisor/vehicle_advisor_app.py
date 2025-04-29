@@ -12,7 +12,7 @@ def load_vehicle_data():
     if response.status_code == 200:
         csv_data = StringIO(response.text)
         df = pd.read_csv(csv_data)
-        df.columns = df.columns.str.strip()  # Clean up column names
+        df.columns = df.columns.str.strip()
         df['Brand'] = df['Brand'].str.lower()
         df['Model'] = df['Model'].str.lower()
         df['Min Price'] = df['MSRP Range'].str.extract(r'\$([\d,]+)')[0].str.replace(',', '').astype(float)
@@ -26,16 +26,14 @@ df = load_vehicle_data()
 # Setup OpenAI
 client = openai.OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
-# 22 Structured Questions (model year removed)
+# Structured Questions (brand moved toward end)
 questions = [
-    {"key": "brand", "question": "Do you have a preferred vehicle brand? (e.g., Honda, Ford, Toyota)"},
     {"key": "vehicle_type", "question": "What type of vehicle are you looking for? (Sedan, SUV, Truck, Coupe, etc.)"},
     {"key": "car_size", "question": "What size of vehicle do you want? (Compact, Midsize, Full-size, etc.)"},
     {"key": "budget", "question": "What's your maximum budget for a vehicle (in USD)?"},
     {"key": "fuel_type", "question": "What fuel type do you prefer? (Gasoline, Electric, Hybrid)"},
-    {"key": "mpg_range", "question": "Minimum MPG or Range requirement? (e.g., 30 MPG or 250 miles range)"},
-    {"key": "use_category", "question": "What will be the vehicle's primary use? (Personal, Commercial, etc.)"},
     {"key": "region", "question": "Which region are you located in? (Northeast, Midwest, West, South)"},
+    {"key": "use_category", "question": "What will be the vehicle's primary use? (Personal, Commercial, etc.)"},
     {"key": "eco_conscious", "question": "Are you eco-conscious? (Yes or No)"},
     {"key": "charging_access", "question": "Do you have access to a charging station? (Yes or No)"},
     {"key": "neighborhood_type", "question": "What type of neighborhood are you in? (Urban, Suburban, Rural)"},
@@ -48,7 +46,8 @@ questions = [
     {"key": "travel_frequency", "question": "How often do you travel long distances? (Often, Occasionally, Rarely)"},
     {"key": "ownership_duration", "question": "How long do you plan to own the vehicle? (Short term, Long term)"},
     {"key": "ownership_recommendation", "question": "Would you prefer to own, lease, or rent the vehicle?"},
-    {"key": "yearly_income", "question": "What is your estimated yearly income (in USD)?"}
+    {"key": "yearly_income", "question": "What is your estimated yearly income (in USD)?"},
+    {"key": "brand", "question": "Do you have a preferred vehicle brand? (e.g., Honda, Ford, Toyota)"}
 ]
 
 # Initialize session state
@@ -59,7 +58,6 @@ if "answers" not in st.session_state:
 if "question_index" not in st.session_state:
     st.session_state.question_index = 0
 
-# Title
 st.title("🚗 Vehicle Advisor Chatbot")
 
 # Display previous messages
@@ -67,12 +65,15 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Strict Filtering Logic
+# Strict filter with skip if "no", "none", "any"
 def filter_cars():
     filtered = df.copy()
 
     for key, value in st.session_state.answers.items():
         value = value.strip().lower()
+
+        if value in ["no", "none", "any"]:
+            continue
 
         if key == "budget":
             try:
@@ -155,7 +156,7 @@ def filter_cars():
 
     return filtered
 
-# Recommendation using GPT
+# Recommend using GPT after every answer
 def recommend_cars(filtered_cars):
     top_cars = filtered_cars.head(2)
     if top_cars.empty:
@@ -183,14 +184,14 @@ def recommend_cars(filtered_cars):
     )
     return st.write_stream(stream)
 
-# Ask first question
+# First question
 if st.session_state.question_index < len(questions) and len(st.session_state.messages) == 0:
     first_question = questions[st.session_state.question_index]["question"]
     with st.chat_message("assistant"):
         st.markdown(first_question)
     st.session_state.messages.append({"role": "assistant", "content": first_question})
 
-# Chat input
+# Chat input flow
 if prompt := st.chat_input("Type your answer..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
@@ -201,11 +202,13 @@ if prompt := st.chat_input("Type your answer..."):
         st.session_state.answers[key] = prompt
         st.session_state.question_index += 1
 
+    # Always filter cars and recommend after every answer
     filtered = filter_cars()
     with st.chat_message("assistant"):
         st.markdown("🚘 **Current Best Vehicle Matches:**")
         recommend_cars(filtered)
 
+    # Then ask next question
     if st.session_state.question_index < len(questions):
         next_q = questions[st.session_state.question_index]["question"]
         with st.chat_message("assistant"):
