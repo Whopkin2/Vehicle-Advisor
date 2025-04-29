@@ -6,7 +6,7 @@ import re
 st.title("🚗 Vehicle Advisor Chatbot")
 
 # ✅ Load OpenAI API Key securely from Streamlit secrets
-openai.api_key = st.secrets["OPENAI_API_KEY"]
+client = openai.OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 @st.cache_data
 def load_data():
@@ -14,7 +14,6 @@ def load_data():
     if 'Brand' in df.columns:
         df['Brand'] = df['Brand'].str.lower()
 
-    # Extract MSRP Min and Max
     if 'MSRP Range' in df.columns:
         df['MSRP Min'] = df['MSRP Range'].str.extract(r'\$([\d,]+)')[0]
         df['MSRP Min'] = df['MSRP Min'].str.replace(',', '').astype(float)
@@ -85,6 +84,7 @@ def flexible_filter(df, answers):
 
     return filtered
 
+# 🛠 Fixed GPT call for OpenAI 1.x
 def generate_reasoning_gpt(car, answers):
     brand = car['Brand'].title()
     model = car['Model']
@@ -98,14 +98,14 @@ def generate_reasoning_gpt(car, answers):
         f"Highlight any features that make it especially suitable, such as luxury, AWD, fuel economy, or reliability."
     )
 
-    response = openai.ChatCompletion.create(
+    response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[{"role": "user", "content": prompt}],
         temperature=0.7,
         max_tokens=120
     )
 
-    explanation = response['choices'][0]['message']['content'].strip()
+    explanation = response.choices[0].message.content.strip()
     return explanation
 
 questions = [
@@ -122,12 +122,11 @@ questions = [
     "💵 What's your maximum monthly payment goal?"
 ]
 
-# Show chat history
+# --- Chat history + app flow (same as you built) ---
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Ask initial question
 if len(st.session_state.messages) == 0:
     with st.chat_message("assistant"):
         st.markdown(questions[0])
@@ -187,7 +186,6 @@ if user_input:
     else:
         st.session_state.messages.append({"role": "assistant", "content": "✅ Finalizing your top matches now!"})
 
-# Restart
 if st.button("🔄 Restart Profile"):
     st.session_state.clear()
     st.rerun()
