@@ -161,22 +161,22 @@ if user_input:
         filtered = filtered[filtered['Brand'].isin(luxury_brands)]
 
     if not filtered.empty:
-    filtered = filtered.sort_values(by=["MSRP Min", "Year", "Mileage"], ascending=[True, False, True])
-    top_cars = filtered.head(2)
-    response = "🔎 Based on your answers so far, here are two cars you might love:\n"
-    for _, car in top_cars.iterrows():
-        price = f"${car['MSRP Min']:,}"
-        name = f"{car['Brand'].title()} {car['Model']}"
-        if 'Fuel Type' in car and 'electric' in str(car['Fuel Type']).lower():
-            reason = "⚡ Eco-friendly electric drive and modern features."
-        elif car['Brand'].lower() in ['bmw', 'mercedes', 'audi', 'lexus', 'cadillac', 'infiniti', 'acura', 'volvo']:
-            reason = "💎 Premium luxury and brand prestige."
-        elif 'Mileage' in car and car['Mileage'] is not None and car['Mileage'] < 30000:
-            reason = "🛡️ Very low mileage — almost like new!"
-        else:
-            reason = "✅ A perfect match for affordability and reliability."
-        response += f"**✨ {name}**\n- 💲 **Price:** {price}\n- {reason}\n\n"
-    st.session_state.messages.append({"role": "assistant", "content": response})
+        filtered = filtered.sort_values(by=["MSRP Min", "Year", "Mileage"], ascending=[True, False, True])
+        top_cars = filtered.head(2)
+        response = "🔎 Based on your answers so far, here are two cars you might love:\n"
+        for _, car in top_cars.iterrows():
+            price = f"${car['MSRP Min']:,}"
+            name = f"{car['Brand'].title()} {car['Model']}"
+            if 'Fuel Type' in car and 'electric' in str(car['Fuel Type']).lower():
+                reason = "⚡ Eco-friendly electric drive and modern features."
+            elif car['Brand'].lower() in ['bmw', 'mercedes', 'audi', 'lexus', 'cadillac', 'infiniti', 'acura', 'volvo']:
+                reason = "💎 Premium luxury and brand prestige."
+            elif 'Mileage' in car and car['Mileage'] is not None and car['Mileage'] < 30000:
+                reason = "🛡️ Very low mileage — almost like new!"
+            else:
+                reason = "✅ A perfect match for affordability and reliability."
+            response += f"**✨ {name}**\n- 💲 **Price:** {price}\n- {reason}\n\n"
+        st.session_state.messages.append({"role": "assistant", "content": response})
 
     # Prepare next question
     if idx == 0:
