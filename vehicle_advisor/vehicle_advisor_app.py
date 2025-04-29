@@ -10,11 +10,11 @@ openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 @st.cache_data
 def load_data():
-    df = pd.read_csv("https://raw.githubusercontent.com/Whopkin2/Vehicle-Advisor/main/vehicle_data.csv")
+    df = pd.read_csv("https://raw.githubusercontent.com/Whopkin2/Vehicle-Advisor/main/vehicle_advisor/vehicle_data.csv")
     if 'Brand' in df.columns:
         df['Brand'] = df['Brand'].str.lower()
 
-    # ✅ Extract MSRP Min and MSRP Max from MSRP Range
+    # Extract MSRP Min and Max
     if 'MSRP Range' in df.columns:
         df['MSRP Min'] = df['MSRP Range'].str.extract(r'\$([\d,]+)')[0]
         df['MSRP Min'] = df['MSRP Min'].str.replace(',', '').astype(float)
