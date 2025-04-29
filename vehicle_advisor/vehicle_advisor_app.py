@@ -13,13 +13,13 @@ def load_data():
 
 df = load_data()
 
-# Valid values
+# Valid values (UPDATED: Remove "All Regions")
 vehicle_types = ['Crossover', 'Hatchback', 'SUV', 'Sedan', 'Sports Car', 'Truck']
 brands = ['Acura', 'Alfa Romeo', 'Audi', 'BMW', 'Cadillac', 'Chevrolet', 'Ferrari', 'Ford', 'GMC', 'Genesis',
           'Honda', 'Hyundai', 'Infiniti', 'Jaguar', 'Jeep', 'Kia', 'Lexus', 'Lucid', 'Mazda', 'Mercedes-Benz',
           'Mini', 'Nissan', 'Porsche', 'Ram', 'Rivian', 'Subaru', 'Tesla', 'Toyota', 'Volkswagen', 'Volvo']
 fuel_types = ['Electric', 'Gas', 'Hybrid', 'Plug-in Hybrid']
-regions = ['All Regions', 'Mid-West', 'North East', 'North West', 'South East', 'South West', 'West']
+regions = ['Mid-West', 'North East', 'North West', 'South East', 'South West', 'West']  # Removed "All Regions"
 credit_scores = ['Excellent (800+)', 'Fair (580-669)', 'Good (670-739)', 'Very Good (740-799)']
 employment_statuses = ['Full-time', 'Part-time', 'Retired', 'Student']
 garage_access_options = ['Yes', 'No']
@@ -82,7 +82,7 @@ def ask_gpt_about(field, value):
     )
     return response.choices[0].message.content.strip()
 
-# Main flow
+# Main Flow
 if st.session_state.step < len(questions):
     field_name, options = questions[st.session_state.step]
     user_answer = validated_text_input(f"✍ Enter your {field_name}:", options)
@@ -116,11 +116,11 @@ if st.session_state.step < len(questions):
     else:
         st.warning("❌ No matches found so far. You may need to restart.")
 
-    # Move to next question
+    # 🚀 Immediately move to next question
     st.session_state.step += 1
-    st.stop()
+    st.experimental_rerun()
 
-# After all questions are done
+# After all questions done
 else:
     st.success("✅ All questions answered! Final matches below:")
 
