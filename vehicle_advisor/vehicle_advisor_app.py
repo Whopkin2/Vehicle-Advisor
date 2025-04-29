@@ -29,7 +29,7 @@ client = openai.OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 # Questions
 questions = [
     {"key": "New or Used", "question": "Do you prefer a new or used car? (New or Used)"},
-    {"key": "vehicle_type", "question": "What type of vehicle are you looking for? (Sedan, SUV, Truck, Crossover)"},
+    {"key": "vehicle_type", "question": "What type of vehicle are you looking for? (Sedan, SUV, Truck, Crossover, Sports Car, Van, Coupe)"},
     {"key": "car_size", "question": "What size of vehicle do you want? (Compact, Midsize, Fullsize)"},
     {"key": "budget", "question": "What's your maximum budget for a vehicle (in USD)?"},
     {"key": "fuel_type", "question": "What fuel type do you prefer? (Gasoline, Electric, Hybrid)"},
