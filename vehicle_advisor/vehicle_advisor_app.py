@@ -221,7 +221,28 @@ if user_input:
 if st.session_state.question_step > 9:
     with st.chat_message("assistant"):
         st.markdown("🚗 Based on your final preferences, here are your top matches:")
-        filtered = prioritize_by_budget(df)
+
+        luxury_brands = ['bmw', 'mercedes', 'audi', 'lexus', 'cadillac', 'infiniti', 'acura', 'volvo']
+        filtered = df.copy()
+
+        if st.session_state.answers.get("type"):
+            filtered = filtered[filtered['Model'].str.contains(st.session_state.answers["type"], case=False, na=False)]
+        if st.session_state.answers.get("brand"):
+            filtered = filtered[filtered['Brand'].str.contains(st.session_state.answers["brand"], case=False, na=False)]
+        if st.session_state.answers.get("budget"):
+            filtered = filtered[filtered['MSRP Min'] <= st.session_state.answers["budget"]]
+        if st.session_state.answers.get("year") and 'Year' in filtered.columns:
+            filtered = filtered[filtered['Year'] >= st.session_state.answers["year"]]
+        if st.session_state.answers.get("mileage") and 'Mileage' in filtered.columns:
+            filtered = filtered[filtered['Mileage'] <= st.session_state.answers["mileage"]]
+        if st.session_state.answers.get("electric") == True:
+            filtered = filtered[filtered['Fuel Type'].str.contains('electric', case=False, na=False)]
+        if st.session_state.answers.get("luxury") == True:
+            filtered = filtered[filtered['Brand'].isin(luxury_brands)]
+
+        # ✅ NOW prioritize after filtering
+        filtered = prioritize_by_budget(filtered)
+
         if not filtered.empty:
             top_cars = filtered.head(3)
             for _, car in top_cars.iterrows():
@@ -230,7 +251,7 @@ if st.session_state.question_step > 9:
                 st.markdown(f"**✨ {name}**\n- 💲 **Price:** {price}")
         else:
             st.markdown("❗ No cars matched your preferences. Try adjusting some options!")
-
+            
 if st.button("🔄 Restart Profile"):
     st.session_state.clear()
     st.rerun()
