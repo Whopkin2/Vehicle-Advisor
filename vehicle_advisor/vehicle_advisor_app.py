@@ -28,7 +28,7 @@ client = openai.OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 # 8 Structured Questions
 questions = [
     {"key": "budget", "question": "What's your maximum budget for a vehicle (in USD)?"},
-    {"key": "fuel_type", "question": "What fuel type do you prefer? (Gasoline, Electric, Hybrid)"},
+    {"key": "fuel", "question": "What fuel type do you prefer? (Gasoline, Electric, Hybrid)"},
     {"key": "condition", "question": "Do you prefer a new or used vehicle?"},
     {"key": "size", "question": "What size of vehicle are you looking for? (Compact, SUV, Full-size, etc.)"},
     {"key": "region", "question": "Which region are you located in? (e.g., Northeast, South, Midwest, West)"},
@@ -64,7 +64,7 @@ def filter_cars():
         except:
             pass
 
-    if "fuel_type" in st.session_state.answers:
+    if "fuel_type" in st.session_state.answers and "Fuel" in filtered.columns:
         filtered = filtered[filtered["Fuel"].str.contains(st.session_state.answers["fuel_type"], case=False, na=False)]
 
     if "condition" in st.session_state.answers:
