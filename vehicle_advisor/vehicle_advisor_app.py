@@ -180,5 +180,8 @@ if prompt := st.chat_input("Type your answer..."):
             st.markdown(next_q)
         st.session_state.messages.append({"role": "assistant", "content": next_q})
     else:
-        with st.chat_message("assistant"):
-            st.markdown("✅ You've completed all questions. Final recommendations are above!")
+    filtered = filter_cars()
+    with st.chat_message("assistant"):
+        st.markdown("✅ You've completed all questions. Here are your top 3 recommended vehicles:")
+        recommend_final_cars(filtered)
+
