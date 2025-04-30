@@ -66,8 +66,6 @@ if "top_matches" not in st.session_state:
     st.session_state.top_matches = pd.DataFrame()
 if "match_explanations" not in st.session_state:
     st.session_state.match_explanations = []
-if "shown_models" not in st.session_state:
-    st.session_state.shown_models = set()
 
 st.title("\U0001F697 Vehicle Advisor Chatbot")
 
@@ -180,18 +178,16 @@ def filter_cars():
     return filtered
 
 def recommend_final_cars(filtered):
-    # ✅ Only recommend cars not already shown
-    new_matches = filtered[~filtered['Model'].isin(st.session_state.shown_models)].head(3)
-    
-    if new_matches.empty:
-        return st.markdown("_No new matching vehicles found for the full profile._")
+    top = filtered.head(3)
+    if top.empty:
+        return st.markdown("_No matching vehicles found for full profile._")
 
     profile = "\n".join([
         f"{k.replace('_',' ').title()}: {v}" for k,v in st.session_state.answers.items()
     ])
 
     explanations = []
-    for _, row in new_matches.iterrows():
+    for _, row in top.iterrows():
         brand = row['Brand'].title()
         model = row['Model'].title()
         msrp = row['MSRP Range']
@@ -208,27 +204,11 @@ def recommend_final_cars(filtered):
         explanation = response.choices[0].message.content
         explanations.append(f"**{brand} {model}**  \n{explanation}  \n**MSRP Range:** {msrp}")
 
-        st.session_state.match_explanations.append({
-            "question_key": questions[st.session_state.question_index - 1]["key"],  # previous question
-            "question_text": questions[st.session_state.question_index - 1]["question"],
-            "vehicles": [
-                {
-                    "brand": row['Brand'].title(),
-                    "model": row['Model'].title(),
-                    "msrp": row['MSRP Range'],
-                    "explanation": explanation
-                }
-                for row, explanation in zip(new_matches.itertuples(index=False), [exp['explanation'] for exp in st.session_state.match_explanations[-2:]])
-            ]
-        })
-
-    # ✅ Track these models so they aren’t shown again
-    st.session_state.shown_models.update(new_matches['Model'].tolist())
-
     st.markdown(
         f"<div style='font-family: Arial; font-size: 16px; line-height: 1.6;'>{'<br><br>'.join(explanations)}</div>",
         unsafe_allow_html=True
     )
+
 # User input
 if prompt := st.chat_input("Type your answer..."):
     # Save user message
@@ -236,18 +216,20 @@ if prompt := st.chat_input("Type your answer..."):
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # Save answer (do NOT increment yet)
+    # Save answer and advance question index
     if st.session_state.question_index < len(questions):
         q_key = questions[st.session_state.question_index]["key"]
         st.session_state.answers[q_key] = prompt
+        st.session_state.question_index += 1
 
-    # Filter and get 2 new vehicles not shown before
+    # Filter and store matches
     filtered = filter_cars()
-    new_matches = filtered[~filtered['Model'].isin(st.session_state.shown_models)].head(2)
+    top = filtered.head(2)
+    st.session_state.top_matches = top
+    st.session_state.match_explanations = []
 
-    # Generate GPT explanations
-    vehicles = []
-    for _, row in new_matches.iterrows():
+    # Generate GPT-based explanations
+    for _, row in top.iterrows():
         brand = row['Brand'].title()
         model = row['Model'].title()
         msrp = row['MSRP Range']
@@ -275,37 +257,28 @@ if prompt := st.chat_input("Type your answer..."):
         except Exception as e:
             explanation = f"*(Explanation failed: {e})*"
 
-        vehicles.append({
+        st.session_state.match_explanations.append({
             "brand": brand,
             "model": model,
             "msrp": msrp,
             "explanation": explanation
         })
 
-    # ⬇️ Immediately render car suggestions BELOW user's answer
-    if vehicles:
-        current_q_index = st.session_state.question_index
-        st.session_state.match_explanations.append({
-            "question_text": questions[current_q_index]["question"],
-            "vehicles": vehicles
-        })
-        st.session_state.shown_models.update([v["model"].lower() for v in vehicles])
-
+    # Display current best matches immediately
+    if not st.session_state.top_matches.empty and st.session_state.match_explanations:
         with st.chat_message("assistant"):
-            st.markdown(
-                f"<div style='font-family: Arial; font-size: 16px;'><strong>🚘 Suggestions after:</strong> <em>{questions[current_q_index]['question']}</em></div>",
-                unsafe_allow_html=True
-            )
+            st.markdown("<div style='font-family: Arial; font-size: 16px; line-height: 1.6;'>🚘 <strong>Current Best Vehicle Matches:</strong></div>", unsafe_allow_html=True)
             car_list = "<ul style='font-family: Arial; font-size: 16px;'>"
-            for car in vehicles:
-                car_list += f"<li><strong>{car['brand']} {car['model']}</strong> (MSRP Range: {car['msrp']})<br>{car['explanation']}</li>"
-            car_list += "</ul><br>"
+            for match in st.session_state.match_explanations:
+                car_list += f"<li><strong>{match['brand']} {match['model']}</strong> (MSRP Range: {match['msrp']})<br>{match['explanation']}</li>"
+            car_list += "</ul>"
             st.markdown(car_list, unsafe_allow_html=True)
 
-    # ✅ NOW increment the index AFTER suggestions display
-    st.session_state.question_index += 1
+    # Final recommendations if all questions done
+    if st.session_state.question_index >= len(questions):
+        recommend_final_cars(filtered)
 
-    # Ask the next question (goes at the very end)
+    # Ask next question
     if st.session_state.question_index < len(questions):
         next_q = questions[st.session_state.question_index]["question"]
         with st.chat_message("assistant"):
