@@ -150,7 +150,24 @@ def filter_cars():
             filtered = filtered[filtered["Ownership Recommendation"].str.lower().str.contains(value, na=False)]
 
         elif key == "yearly_income" and "Yearly Income" in filtered.columns:
-            filtered = filtered[filtered["Yearly Income"].str.lower().str.contains(value, na=False)]
+            try:
+                income_val = float(value.lower().replace('$', '').replace(',', '').replace('k', '000').strip())
+        
+                # Extract min income value from "$57,000+" style format
+                if "Min Income" not in filtered.columns:
+                    filtered["Min Income"] = (
+                        filtered["Yearly Income"]
+                        .str.extract(r'\$?([\d,]+)')[0]
+                        .str.replace(',', '')
+                        .astype(float)
+                    )
+        
+                # Keep only vehicles where required income is ≤ user income
+                filtered = filtered[filtered["Min Income"] <= income_val]
+
+    except Exception as e:
+        st.warning(f"Income filtering failed: {e}")
+
 
         elif key == "use_category" and "Use Category" in filtered.columns:
             filtered = filtered[filtered["Use Category"].str.lower().str.contains(value, na=False)]
