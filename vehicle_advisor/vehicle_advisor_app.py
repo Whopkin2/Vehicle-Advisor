@@ -165,9 +165,8 @@ def filter_cars():
                 # Keep only vehicles where required income is ≤ user income
                 filtered = filtered[filtered["Min Income"] <= income_val]
 
-    except Exception as e:
-        st.warning(f"Income filtering failed: {e}")
-
+            except Exception as e:
+                st.warning(f"Income filtering failed: {e}")
 
         elif key == "use_category" and "Use Category" in filtered.columns:
             filtered = filtered[filtered["Use Category"].str.lower().str.contains(value, na=False)]
