@@ -84,13 +84,16 @@ def filter_cars():
             try:
                 max_budget = float(value.lower().replace('$', '').replace(',', '').replace('k', '000').strip())
 
-                # Split MSRP Range into Min and Max Price columns
+                # Extract MSRP Range into Min and Max
                 price_range = filtered["MSRP Range"].str.extract(r'\$?([\d,]+)\s*[-–]\s*\$?([\d,]+)')
                 filtered["Min Price"] = price_range[0].str.replace(',', '').astype(float)
                 filtered["Max Price"] = price_range[1].str.replace(',', '').astype(float)
 
-                # Only keep cars where Min Price is within budget
-                filtered = filtered[filtered["Min Price"] <= max_budget]
+                # Filter only cars fully within budget range
+                filtered = filtered[
+                    (filtered["Min Price"] <= max_budget) &
+                    (filtered["Max Price"] <= max_budget)
+                ]
             except Exception as e:
                 st.warning(f"Budget parsing failed: {e}")
 
