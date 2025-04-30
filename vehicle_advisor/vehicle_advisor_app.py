@@ -229,7 +229,6 @@ def recommend_final_cars(filtered):
         f"<div style='font-family: Arial; font-size: 16px; line-height: 1.6;'>{'<br><br>'.join(explanations)}</div>",
         unsafe_allow_html=True
     )
-
 # User input
 if prompt := st.chat_input("Type your answer..."):
     # Save user message
@@ -243,14 +242,12 @@ if prompt := st.chat_input("Type your answer..."):
         st.session_state.answers[q_key] = prompt
         st.session_state.question_index += 1
 
-    # Filter and store matches
+    # Filter and select unseen vehicles
     filtered = filter_cars()
     new_matches = filtered[~filtered['Model'].isin(st.session_state.shown_models)].head(2)
-    st.session_state.top_matches = new_matches
-    if "match_explanations" not in st.session_state:
-        st.session_state.match_explanations = []
 
-    # Generate GPT-based explanations
+    # Generate GPT explanations
+    vehicles = []
     for _, row in new_matches.iterrows():
         brand = row['Brand'].title()
         model = row['Model'].title()
@@ -279,29 +276,37 @@ if prompt := st.chat_input("Type your answer..."):
         except Exception as e:
             explanation = f"*(Explanation failed: {e})*"
 
-        st.session_state.match_explanations.append({
+        vehicles.append({
             "brand": brand,
             "model": model,
             "msrp": msrp,
             "explanation": explanation
         })
 
-    # Display current best matches immediately
+    # Save grouped suggestions under the last question asked
+    if vehicles:
+        last_q_index = st.session_state.question_index - 1
+        st.session_state.match_explanations.append({
+            "question_text": questions[last_q_index]["question"],
+            "vehicles": vehicles
+        })
+        st.session_state.shown_models.update([v["model"].lower() for v in vehicles])
+
+    # DISPLAY — all past grouped car suggestions
     if st.session_state.match_explanations:
         with st.chat_message("assistant"):
             for group in st.session_state.match_explanations:
-                st.markdown(f"<div style='font-family: Arial; font-size: 16px;'><strong>🚘 Suggestions after:</strong> <em>{group['question_text']}</em></div>", unsafe_allow_html=True)
+                st.markdown(
+                    f"<div style='font-family: Arial; font-size: 16px;'><strong>🚘 Suggestions after:</strong> <em>{group.get('question_text', 'Previous question')}</em></div>",
+                    unsafe_allow_html=True
+                )
                 car_list = "<ul style='font-family: Arial; font-size: 16px;'>"
                 for car in group["vehicles"]:
                     car_list += f"<li><strong>{car['brand']} {car['model']}</strong> (MSRP Range: {car['msrp']})<br>{car['explanation']}</li>"
                 car_list += "</ul><br>"
                 st.markdown(car_list, unsafe_allow_html=True)
 
-    # Final recommendations if all questions done
-    if st.session_state.question_index >= len(questions):
-        recommend_final_cars(filtered)
-
-    # Ask next question
+    # Ask the next question
     if st.session_state.question_index < len(questions):
         next_q = questions[st.session_state.question_index]["question"]
         with st.chat_message("assistant"):
