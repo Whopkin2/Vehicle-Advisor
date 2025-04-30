@@ -84,26 +84,11 @@ def filter_cars():
             try:
                 budget_val = float(value.lower().replace('$', '').replace(',', '').replace('k', '000').strip())
         
-                # Extract both min and max MSRP if not already in the dataframe
-                if "Max Price" not in filtered.columns:
-                    price_range = filtered["MSRP Range"].str.extract(r'\$?([\d,]+)\s*[-–]\s*\$?([\d,]+)')
-                    filtered["Min Price"] = price_range[0].str.replace(',', '').astype(float)
-                    filtered["Max Price"] = price_range[1].str.replace(',', '').astype(float)
-        
-                # Budget must fall within the MSRP range
-                filtered = filtered[
-                    (filtered["Min Price"] <= budget_val) & 
-                    (filtered["Max Price"] >= budget_val)
-                ]
-        
-                # Sort vehicles by closeness to budget
-                filtered["Mid Price"] = (filtered["Min Price"] + filtered["Max Price"]) / 2
-                filtered["Price Diff"] = abs(filtered["Mid Price"] - budget_val)
-                filtered = filtered.sort_values(by="Price Diff")
+                filtered = filtered[filtered["Max Price"] <= budget_val]
+                filtered = filtered.sort_values(by="Max Price")
         
             except Exception as e:
                 st.warning(f"Budget filtering failed: {e}")
-
 
         elif key == "new_or_used":
             if "used" in value:
