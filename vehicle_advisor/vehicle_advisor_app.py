@@ -62,6 +62,8 @@ if "answers" not in st.session_state:
     st.session_state.answers = {}
 if "question_index" not in st.session_state:
     st.session_state.question_index = 0
+if "top_matches" not in st.session_state:
+    st.session_state.top_matches = pd.DataFrame()
 
 st.title("\U0001F697 Vehicle Advisor Chatbot")
 
@@ -217,6 +219,8 @@ if prompt := st.chat_input("Type your answer..."):
         st.session_state.question_index += 1
 
     filtered = filter_cars()
+    st.session_state.top_matches = filtered.head(2)
+
 
     if st.session_state.question_index >= len(questions):
         recommend_final_cars(filtered)
