@@ -92,7 +92,7 @@ def filter_cars():
                 # Filter only cars fully within budget range
                 filtered = filtered[
                     (filtered["Min Price"] <= max_budget) &
-                    (filtered["Max Price"] <= max_budget)
+                    (filtered["Max Price"] >= max_budget)
                 ]
             except Exception as e:
                 st.warning(f"Budget parsing failed: {e}")
