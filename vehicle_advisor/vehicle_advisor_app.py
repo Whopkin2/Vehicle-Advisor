@@ -240,7 +240,7 @@ if prompt := st.chat_input("Type your answer..."):
     # Filter and store matches
     filtered = filter_cars()
     new_matches = filtered[~filtered['Model'].isin(st.session_state.shown_models)].head(2)
-    st.session_state.top_matches = top
+    st.session_state.top_matches = new_matches
     if "match_explanations" not in st.session_state:
         st.session_state.match_explanations = []
 
