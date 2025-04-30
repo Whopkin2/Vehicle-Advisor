@@ -264,7 +264,17 @@ if prompt := st.chat_input("Type your answer..."):
             "explanation": explanation
         })
 
-    # Final recommendation if done
+    # Display current best matches immediately
+    if not st.session_state.top_matches.empty and st.session_state.match_explanations:
+        with st.chat_message("assistant"):
+            st.markdown("<div style='font-family: Arial; font-size: 16px; line-height: 1.6;'>🚘 <strong>Current Best Vehicle Matches:</strong></div>", unsafe_allow_html=True)
+            car_list = "<ul style='font-family: Arial; font-size: 16px;'>"
+            for match in st.session_state.match_explanations:
+                car_list += f"<li><strong>{match['brand']} {match['model']}</strong> (MSRP Range: {match['msrp']})<br>{match['explanation']}</li>"
+            car_list += "</ul>"
+            st.markdown(car_list, unsafe_allow_html=True)
+
+    # Final recommendations if all questions done
     if st.session_state.question_index >= len(questions):
         recommend_final_cars(filtered)
 
@@ -274,13 +284,3 @@ if prompt := st.chat_input("Type your answer..."):
         with st.chat_message("assistant"):
             st.markdown(next_q)
         st.session_state.messages.append({"role": "assistant", "content": next_q})
-
-# 🔁 Always show best matches with GPT output, even on refresh
-if not st.session_state.top_matches.empty and "match_explanations" in st.session_state:
-    with st.chat_message("assistant"):
-        st.markdown("<div style='font-family: Arial; font-size: 16px; line-height: 1.6;'>🚘 <strong>Current Best Vehicle Matches:</strong></div>", unsafe_allow_html=True)
-        car_list = "<ul style='font-family: Arial; font-size: 16px;'>"
-        for match in st.session_state.match_explanations:
-            car_list += f"<li><strong>{match['brand']} {match['model']}</strong> (MSRP Range: {match['msrp']})<br>{match['explanation']}</li>"
-        car_list += "</ul>"
-        st.markdown(car_list, unsafe_allow_html=True)
