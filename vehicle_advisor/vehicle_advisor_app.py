@@ -153,18 +153,18 @@ def filter_cars():
             try:
                 income_val = float(value.lower().replace('$', '').replace(',', '').replace('k', '000').strip())
         
-                # Extract min income value from "$57,000+" style format
+                # Clean and extract min income from values like "$57,000+"
                 if "Min Income" not in filtered.columns:
                     filtered["Min Income"] = (
                         filtered["Yearly Income"]
-                        .str.extract(r'\$?([\d,]+)')[0]
-                        .str.replace(',', '')
+                        .astype(str)
+                        .str.replace(r'[^\d]', '', regex=True)  # remove all non-numeric characters
                         .astype(float)
                     )
         
-                # Keep only vehicles where required income is ≤ user income
+                # Show only vehicles where min required income is ≤ entered income
                 filtered = filtered[filtered["Min Income"] <= income_val]
-
+        
             except Exception as e:
                 st.warning(f"Income filtering failed: {e}")
 
