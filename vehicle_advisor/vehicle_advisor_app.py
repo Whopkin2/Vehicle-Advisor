@@ -79,8 +79,8 @@ def filter_cars():
         value = value.strip().lower()
         if value in ["no", "none", "any"]:
             continue
-
-       elif key == "budget":
+            
+        elif key == "budget":
             try:
                 max_budget = float(value.replace('$', '').replace(',', '').replace('k', '000').strip().split()[0])
         
@@ -93,7 +93,7 @@ def filter_cars():
                 filtered = filtered[filtered["Min Price"] <= max_budget]
             except Exception as e:
                 st.error(f"Budget parsing error: {e}")
-
+           
         elif key == "new_or_used":
             if "used" in value:
                 filtered = filtered[filtered["New or Used"].str.lower().str.contains("used", na=False)]
