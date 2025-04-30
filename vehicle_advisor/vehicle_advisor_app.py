@@ -204,48 +204,48 @@ if prompt := st.chat_input("Type your answer..."):
 
     filtered = filter_cars()
     
-    if st.session_state.question_index >= len(questions):
-        recommend_final_cars(filtered)
-        
-    else:
-        with st.chat_message("assistant"):
-            top = filtered.head(2)  # ✅ Define 'top' first
-            st.markdown("<div style='font-family: Arial; font-size: 16px; line-height: 1.6;'>🚘 <strong>Current Best Vehicle Matches:</strong></div>", unsafe_allow_html=True)
-            explanations_html = "<ul style='font-family: Arial; font-size: 16px;'>"
-    for _, row in top.iterrows():
-        brand = row['Brand'].title()
-        model = row['Model'].title()
-        msrp = row['MSRP Range']
+        if st.session_state.question_index >= len(questions):
+            recommend_final_cars(filtered)
+        else:
+            with st.chat_message("assistant"):
+                top = filtered.head(2)
+                st.markdown("<div style='font-family: Arial; font-size: 16px; line-height: 1.6;'>🚘 <strong>Current Best Vehicle Matches:</strong></div>", unsafe_allow_html=True)
 
-        profile_so_far = "\n".join([
-            f"{k.replace('_',' ').title()}: {v}" for k, v in st.session_state.answers.items()
-        ])
+                car_list = "<ul style='font-family: Arial; font-size: 16px;'>"
+                for _, row in top.iterrows():
+                    brand = row['Brand'].title()
+                    model = row['Model'].title()
+                    msrp = row['MSRP Range']
 
-        prompt = (
-            f"User Profile so far:\n{profile_so_far}\n\n"
-            f"Explain in 2-3 sentences why the {brand} {model} is a good choice for this user. "
-            f"Highlight anything notable like fuel economy, comfort, utility, safety, or luxury. "
-            f"Include MSRP range: {msrp}."
-        )
+                    # Generate GPT Explanation
+                    profile_so_far = "\n".join([
+                        f"{k.replace('_',' ').title()}: {v}" for k, v in st.session_state.answers.items()
+                    ])
+                    prompt = (
+                        f"User Profile so far:\n{profile_so_far}\n\n"
+                        f"Explain in 2-3 sentences why the {brand} {model} is a good choice for this user. "
+                        f"Highlight anything notable like fuel economy, comfort, utility, safety, or luxury. "
+                        f"Include MSRP range: {msrp}."
+                    )
+                    try:
+                        response = client.chat.completions.create(
+                            model="gpt-4",
+                            messages=[{"role": "user", "content": prompt}]
+                        )
+                        explanation = response.choices[0].message.content.strip()
+                except Exception as e:
+                    explanation = f"*(Failed to generate explanation: {e})*"
 
-        try:
-            response = client.chat.completions.create(
-                model="gpt-4",
-                messages=[{"role": "user", "content": prompt}]
-            )
-            explanation = response.choices[0].message.content.strip()
-        except Exception as e:
-            explanation = f"*(Failed to generate explanation: {e})*"
+                car_list += f"<li><strong>{brand} {model}</strong> (MSRP Range: {msrp})<br>{explanation}</li>"
 
-        explanations_html += f"<li><strong>{brand} {model}</strong> (MSRP Range: {msrp})<br>{explanation}</li>"
+            car_list += "</ul>"
+            st.markdown(car_list, unsafe_allow_html=True)
 
-    explanations_html += "</ul>"
-
-    st.markdown(explanations_html, unsafe_allow_html=True)   
-
+        # ✅ This must be inside the same else block, same indentation
         if st.session_state.question_index < len(questions):
             next_q = questions[st.session_state.question_index]["question"]
             with st.chat_message("assistant"):
                 st.markdown(next_q)
             st.session_state.messages.append({"role": "assistant", "content": next_q})
+
 
