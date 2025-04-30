@@ -66,6 +66,8 @@ if "top_matches" not in st.session_state:
     st.session_state.top_matches = pd.DataFrame()
 if "match_explanations" not in st.session_state:
     st.session_state.match_explanations = []
+if "shown_models" not in st.session_state:
+    st.session_state.shown_models = set()
 
 st.title("\U0001F697 Vehicle Advisor Chatbot")
 
@@ -178,16 +180,18 @@ def filter_cars():
     return filtered
 
 def recommend_final_cars(filtered):
-    top = filtered.head(3)
-    if top.empty:
-        return st.markdown("_No matching vehicles found for full profile._")
+    # ✅ Only recommend cars not already shown
+    new_matches = filtered[~filtered['Model'].isin(st.session_state.shown_models)].head(3)
+    
+    if new_matches.empty:
+        return st.markdown("_No new matching vehicles found for the full profile._")
 
     profile = "\n".join([
         f"{k.replace('_',' ').title()}: {v}" for k,v in st.session_state.answers.items()
     ])
 
     explanations = []
-    for _, row in top.iterrows():
+    for _, row in new_matches.iterrows():
         brand = row['Brand'].title()
         model = row['Model'].title()
         msrp = row['MSRP Range']
@@ -203,6 +207,17 @@ def recommend_final_cars(filtered):
         )
         explanation = response.choices[0].message.content
         explanations.append(f"**{brand} {model}**  \n{explanation}  \n**MSRP Range:** {msrp}")
+
+        # ✅ Also save to session so they persist
+        st.session_state.match_explanations.append({
+            "brand": brand,
+            "model": model,
+            "msrp": msrp,
+            "explanation": explanation
+        })
+
+    # ✅ Track these models so they aren’t shown again
+    st.session_state.shown_models.update(new_matches['Model'].tolist())
 
     st.markdown(
         f"<div style='font-family: Arial; font-size: 16px; line-height: 1.6;'>{'<br><br>'.join(explanations)}</div>",
@@ -224,13 +239,13 @@ if prompt := st.chat_input("Type your answer..."):
 
     # Filter and store matches
     filtered = filter_cars()
-    top = filtered.head(2)
+    new_matches = filtered[~filtered['Model'].isin(st.session_state.shown_models)].head(2)
     st.session_state.top_matches = top
     if "match_explanations" not in st.session_state:
         st.session_state.match_explanations = []
 
     # Generate GPT-based explanations
-    for _, row in top.iterrows():
+    for _, row in new_matches.iterrows():
         brand = row['Brand'].title()
         model = row['Model'].title()
         msrp = row['MSRP Range']
