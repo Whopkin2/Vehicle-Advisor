@@ -163,26 +163,31 @@ def recommend_final_cars(filtered):
     top = filtered.head(3)
     if top.empty:
         return st.markdown("_No matching vehicles found for full profile._")
-    car_list = "\n".join([
-        f"- {row['Brand'].title()} {row['Model'].title()} (MSRP Range: {row['MSRP Range']})"
-        for _, row in top.iterrows()
-    ])
+
     profile = "\n".join([
         f"{k.replace('_',' ').title()}: {v}" for k,v in st.session_state.answers.items()
     ])
-    prompt = (
-        f"Here is the full user profile:\n{profile}\n\n"
-        f"Available cars:\n{car_list}\n\n"
-        f"Please recommend the top 3 vehicles that best match the user's full profile. Explain briefly why each fits well and include the MSRP Range."
-    )
 
-    response = client.chat.completions.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": prompt}],
-    )
-    output = response.choices[0].message.content
+    explanations = []
+    for _, row in top.iterrows():
+        brand = row['Brand'].title()
+        model = row['Model'].title()
+        msrp = row['MSRP Range']
+        prompt = (
+            f"User Profile:\n{profile}\n\n"
+            f"Explain in 2-3 sentences why a {brand} {model} would be a good fit for a user with this profile. "
+            f"Highlight any features that make it especially suitable, such as luxury, AWD, fuel economy, or reliability. "
+            f"Include the MSRP range: {msrp}."
+        )
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[{"role": "user", "content": prompt}],
+        )
+        explanation = response.choices[0].message.content
+        explanations.append(f"**{brand} {model}**  \n{explanation}  \n**MSRP Range:** {msrp}")
+
     st.markdown(
-        f"<div style='font-family: Arial; font-size: 16px; line-height: 1.6;'>{output}</div>",
+        f"<div style='font-family: Arial; font-size: 16px; line-height: 1.6;'>{'<br><br>'.join(explanations)}</div>",
         unsafe_allow_html=True
     )
 
