@@ -51,7 +51,7 @@ questions = [
     {"key": "travel_frequency", "question": "How often do you travel long distances? (Daily, Weekly, Rarely)"},
     {"key": "ownership_duration", "question": "How long do you plan to own the vehicle? (Short Term, Medium Term, Long Term)"},
     {"key": "ownership_recommendation", "question": "Would you prefer to Buy, Lease, or Rent the vehicle?"},
-    {"key": "yearly_income", "question": "What is your estimated yearly income? (e.g., 50k-100k, 100k-150k)"},
+    {"key": "yearly_income", "question": "What is your estimated yearly income? (in USD)"},
     {"key": "brand", "question": "Do you have a preferred vehicle brand? (e.g., Honda, Ford, Audi, Mercedes)"},
 ]
 
