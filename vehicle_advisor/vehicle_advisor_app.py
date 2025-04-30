@@ -97,9 +97,9 @@ def filter_cars():
 
         elif key == "new_or_used":
             if "used" in value:
-                filtered = filtered[filtered["Model Year"].str.lower().str.contains("used", na=False)]
+                filtered = filtered[filtered["New or Used"].str.lower().str.contains("used", na=False)]
             elif "new" in value:
-                filtered = filtered[~filtered["Model Year"].str.lower().str.contains("used", na=False)]
+                filtered = filtered[~filtered["New or Used"].str.lower().str.contains("used", na=False)]
 
         elif key == "fuel_type" and "Fuel Type" in filtered.columns:
             filtered = filtered[filtered["Fuel Type"].str.lower().str.contains(value, na=False)]
