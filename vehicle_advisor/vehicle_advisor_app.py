@@ -80,20 +80,17 @@ def filter_cars():
         if value in ["no", "none", "any"]:
             continue
 
-        if key == "budget":
+        elif key == "budget":
             try:
                 max_budget = float(value.replace('$', '').replace(',', '').replace('k', '000').split()[0])
-                # Extract max price from MSRP Range
-                filtered["Max Price"] = filtered["MSRP Range"].str.extract(r'\$?\d+[kK]?-?\$?(\d+[kK]?)')[0]
-                filtered["Max Price"] = (
-                    filtered["Max Price"]
-                    .str.replace('k', '000', case=False)
-                    .str.replace(',', '')
-                    .astype(float)
-                )
-                filtered = filtered[filtered["Max Price"] <= max_budget]
-            except: pass
-
+                # Extract both min and max price
+                price_range = filtered["MSRP Range"].str.extract(r'\$?([\d,]+)[–-]\$?([\d,]+)')
+                filtered["Min Price"] = price_range[0].str.replace(',', '').astype(float)
+                filtered["Max Price"] = price_range[1].str.replace(',', '').astype(float)
+                # Only include cars where min price is under budget
+                filtered = filtered[filtered["Min Price"] <= max_budget]
+            except Exception as e:
+                st.error(f"Budget parsing error: {e}")
 
         elif key == "new_or_used":
             if "used" in value:
