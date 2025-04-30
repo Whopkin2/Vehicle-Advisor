@@ -236,11 +236,10 @@ if prompt := st.chat_input("Type your answer..."):
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # Save answer and advance question index
+    # Save answer (DO NOT increment question index yet)
     if st.session_state.question_index < len(questions):
         q_key = questions[st.session_state.question_index]["key"]
         st.session_state.answers[q_key] = prompt
-        st.session_state.question_index += 1
 
     # Filter and select unseen vehicles
     filtered = filter_cars()
@@ -283,16 +282,19 @@ if prompt := st.chat_input("Type your answer..."):
             "explanation": explanation
         })
 
-    # Save grouped suggestions under the last question asked
+    # 🔧 FIXED: Group under the current question BEFORE moving on
     if vehicles:
-        last_q_index = st.session_state.question_index - 1
+        current_q_index = st.session_state.question_index  # DO NOT subtract
         st.session_state.match_explanations.append({
-            "question_text": questions[last_q_index]["question"],
+            "question_text": questions[current_q_index]["question"],
             "vehicles": vehicles
         })
         st.session_state.shown_models.update([v["model"].lower() for v in vehicles])
 
-    # DISPLAY — all past grouped car suggestions
+    # ✅ NOW increment the question index
+    st.session_state.question_index += 1
+
+    # DISPLAY all grouped car suggestions so far
     if st.session_state.match_explanations:
         with st.chat_message("assistant"):
             for group in st.session_state.match_explanations:
@@ -312,3 +314,4 @@ if prompt := st.chat_input("Type your answer..."):
         with st.chat_message("assistant"):
             st.markdown(next_q)
         st.session_state.messages.append({"role": "assistant", "content": next_q})
+
