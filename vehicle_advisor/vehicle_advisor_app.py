@@ -208,13 +208,14 @@ if prompt := st.chat_input("Type your answer..."):
         recommend_final_cars(filtered)
     else:
         with st.chat_message("assistant"):
+            top = filtered.head(2)  # ✅ Define 'top' first
             st.markdown("<div style='font-family: Arial; font-size: 16px; line-height: 1.6;'>🚘 <strong>Current Best Vehicle Matches:</strong></div>", unsafe_allow_html=True)
-    
+
             car_list = "<ul style='font-family: Arial; font-size: 16px;'>"
             for _, row in top.iterrows():
                 car_list += f"<li><strong>{row['Brand'].title()} {row['Model'].title()}</strong> (MSRP Range: {row['MSRP Range']})</li>"
             car_list += "</ul>"
-    
+
             st.markdown(car_list, unsafe_allow_html=True)
 
         if st.session_state.question_index < len(questions):
