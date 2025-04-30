@@ -64,6 +64,8 @@ if "question_index" not in st.session_state:
     st.session_state.question_index = 0
 if "top_matches" not in st.session_state:
     st.session_state.top_matches = pd.DataFrame()
+if "match_explanations" not in st.session_state:
+    st.session_state.match_explanations = []
 
 st.title("\U0001F697 Vehicle Advisor Chatbot")
 
@@ -219,53 +221,53 @@ if prompt := st.chat_input("Type your answer..."):
         st.session_state.question_index += 1
 
     filtered = filter_cars()
-    st.session_state.top_matches = filtered.head(2)
-
-    if st.session_state.question_index >= len(questions):
-        recommend_final_cars(filtered)
-    else:
-        if not st.session_state.top_matches.empty:
-            with st.chat_message("assistant"):
-                st.markdown("<div style='font-family: Arial; font-size: 16px; line-height: 1.6;'>🚘 <strong>Current Best Vehicle Matches:</strong></div>", unsafe_allow_html=True)
+        top = filtered.head(2)
+        st.session_state.top_matches = top
+        st.session_state.match_explanations = []
         
-                car_list = "<ul style='font-family: Arial; font-size: 16px;'>"
+        for _, row in top.iterrows():
+            brand = row['Brand'].title()
+            model = row['Model'].title()
+            msrp = row['MSRP Range']
+            vehicle_type = row.get('Vehicle Type', 'Unknown')
+            fuel_type = row.get('Fuel Type', 'Unknown')
+            car_size = row.get('Car Size', 'Unknown')
         
-                for _, row in st.session_state.top_matches.iterrows():
-                    brand = row['Brand'].title()
-                    model = row['Model'].title()
-                    msrp = row['MSRP Range']
-                    vehicle_type = row.get('Vehicle Type', 'Unknown')
-                    fuel_type = row.get('Fuel Type', 'Unknown')
-                    car_size = row.get('Car Size', 'Unknown')
+            profile_so_far = "\n".join([
+                f"{k.replace('_',' ').title()}: {v}" for k, v in st.session_state.answers.items()
+            ])
+            prompt = (
+                f"User Profile:\n{profile_so_far}\n\n"
+                f"Vehicle Info:\nModel: {brand} {model}\n"
+                f"Type: {vehicle_type}, Size: {car_size}, Fuel: {fuel_type}, MSRP: {msrp}\n\n"
+                f"Explain in 2-3 sentences why this car is a good match. Only describe the vehicle type as provided — "
+                f"do not infer based on model name."
+            )
         
-                    profile_so_far = "\n".join([
-                        f"{k.replace('_',' ').title()}: {v}" for k, v in st.session_state.answers.items()
-                    ])
-                    prompt = (
-                        f"User Profile:\n{profile_so_far}\n\n"
-                        f"Vehicle Info:\nModel: {brand} {model}\n"
-                        f"Type: {vehicle_type}, Size: {car_size}, Fuel: {fuel_type}, MSRP: {msrp}\n\n"
-                        f"Explain in 2-3 sentences why this car is a good match. Only describe the vehicle type as provided — "
-                        f"do not infer based on model name."
-                    )
+            try:
+                response = client.chat.completions.create(
+                    model="gpt-4",
+                    messages=[{"role": "user", "content": prompt}]
+                )
+                explanation = response.choices[0].message.content.strip()
+            except Exception as e:
+                explanation = f"*(Explanation failed: {e})*"
         
-                    try:
-                        response = client.chat.completions.create(
-                            model="gpt-4",
-                            messages=[{"role": "user", "content": prompt}]
-                        )
-                        explanation = response.choices[0].message.content.strip()
-                    except Exception as e:
-                        explanation = f"*(Explanation failed: {e})*"
+            st.session_state.match_explanations.append({
+                "brand": brand,
+                "model": model,
+                "msrp": msrp,
+                "explanation": explanation
+            })
         
-                    car_list += f"<li><strong>{brand} {model}</strong> (MSRP Range: {msrp})<br>{explanation}</li>"
-        
-                car_list += "</ul>"
-                st.markdown(car_list, unsafe_allow_html=True)
-        
-        # Then immediately show the next question (this part stays unchanged)
-        if st.session_state.question_index < len(questions):
-            next_q = questions[st.session_state.question_index]["question"]
-            with st.chat_message("assistant"):
-                st.markdown(next_q)
-            st.session_state.messages.append({"role": "assistant", "content": next_q})
+        if st.session_state.question_index >= len(questions):
+            recommend_final_cars(filtered)
+            
+if not st.session_state.top_matches.empty:
+    with st.chat_message("assistant"):
+        st.markdown("<div style='font-family: Arial; font-size: 16px; line-height: 1.6;'>🚘 <strong>Current Best Vehicle Matches:</strong></div>", unsafe_allow_html=True)
+        car_list = "<ul style='font-family: Arial; font-size: 16px;'>"
+        for match in st.session_state.match_explanations:
+            car_list += f"<li><strong>{match['brand']} {match['model']}</strong> (MSRP Range: {match['msrp']})<br>{match['explanation']}</li>"
+        car_list += "</ul>"
+        st.markdown(car_list, unsafe_allow_html=True)
