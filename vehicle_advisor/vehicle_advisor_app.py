@@ -221,12 +221,19 @@ if prompt := st.chat_input("Type your answer..."):
                 profile_so_far = "\n".join([
                     f"{k.replace('_',' ').title()}: {v}" for k, v in st.session_state.answers.items()
                 ])
+                vehicle_type = row['Vehicle Type']
+                fuel_type = row.get('Fuel Type', 'N/A')
+                car_size = row.get('Car Size', 'N/A')
+
                 prompt = (
                     f"User Profile so far:\n{profile_so_far}\n\n"
-                    f"Explain in 2-3 sentences why the {brand} {model} is a good choice for this user. "
-                    f"Highlight anything notable like fuel economy, comfort, utility, safety, or luxury. "
-                    f"Include MSRP range: {msrp}."
+                    f"Vehicle Info:\nModel: {brand} {model}\n"
+                    f"Type: {vehicle_type}, Size: {car_size}, Fuel: {fuel_type}, MSRP: {msrp}\n\n"
+                    f"Write 2-3 sentences explaining why this vehicle is a good match based on the user's profile. "
+                    f"Be accurate — refer only to the listed Vehicle Type, not assumptions about the car model. "
+                    f"Emphasize safety, economy, comfort, or performance as relevant."
                 )
+
                 try:
                     response = client.chat.completions.create(
                         model="gpt-4",
