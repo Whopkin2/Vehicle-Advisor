@@ -42,7 +42,7 @@ questions = [
     {"key": "safety_priority", "question": "How important are safety features to you? (High, Medium, Low)"},
     {"key": "garage_access", "question": "Do you have a garage for your vehicle? (Yes or No)"},
     {"key": "employment_status", "question": "What is your employment status? (Employed, Student, Retired)"},
-    {"key": "credit_score", "question": "What is your approximate credit range? (Excellent 800+, Very Good 799-750, Good 749-700, Fair <700)"},
+    {"key": "credit_score", "question": "What is your approximate credit range? (Excellent 800+, Very Good 799-750, Good 749-700, Fair 700-550, Poor <549)"},
     {"key": "travel_frequency", "question": "How often do you travel long distances? (Daily, Occasionally, Rarely)"},
     {"key": "ownership_duration", "question": "How long do you plan to own the vehicle? (Short Term, Medium Term, Long Term)"},
     {"key": "ownership_recommendation", "question": "Would you prefer to Buy, Lease, or Rent the vehicle?"},
