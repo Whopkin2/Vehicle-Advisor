@@ -288,14 +288,14 @@ if prompt := st.chat_input("Type your answer..."):
 
     # Display current best matches immediately
     if st.session_state.match_explanations:
-    with st.chat_message("assistant"):
-        for group in st.session_state.match_explanations:
-            st.markdown(f"<div style='font-family: Arial; font-size: 16px;'><strong>🚘 Suggestions after:</strong> <em>{group['question_text']}</em></div>", unsafe_allow_html=True)
-            car_list = "<ul style='font-family: Arial; font-size: 16px;'>"
-            for car in group["vehicles"]:
-                car_list += f"<li><strong>{car['brand']} {car['model']}</strong> (MSRP Range: {car['msrp']})<br>{car['explanation']}</li>"
-            car_list += "</ul><br>"
-            st.markdown(car_list, unsafe_allow_html=True)
+        with st.chat_message("assistant"):
+            for group in st.session_state.match_explanations:
+                st.markdown(f"<div style='font-family: Arial; font-size: 16px;'><strong>🚘 Suggestions after:</strong> <em>{group['question_text']}</em></div>", unsafe_allow_html=True)
+                car_list = "<ul style='font-family: Arial; font-size: 16px;'>"
+                for car in group["vehicles"]:
+                    car_list += f"<li><strong>{car['brand']} {car['model']}</strong> (MSRP Range: {car['msrp']})<br>{car['explanation']}</li>"
+                car_list += "</ul><br>"
+                st.markdown(car_list, unsafe_allow_html=True)
 
     # Final recommendations if all questions done
     if st.session_state.question_index >= len(questions):
