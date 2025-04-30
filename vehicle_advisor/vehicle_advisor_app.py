@@ -207,50 +207,50 @@ if prompt := st.chat_input("Type your answer..."):
     if st.session_state.question_index >= len(questions):
         recommend_final_cars(filtered)
     else:
-        with st.chat_message("assistant"):
-            top = filtered.head(2)
-            st.markdown("<div style='font-family: Arial; font-size: 16px; line-height: 1.6;'>🚘 <strong>Current Best Vehicle Matches:</strong></div>", unsafe_allow_html=True)
+    with st.chat_message("assistant"):
+        st.markdown("<div style='font-family: Arial; font-size: 16px; line-height: 1.6;'>🚘 <strong>Current Best Vehicle Matches:</strong></div>", unsafe_allow_html=True)
 
-            car_list = "<ul style='font-family: Arial; font-size: 16px;'>"
-            for _, row in top.iterrows():
-                brand = row['Brand'].title()
-                model = row['Model'].title()
-                msrp = row['MSRP Range']
+        # Show top 2 filtered cars
+        top = filtered.head(2)
+        car_list = "<ul style='font-family: Arial; font-size: 16px;'>"
 
-                # Generate GPT Explanation
-                profile_so_far = "\n".join([
-                    f"{k.replace('_',' ').title()}: {v}" for k, v in st.session_state.answers.items()
-                ])
-                vehicle_type = row['Vehicle Type']
-                fuel_type = row.get('Fuel Type', 'N/A')
-                car_size = row.get('Car Size', 'N/A')
+        for _, row in top.iterrows():
+            brand = row['Brand'].title()
+            model = row['Model'].title()
+            msrp = row['MSRP Range']
+            vehicle_type = row.get('Vehicle Type', 'Unknown')
+            fuel_type = row.get('Fuel Type', 'Unknown')
+            car_size = row.get('Car Size', 'Unknown')
 
-                prompt = (
-                    f"User Profile so far:\n{profile_so_far}\n\n"
-                    f"Vehicle Info:\nModel: {brand} {model}\n"
-                    f"Type: {vehicle_type}, Size: {car_size}, Fuel: {fuel_type}, MSRP: {msrp}\n\n"
-                    f"Write 2-3 sentences explaining why this vehicle is a good match based on the user's profile. "
-                    f"Be accurate — refer only to the listed Vehicle Type, not assumptions about the car model. "
-                    f"Emphasize safety, economy, comfort, or performance as relevant."
+            # Build prompt with explicit metadata
+            profile_so_far = "\n".join([
+                f"{k.replace('_',' ').title()}: {v}" for k, v in st.session_state.answers.items()
+            ])
+            prompt = (
+                f"User Profile:\n{profile_so_far}\n\n"
+                f"Vehicle Info:\nModel: {brand} {model}\n"
+                f"Type: {vehicle_type}, Size: {car_size}, Fuel: {fuel_type}, MSRP: {msrp}\n\n"
+                f"Explain in 2-3 sentences why this car is a good match. Only describe the vehicle type as provided — "
+                f"do not infer based on model name."
+            )
+
+            try:
+                response = client.chat.completions.create(
+                    model="gpt-4",
+                    messages=[{"role": "user", "content": prompt}]
                 )
+                explanation = response.choices[0].message.content.strip()
+            except Exception as e:
+                explanation = f"*(Explanation failed: {e})*"
 
-                try:
-                    response = client.chat.completions.create(
-                        model="gpt-4",
-                        messages=[{"role": "user", "content": prompt}]
-                    )
-                    explanation = response.choices[0].message.content.strip()
-                except Exception as e:
-                    explanation = f"*(Failed to generate explanation: {e})*"
+            car_list += f"<li><strong>{brand} {model}</strong> (MSRP Range: {msrp})<br>{explanation}</li>"
 
-                car_list += f"<li><strong>{brand} {model}</strong> (MSRP Range: {msrp})<br>{explanation}</li>"
+        car_list += "</ul>"
+        st.markdown(car_list, unsafe_allow_html=True)
 
-            car_list += "</ul>"
-            st.markdown(car_list, unsafe_allow_html=True)
-
-        # ✅ This must be inside the same else block, same indentation
-        if st.session_state.question_index < len(questions):
-            next_q = questions[st.session_state.question_index]["question"]
-            with st.chat_message("assistant"):
-                st.markdown(next_q)
-            st.session_state.messages.append({"role": "assistant", "content": next_q})
+    # Show next question if more remain
+    if st.session_state.question_index < len(questions):
+        next_q = questions[st.session_state.question_index]["question"]
+        with st.chat_message("assistant"):
+            st.markdown(next_q)
+        st.session_state.messages.append({"role": "assistant", "content": next_q})
