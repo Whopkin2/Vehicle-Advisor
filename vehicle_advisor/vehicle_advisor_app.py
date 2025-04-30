@@ -226,7 +226,8 @@ if prompt := st.chat_input("Type your answer..."):
     filtered = filter_cars()
     top = filtered.head(2)
     st.session_state.top_matches = top
-    st.session_state.match_explanations = []
+    if "match_explanations" not in st.session_state:
+        st.session_state.match_explanations = []
 
     # Generate GPT-based explanations
     for _, row in top.iterrows():
