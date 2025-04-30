@@ -15,7 +15,12 @@ def load_vehicle_data():
         df.columns = df.columns.str.strip()
         df['Brand'] = df['Brand'].str.lower()
         df['Model'] = df['Model'].str.lower()
-        df['Min Price'] = df['MSRP Range'].str.extract(r'\$([\d,]+)')[0].str.replace(',', '').astype(float)
+
+        # ✅ Fix: Extract both Min and Max Price from MSRP
+        df[['Min Price', 'Max Price']] = df['MSRP Range'].str.extract(r'\$?([\d,]+)\s*[-–]\s*\$?([\d,]+)')
+        df['Min Price'] = df['Min Price'].str.replace(',', '').astype(float)
+        df['Max Price'] = df['Max Price'].str.replace(',', '').astype(float)
+
         return df
     else:
         st.error("Failed to load vehicle data.")
