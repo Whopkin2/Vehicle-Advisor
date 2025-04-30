@@ -208,12 +208,18 @@ def recommend_final_cars(filtered):
         explanation = response.choices[0].message.content
         explanations.append(f"**{brand} {model}**  \n{explanation}  \n**MSRP Range:** {msrp}")
 
-        # ✅ Also save to session so they persist
         st.session_state.match_explanations.append({
-            "brand": brand,
-            "model": model,
-            "msrp": msrp,
-            "explanation": explanation
+            "question_key": questions[st.session_state.question_index - 1]["key"],  # previous question
+            "question_text": questions[st.session_state.question_index - 1]["question"],
+            "vehicles": [
+                {
+                    "brand": row['Brand'].title(),
+                    "model": row['Model'].title(),
+                    "msrp": row['MSRP Range'],
+                    "explanation": explanation
+                }
+                for row, explanation in zip(new_matches.itertuples(index=False), [exp['explanation'] for exp in st.session_state.match_explanations[-2:]])
+            ]
         })
 
     # ✅ Track these models so they aren’t shown again
@@ -281,13 +287,14 @@ if prompt := st.chat_input("Type your answer..."):
         })
 
     # Display current best matches immediately
-    if not st.session_state.top_matches.empty and st.session_state.match_explanations:
-        with st.chat_message("assistant"):
-            st.markdown("<div style='font-family: Arial; font-size: 16px; line-height: 1.6;'>🚘 <strong>Current Best Vehicle Matches:</strong></div>", unsafe_allow_html=True)
+    if st.session_state.match_explanations:
+    with st.chat_message("assistant"):
+        for group in st.session_state.match_explanations:
+            st.markdown(f"<div style='font-family: Arial; font-size: 16px;'><strong>🚘 Suggestions after:</strong> <em>{group['question_text']}</em></div>", unsafe_allow_html=True)
             car_list = "<ul style='font-family: Arial; font-size: 16px;'>"
-            for match in st.session_state.match_explanations:
-                car_list += f"<li><strong>{match['brand']} {match['model']}</strong> (MSRP Range: {match['msrp']})<br>{match['explanation']}</li>"
-            car_list += "</ul>"
+            for car in group["vehicles"]:
+                car_list += f"<li><strong>{car['brand']} {car['model']}</strong> (MSRP Range: {car['msrp']})<br>{car['explanation']}</li>"
+            car_list += "</ul><br>"
             st.markdown(car_list, unsafe_allow_html=True)
 
     # Final recommendations if all questions done
