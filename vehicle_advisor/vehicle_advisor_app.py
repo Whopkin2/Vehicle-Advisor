@@ -216,28 +216,19 @@ if prompt := st.chat_input("Type your answer..."):
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    if not st.session_state.top_matches.empty and st.session_state.match_explanations:
-        with st.chat_message("assistant"):
-            st.markdown("<div style='font-family: Arial; font-size: 16px; line-height: 1.6;'>🚘 <strong>Current Best Vehicle Matches:</strong></div>", unsafe_allow_html=True)
-            car_list = "<ul style='font-family: Arial; font-size: 16px;'>"
-            for match in st.session_state.match_explanations:
-                car_list += f"<li><strong>{match['brand']} {match['model']}</strong> (MSRP Range: {match['msrp']})<br>{match['explanation']}</li>"
-            car_list += "</ul>"
-            st.markdown(car_list, unsafe_allow_html=True)
-
-    # Save answer and move to next question
+    # Save answer and advance question index
     if st.session_state.question_index < len(questions):
         q_key = questions[st.session_state.question_index]["key"]
         st.session_state.answers[q_key] = prompt
         st.session_state.question_index += 1
 
-    # Filter and store top matches
+    # Filter and store matches
     filtered = filter_cars()
     top = filtered.head(2)
     st.session_state.top_matches = top
     st.session_state.match_explanations = []
 
-    # Generate GPT explanations and store
+    # Generate GPT-based explanations
     for _, row in top.iterrows():
         brand = row['Brand'].title()
         model = row['Model'].title()
@@ -273,11 +264,21 @@ if prompt := st.chat_input("Type your answer..."):
             "explanation": explanation
         })
 
-    # Final recommendation flow (if last question)
+    # Display current best matches immediately
+    if not st.session_state.top_matches.empty and st.session_state.match_explanations:
+        with st.chat_message("assistant"):
+            st.markdown("<div style='font-family: Arial; font-size: 16px; line-height: 1.6;'>🚘 <strong>Current Best Vehicle Matches:</strong></div>", unsafe_allow_html=True)
+            car_list = "<ul style='font-family: Arial; font-size: 16px;'>"
+            for match in st.session_state.match_explanations:
+                car_list += f"<li><strong>{match['brand']} {match['model']}</strong> (MSRP Range: {match['msrp']})<br>{match['explanation']}</li>"
+            car_list += "</ul>"
+            st.markdown(car_list, unsafe_allow_html=True)
+
+    # Final recommendations if all questions done
     if st.session_state.question_index >= len(questions):
         recommend_final_cars(filtered)
 
-    # ✅ NEXT QUESTION — THIS WAS MISSING
+    # Ask next question
     if st.session_state.question_index < len(questions):
         next_q = questions[st.session_state.question_index]["question"]
         with st.chat_message("assistant"):
