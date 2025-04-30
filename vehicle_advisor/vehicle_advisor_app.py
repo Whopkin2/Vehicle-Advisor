@@ -89,16 +89,11 @@ def filter_cars():
             try:
                 budget_val = float(value.lower().replace('$', '').replace(',', '').replace('k', '000').strip())
         
-                # Only include cars whose Max Price is within budget
+                # Just filter based on Max Price, keep original row order
                 filtered = filtered[filtered["Max Price"] <= budget_val]
-        
-                # Sort by how close the Max Price is to the budget
-                filtered["Price Gap"] = abs(filtered["Max Price"] - budget_val)
-                filtered = filtered.sort_values(by="Price Gap")
         
             except Exception as e:
                 st.warning(f"Budget filtering failed: {e}")
-
 
         elif key == "new_or_used":
             if "used" in value:
