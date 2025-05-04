@@ -37,7 +37,7 @@ questions = [
     {"key": "vehicle_type", "question": "What type of vehicle are you looking for? (Sedan, SUV, Truck, Crossover, Sports Car, Van, Coupe)"},
     {"key": "car_size", "question": "What size of vehicle do you want? (Compact, Midsize, Fullsize)"},
     {"key": "budget", "question": "What's your maximum budget for a vehicle (in USD)?"},
-    {"key": "fuel_type", "question": "What fuel type do you prefer? (Gasoline, Electric, Hybrid, Plug-in Hybrid)"},
+    {"key": "fuel_type", "question": "What fuel type do you prefer? (Gas, Electric, Hybrid, Plug-in Hybrid)"},
     {"key": "region", "question": "Which region are you located in? (North East, Mid-West, West, South)"},
     {"key": "use_category", "question": "What will be the vehicle's primary use? (Family Vehicle, Commuting, Utility, Off-Roading)"},
     {"key": "eco_conscious", "question": "Are you eco-conscious? (Yes or No)"},
